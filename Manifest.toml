@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.2"
+julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "b9e8669cdfe4347ff5cddab13ab6d9c30a2aa36d"
+project_hash = "5660bbdb570d85f579e8798e70892a1de1751acd"
 
 [[deps.ASL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
