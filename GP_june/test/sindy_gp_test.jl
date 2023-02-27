@@ -2,6 +2,7 @@ using Revise
 using DifferentialEquations 
 using GP_june 
 using LinearAlgebra 
+using Zygote 
 
 
 ## ============================================ ##
@@ -93,12 +94,12 @@ XI = sparsify_dynamics(THETA, xdot, lambda, n_vars)
 ## ============================================ ##
 
 # log-likelihood function 
-function log_Z2( (dX, Θ, Ξ, Ky) ) 
+function log_Z2( dX, Θ, Ξ, Ky ) 
 
     # ensure everything is a matrix 
     dX = dX[:,:]  
-    Θ = Θ[:,:]  
-    Ξ = Ξ[:,:] 
+    Θ  = Θ[:,:]  
+    Ξ  = Ξ[:,:] 
     Ky = Ky[:,:] 
 
     # log-likelihood 
@@ -129,6 +130,10 @@ XI_1   = XI[:,1] ;      XI_2   = XI[:,2]
 xdot_1 = xdot[:,1] ;    xdot_2 = xdot[:,2]
 
 Ky_1 = k_fn(sig_f0, l0, xdot_1, xdot_1) + sig_n0^2 * I 
-test = log_Z2( ( xdot_1, THETA, XI_1, Ky_1 ) ) 
+test = log_Z2( xdot_1, THETA, XI_1, Ky_1 ) 
+
+g = gradient( log_Z2, xdot_1, THETA, XI_1, Ky_1 )
 
 
+## ============================================ ##
+# ADMM 

@@ -1,8 +1,16 @@
-## ============================================ ##
-# ADMM 
+# define output hist struct 
+struct Hist 
+    objval 
+    r_norm 
+    s_norm 
+    eps_pri 
+    eps_dual 
+end 
+hist = Hist([], [], [], [], [])
 
 using LinearAlgebra 
 
+## ============================================ ##
 # objective 
 function objective(A, b, lambda, x, z) 
 
@@ -11,7 +19,14 @@ function objective(A, b, lambda, x, z)
     return p 
 end 
 
-
+# test function 
+A = rand(3,3)  
+b = rand(3,1)  
+lambda = 0.1  
+x = rand(3,1)  
+z = rand(3,1) 
+p = objective(A, b, lambda, x, z) 
+println("objective p = ", p)
 
 # shrinkage 
 function shrinkage(x, kappa) 
@@ -24,7 +39,36 @@ function shrinkage(x, kappa)
     return z 
 end 
 
+## ============================================ ##
+# test shrinkage 
+kappa = 0.1 ; 
+z = shrinkage(x, kappa) ; 
+println("shrinkage z = ", z)
 
+# cache factorization 
+function factor(A, rho)
+
+    m, n =  size(A) ; 
+    if m >= n 
+        C = cholesky( A'*A + rho*I ) 
+    else
+        C = cholesky( I + 1/rho*(A*A') )  
+    end 
+    L = C.L  
+    U = C.U 
+
+    return L, U 
+end 
+
+# test 
+rho = 0.1 
+L, U = factor(A, rho) 
+
+# end 
+
+
+## ============================================ ##
+# lasso_admm 
 
 function lasso_admm(A, b, lamda, rho, alpha) 
     # ------------------------------------------------------------------------
@@ -74,9 +118,8 @@ function lasso_admm(A, b, lamda, rho, alpha)
         # begin iterations 
         for k = 1:max_iter 
     
-            ## ============================================ ##
-            # x-update --> USE OPTIM 
-            q = Atb + rho*(z - u)           # temp value 
+            # x-update 
+            q = Atb + rho*(z .- u)           # temp value 
             if m >= n                       # if skinny 
                 x = U \ ( L \ q ) 
             else                            # if fat 
@@ -89,7 +132,7 @@ function lasso_admm(A, b, lamda, rho, alpha)
             z = shrinkage(x_hat + u, lambda/rho) 
     
             # u-update 
-            u = u + (x_hat - z) 
+            u = u + (x_hat .- z) 
     
             # diagnostics + termination checks 
             p = objective(A, b, lambda, x, z) 
@@ -105,6 +148,8 @@ function lasso_admm(A, b, lamda, rho, alpha)
     
         end 
     
-        return z, hist
+        return z, hist 
     end 
-
+    
+    # test 
+    x, hist = lasso_admm(A, b, lambda, 1.0, 1.0) 
