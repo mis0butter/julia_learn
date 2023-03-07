@@ -10,6 +10,7 @@ hist = Hist([], [], [], [], [])
 
 using LinearAlgebra 
 
+## ============================================ ##
 # objective 
 function objective(A, b, lambda, x, z) 
 
@@ -38,6 +39,7 @@ function shrinkage(x, kappa)
     return z 
 end 
 
+## ============================================ ##
 # test shrinkage 
 kappa = 0.1 ; 
 z = shrinkage(x, kappa) ; 
@@ -64,6 +66,9 @@ L, U = factor(A, rho)
 
 # end 
 
+
+## ============================================ ##
+# lasso_admm 
 
 function lasso_admm(A, b, lamda, rho, alpha) 
     # ------------------------------------------------------------------------

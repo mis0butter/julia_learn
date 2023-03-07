@@ -1,6 +1,13 @@
 # define square distance function 
 export sq_dist 
-function sq_dist(a::Matrix, b::Matrix) 
+function sq_dist(a, b) 
+
+    if typeof(a) == Vector{Float64} 
+        a = a[:,:] 
+    end 
+    if typeof(b) == Vector{Float64} 
+        b = b[:,:]
+    end 
 
     # extract dims 
     D, n = size(a) ;  
