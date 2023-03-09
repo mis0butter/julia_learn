@@ -94,5 +94,17 @@ log_Z(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_di
 result = optimize(log_Z, σ0) 
 println("minimizer = ", result.minimizer) 
 
+## ============================================ ##
+
+n  = 10
+dx = rand(n) 
+Θ  = rand(n,n)
+ξ  = rand(n) 
+log_Z(( sig_f, l, sig_n )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) + sig_n^2 * I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+
+σ0 = [1.0, 1.0, 1.0]
+result = optimize(log_Z, σ0) 
+println("minimizer = ", result.minimizer) 
+
 
 

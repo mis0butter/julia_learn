@@ -103,14 +103,69 @@ sig_n0 = 0.1
 ξ  = XI[:,1] ;   
 dx = xdot[:,1] ; 
 
-log_Z(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+# log_Z function 
+log_Z(( sig_f, l, sig_n )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + sig_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
 
-σ0 = [1.0, 1.0]
+σ0 = [1.0, 1.0, 0.1]
 result = optimize(log_Z, σ0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
+# full augmented Lagrangian 
+
+ρ = 1.0 
+λ = 0.1 
+y = 0*ξ 
+z = 0*ξ
+
+function aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+
+    term = zeros(5) 
+    term[1] = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) + sig_n^2*I )*( dx - Θ*ξ  ) 
+    term[2] = 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )) 
+    term[3] = λ*sum(abs.(z)) 
+    term[4] = y'*(ξ-z) 
+    term[5] = ρ/2*( norm(ξ-z) )^2 
+
+    return sum(term)
+
+end 
+
+# test 
+aug_L(( sig_f0, l0, sig_n0, dx, ξ, Θ, y, z, λ, ρ ))
+
+aug_L_hp(( sig_f, l, sig_n )) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+aug_L_hp((sig_f0, l0, sig_n0))
+
+result = optimize(aug_L_hp, σ0)
+println("aug_L_hp min = ", result.minimizer) 
+
+
+## ============================================ ##
 # ADMM 
+
+max_iter = 1000 
+abstol   = 1e-4 
+reltol   = 1e-2 
+
+# hyperparameter-update 
+log_Z(( sig_f, l, sig_n )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + sig_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+
+σ0 = [1.0, 1.0, 0.1]
+result = optimize(log_Z, σ0) 
+println("minimizer = ", result.minimizer) 
+
+sig_f = result.minimizer[1] 
+l     = result.minimizer[2] 
+sig_n = result.minimizer[3] 
+
+# x-update 
+log_Z( ξ ) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + sig_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+
+σ0 = ξ
+result = optimize(log_Z, σ0) 
+println("minimizer = ", result.minimizer) 
+
 
 
 
