@@ -145,36 +145,6 @@ println("aug_L_hp min = ", result.minimizer)
 ## ============================================ ##
 # ADMM 
 
-max_iter = 1000 
-abstol   = 1e-4 
-reltol   = 1e-2 
-
-# hyperparameter-update 
-aug_L_hp(( sig_f, l, sig_n )) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
-
-σ0     = [1.0, 1.0, 0.1]
-result = optimize(aug_L_hp, σ0)
-println("aug_L_hp min = ", result.minimizer) 
-
-# assign hyperparameters 
-sig_f = result.minimizer[1] 
-l     = result.minimizer[2] 
-sig_n = result.minimizer[3] 
-
-## ============================================ ##
-# x-update 
-aug_L_ξ(ξ) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
-
-σ0 = ξ
-result = optimize(log_Z, σ0) 
-println("minimizer = ", result.minimizer) 
-
-# assign ξ
-ξ = result.minimizer 
-
-## ============================================ ##
-# z-update
-
 # shrinkage 
 function shrinkage(x, kappa) 
 
@@ -186,15 +156,53 @@ function shrinkage(x, kappa)
     return z 
 end 
 
-z_old = z 
-ξ_hat = α*ξ + ( 1 .- α*z_old )
-z = shrinkage(ξ_hat + y, λ/ρ)
+max_iter = 1000 
+abstol   = 1e-4 
+reltol   = 1e-2 
 
-## ============================================ ##
-# y-update 
+sig_f = 1.0 
+l     = 1.0 
+sig_n = 0.1 
 
-y += ( ξ_hat .- z ) 
-y += ρ*( ξ-z )
+for k = 1:max_iter 
+
+# hyperparameter-update 
+    aug_L_hp(( sig_f, l, sig_n )) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+
+    σ0     = [sig_f, l, sig_n]
+    result = optimize(aug_L_hp, σ0)
+    println("aug_L_hp min = ", result.minimizer) 
+
+    # assign hyperparameters 
+    sig_f = result.minimizer[1] 
+    l     = result.minimizer[2] 
+    sig_n = result.minimizer[3] 
+
+    ## ============================================ ##
+    # x-update 
+    aug_L_ξ(ξ) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+
+    σ0 = ξ
+    result = optimize(log_Z, σ0) 
+    println("minimizer = ", result.minimizer) 
+
+    # assign ξ
+    ξ = result.minimizer 
+
+    ## ============================================ ##
+    # z-update
+
+    z_old = z 
+    ξ_hat = α*ξ + ( 1 .- α*z_old )
+    z = shrinkage(ξ_hat + y, λ/ρ)
+
+    ## ============================================ ##
+    # y-update 
+
+    y += ( ξ_hat .- z ) 
+    y += ρ*( ξ-z )
+
+end 
 
 
 
