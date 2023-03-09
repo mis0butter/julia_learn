@@ -7,128 +7,92 @@ using Optim
 
 
 ## ============================================ ##
-# ODE function 
-function ODE_test(dx, x, p, t)
+# loss function 
 
-    dx[1] = -1/4 * sin(x[1]) ; 
-    dx[2] = -1/2 * x[2] ; 
+x = rand(3) 
+A = rand(3,3) 
+xAx = x'*A*x 
 
-    return dx 
+loss( σ )  = σ^2 * x'*A*x
+loss2( σ ) = σ[1]^2 * xAx + σ[2]
 
-end 
-
-# initial conditions 
-x0 = [1; 1] ; 
-n_vars = size(x0,1) ; 
-
-# timespan 
-ts   = (0.0, 10.0) ; 
-dt   = 0.1 ; 
-
-# solve ODE 
-prob = ODEProblem(ODE_test, x0, ts) ; 
-sol  = solve(prob, saveat = dt) ; 
-
-using Plots 
-plot(sol) 
-
+σ0 = [1.0, 1.0] 
+result = optimize( loss2, σ0 )
+println("result = ", result) 
 
 ## ============================================ ##
-# finite differencing 
 
-# extract variables 
-x = sol.u ; 
-t = sol.t ; 
-
-# finite difference 
-xdot = 0*x ; 
-for i = 1 : length(x)-1
-    xdot[i] = ( x[i+1] - x[i] ) / dt ; 
-end 
-xdot[end] = xdot[end-1] ; 
-
-# true derivatives 
-xdot_true = 0*xdot ; 
-for i = 1 : length(x) 
-    xdot_true[i] = ODE_test([0.0, 0.0], x[i], 0.0, 0.0 ) ; 
-end 
-
-println("t type = ", typeof(t)) 
-println("xdot_true type = ", typeof(xdot_true)) 
-println("xdot type = ", typeof(xdot)) 
-
-# convert vector of vectors into matrix 
-xdot_true = mapreduce(permutedims, vcat, xdot_true) 
-xdot      = mapreduce(permutedims, vcat, xdot) 
-
-println("t type = ", typeof(t)) 
-println("xdot_true type = ", typeof(xdot_true)) 
-println("xdot type = ", typeof(xdot)) 
-
-# add to plot 
-plot(t, xdot_true, lw = 2) 
-plot!(t, xdot, ls = :dot, lw = 2) 
-title!("True and Finite Difference Derivatives")
-xlabel!("t")
-  
-  
-## ============================================ ##
-# TRY FUNCTION 
-
-#define inputs 
-n_vars     = 2 ; 
-poly_order = n_vars ;
-
-THETA = pool_data(x, n_vars, poly_order) ; 
-  
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2])^2
+x0 = [0.0, 0.0]
+result = optimize(f, x0)
+println(result) 
 
 ## ============================================ ##
-# TRY FUNCTION 
 
-# sparsification knob 
-lambda = 0.1 ; 
+dx = rand(3) 
+Θ  = rand(3,3)
+sig_f = 1.0  
+loss( ξ ) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 )*( dx - Θ*ξ  ) 
 
-typeof(xdot) 
-XI = sparsify_dynamics(THETA, xdot, lambda, n_vars)
-
-
-## ============================================ ##
-# setting up GP stuff 
-
-# covariance function from kernel (squared exponential) 
-k_fn(sig_f, l, xp, xq) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
-
-# true hyperparameters 
-sig_f0 = 1  
-l0     = 1 
-sig_n0 = 0.1 
-
-XI_1   = XI[:,1] ;      XI_2   = XI[:,2] 
-xdot_1 = xdot[:,1] ;    xdot_2 = xdot[:,2]
-
-Ky_1 = k_fn(sig_f0, l0, xdot_1, xdot_1) + sig_n0^2 * I 
-test = log_Z2( xdot_1, THETA, XI_1, Ky_1 ) 
-
-g = gradient( log_Z2, xdot_1, THETA, XI_1, Ky_1 )
-
+ξ0 = rand(3) 
+result = optimize(loss, ξ0) 
+println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
-# log-likelihood function 
-function log_Z3( dx, θ, ξ, sig_f, l, sig_n ) 
 
-    k_fn( (sig_f, l, dx, dx) ) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(dx, dx) ) 
-    Ky = k_fn( (sig_f, l, dx, dx) )
+dx = rand(3) 
+Θ  = rand(3,3)
+ξ  = rand(3) 
+loss( σ ) = 1/2*( dx - Θ*ξ )'*inv( σ[1]^2*σ[2] )*( dx - Θ*ξ  ) 
 
-    # log-likelihood 
-    term1 = 1/2 * ( dX - Θ * Ξ )' * inv(Ky) * ( dX - Θ * Ξ ) ; 
-    term2 = 1/2 * log(det(Ky)) 
-    # term3 = n/2 * log(2π)
-    
-    log_Z_out = term1 + term2  
- 
-    return log_Z_out 
+σ0 = rand(2) 
+result = optimize(loss, σ0) 
+println("minimizer = ", result.minimizer) 
 
-end 
+## ============================================ ##
+
+dx = rand(3) 
+Θ  = rand(3,3)
+ξ  = rand(3) 
+loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2*l )*( dx - Θ*ξ  ) 
+
+σ0 = rand(2) 
+result = optimize(loss, σ0) 
+println("minimizer = ", result.minimizer) 
+
+## ============================================ ##
+
+dx = rand(3) 
+Θ  = rand(3,3)
+ξ  = rand(3) 
+loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2*l )*( dx - Θ*ξ  ) 
+
+σ0 = rand(2) 
+result = optimize(loss, σ0) 
+println("minimizer = ", result.minimizer) 
+
+## ============================================ ##
+
+dx = rand(3) 
+Θ  = rand(3,3)
+ξ  = rand(3) 
+loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp(-1/(2*l^2)) )*( dx - Θ*ξ  ) 
+
+σ0 = rand(2) 
+result = optimize(loss, σ0) 
+println("minimizer = ", result.minimizer) 
+
+## ============================================ ##
+
+n  = 10
+dx = rand(n) 
+Θ  = rand(n,n)
+ξ  = rand(n) 
+log_Z(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+
+σ0 = [1.0, 1.0]
+result = optimize(log_Z, σ0) 
+println("minimizer = ", result.minimizer) 
 
 
 

@@ -78,86 +78,36 @@ xlabel!("t")
 n_vars     = 2 ; 
 poly_order = n_vars ;
 
-THETA = pool_data(x, n_vars, poly_order) ; 
+Θ = pool_data(x, n_vars, poly_order) ; 
   
 
 ## ============================================ ##
 # TRY FUNCTION 
 
 # sparsification knob 
-lambda = 0.1 ; 
+λ = 0.1 ; 
 
 typeof(xdot) 
-XI = sparsify_dynamics(THETA, xdot, lambda, n_vars)
-
-
-## ============================================ ##
-
-# log-likelihood function 
-function log_Z2( dX, Θ, Ξ, Ky ) 
-
-    # ensure everything is a matrix 
-    dX = dX[:,:]  
-    Θ  = Θ[:,:]  
-    Ξ  = Ξ[:,:] 
-    Ky = Ky[:,:] 
-
-    # log-likelihood 
-    term1 = 1/2 * ( dX - Θ * Ξ )' * inv(Ky) * ( dX - Θ * Ξ ) ; 
-    term1 = term1[1] 
-    term2 = 1/2 * log(det(Ky)) 
-    # term3 = n/2 * log(2π)
-    
-    log_Z_out = term1 + term2  
- 
-    return log_Z_out 
-
-end 
-
-
-## ============================================ ##
-
-# log-likelihood function 
-function log_Z3( dx, Θ, ξ, sig_f, l, sig_n ) 
-    # setting up GP stuff 
-    
-    # covariance function from kernel (squared exponential) 
-    k_fn(sig_f, l, xp, xq) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
-
-    Ky = k_fn(sig_f, l, dx, dx) + sig_n^2 * I 
-
-    # log-likelihood 
-    term1 = 1/2 * ( dx - Θ * ξ )' * inv(Ky) * ( dx - Θ * ξ ) ; 
-    term1 = term1[1] 
-    term2 = 1/2 * log(det(Ky)) 
-    # term3 = n/2 * log(2π)
-    
-    log_Z_out = term1 + term2  
- 
-    return log_Z_out 
-
-end 
+Ξ = sparsify_dynamics(Θ, xdot, λ, n_vars)
 
 
 ## ============================================ ##
 # setting up GP stuff 
 
-# covariance function from kernel (squared exponential) 
-k_fn(sig_f, l, xp, xq) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
-
-# true hyperparameters 
+# initial hyperparameters 
 sig_f0 = 1  
 l0     = 1 
 sig_n0 = 0.1 
 
-XI_1   = XI[:,1] ;      XI_2   = XI[:,2] 
-xdot_1 = xdot[:,1] ;    xdot_2 = xdot[:,2]
+# try first state 
+ξ  = XI[:,1] ;   
+dx = xdot[:,1] ; 
 
-Ky_1 = k_fn(sig_f0, l0, xdot_1, xdot_1) + sig_n0^2 * I 
-test = log_Z2( xdot_1, THETA, XI_1, Ky_1 ) 
+log_Z(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
 
-g = gradient( log_Z2, xdot_1, THETA, XI_1, Ky_1 )
-
+σ0 = [1.0, 1.0]
+result = optimize(log_Z, σ0) 
+println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
 # ADMM 

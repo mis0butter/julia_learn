@@ -1,10 +1,4 @@
-struct Hist 
-    objval 
-    r_norm 
-    s_norm 
-    eps_pri 
-    eps_dual 
-end 
+
 
 ## ============================================ ##
 
@@ -99,8 +93,7 @@ function lasso_admm(A, b, lamda, rho, alpha)
         # begin iterations 
         for k = 1:max_iter 
     
-            ## ============================================ ##
-            # x-update --> or USE OPTIM, find minimizer of Lagrangian 
+            # x-update 
             q = Atb + rho*(z .- u)           # temp value 
             if m >= n                       # if skinny 
                 x = U \ ( L \ q ) 
@@ -108,8 +101,7 @@ function lasso_admm(A, b, lamda, rho, alpha)
                 x = q / rho - ( A' * ( U \ ( L \ (A*q) ) ) ) / rho^2 
             end 
     
-            ## ============================================ ##
-            # z-update --> LASSO 
+            # z-update 
             z_old = z 
             x_hat = alpha*x + (1 .- alpha*z_old) 
             z = shrinkage(x_hat + u, lambda/rho) 
