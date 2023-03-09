@@ -93,72 +93,6 @@ XI = sparsify_dynamics(THETA, xdot, lambda, n_vars)
 
 
 ## ============================================ ##
-
-# log-likelihood function 
-function log_Z2( dX, Θ, Ξ, Ky ) 
-
-    # ensure everything is a matrix 
-    dX = dX[:,:]  
-    Θ  = Θ[:,:]  
-    Ξ  = Ξ[:,:] 
-    Ky = Ky[:,:] 
-
-    # log-likelihood 
-    term1 = 1/2 * ( dX - Θ * Ξ )' * inv(Ky) * ( dX - Θ * Ξ ) ; 
-    term1 = term1[1] 
-    term2 = 1/2 * log(det(Ky)) 
-    # term3 = n/2 * log(2π)
-    
-    log_Z_out = term1 + term2  
- 
-    return log_Z_out 
-
-end 
-
-## ============================================ ##
-# log-likelihood function 
-function log_Z3( dx, θ, ξ, sig_f, l, sig_n ) 
-
-    k_fn( (sig_f, l, dx, dx) ) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(dx, dx) ) 
-    Ky = k_fn( (sig_f, l, dx, dx) )
-
-    # log-likelihood 
-    term1 = 1/2 * ( dX - Θ * Ξ )' * inv(Ky) * ( dX - Θ * Ξ ) ; 
-    term2 = 1/2 * log(det(Ky)) 
-    # term3 = n/2 * log(2π)
-    
-    log_Z_out = term1 + term2  
- 
-    return log_Z_out 
-
-end 
-
-## ============================================ ## 
-# Using Optim with kernel function 
-
-using Optim 
-
-
-XI_1   = XI[:,1] ;      XI_2   = XI[:,2] 
-xdot_1 = xdot[:,1] ;    xdot_2 = xdot[:,2]
-
-# loss function 
-k_fn( (sig_f, l) ) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xdot_1, xdot_1) ) 
-k_fn( (sig_f, l) ) = sig_f^2 * exp.( -1/( 2*l^2 ) * ones(3,3) ) 
-k_fn( (sig_f, l) ) = sig_f^2 * exp.( -1/( 2*l^2 )  ) 
-# k_fn( (sig_f, l) ) = sig_f^2 * l  
-
-# true hyperparameters 
-sig_f0 = 1.0 
-l0     = 1.0 
-sig_n0 = 0.1 
-
-result = optimize( k_fn, [sig_f0, l0] )
-println(result) 
-
-
-
-## ============================================ ##
 # setting up GP stuff 
 
 # covariance function from kernel (squared exponential) 
@@ -179,4 +113,22 @@ g = gradient( log_Z2, xdot_1, THETA, XI_1, Ky_1 )
 
 
 ## ============================================ ##
-# ADMM 
+# log-likelihood function 
+function log_Z3( dx, θ, ξ, sig_f, l, sig_n ) 
+
+    k_fn( (sig_f, l, dx, dx) ) = sig_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(dx, dx) ) 
+    Ky = k_fn( (sig_f, l, dx, dx) )
+
+    # log-likelihood 
+    term1 = 1/2 * ( dX - Θ * Ξ )' * inv(Ky) * ( dX - Θ * Ξ ) ; 
+    term2 = 1/2 * log(det(Ky)) 
+    # term3 = n/2 * log(2π)
+    
+    log_Z_out = term1 + term2  
+ 
+    return log_Z_out 
+
+end 
+
+
+
