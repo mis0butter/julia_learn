@@ -3,6 +3,7 @@ using DifferentialEquations
 using GP_june 
 using LinearAlgebra 
 using Zygote 
+using Optim 
 
 
 ## ============================================ ##
@@ -21,8 +22,8 @@ x0 = [1; 1] ;
 n_vars = size(x0,1) ; 
 
 # timespan 
-ts   = (0.0, 10.0) ; 
-dt   = 0.1 ; 
+ts = (0.0, 10.0) ; 
+dt = 0.1 ; 
 
 # solve ODE 
 prob = ODEProblem(ODE_test, x0, ts) ; 
@@ -40,33 +41,33 @@ x = sol.u ;
 t = sol.t ; 
 
 # finite difference 
-xdot = 0*x ; 
+dx = 0*x ; 
 for i = 1 : length(x)-1
-    xdot[i] = ( x[i+1] - x[i] ) / dt ; 
+    dx[i] = ( x[i+1] - x[i] ) / dt ; 
 end 
-xdot[end] = xdot[end-1] ; 
+dx[end] = dx[end-1] ; 
 
 # true derivatives 
-xdot_true = 0*xdot ; 
+dx_true = 0*dx ; 
 for i = 1 : length(x) 
-    xdot_true[i] = ODE_test([0.0, 0.0], x[i], 0.0, 0.0 ) ; 
+    dx_true[i] = ODE_test([0.0, 0.0], x[i], 0.0, 0.0 ) ; 
 end 
 
 println("t type = ", typeof(t)) 
-println("xdot_true type = ", typeof(xdot_true)) 
-println("xdot type = ", typeof(xdot)) 
+println("dx_true type = ", typeof(dx_true)) 
+println("dx type = ", typeof(dx)) 
 
 # convert vector of vectors into matrix 
-xdot_true = mapreduce(permutedims, vcat, xdot_true) 
-xdot      = mapreduce(permutedims, vcat, xdot) 
+dx_true = mapreduce(permutedims, vcat, dx_true) 
+dx      = mapreduce(permutedims, vcat, dx) 
 
 println("t type = ", typeof(t)) 
-println("xdot_true type = ", typeof(xdot_true)) 
-println("xdot type = ", typeof(xdot)) 
+println("dx_true type = ", typeof(dx_true)) 
+println("dx type = ", typeof(dx)) 
 
 # add to plot 
-plot(t, xdot_true, lw = 2) 
-plot!(t, xdot, ls = :dot, lw = 2) 
+plot(t, dx_true, lw = 2) 
+plot!(t, dx, ls = :dot, lw = 2) 
 title!("True and Finite Difference Derivatives")
 xlabel!("t")
   
@@ -87,27 +88,27 @@ poly_order = n_vars ;
 # sparsification knob 
 λ = 0.1 ; 
 
-typeof(xdot) 
-Ξ = sparsify_dynamics(Θ, xdot, λ, n_vars)
+typeof(dx) 
+Ξ = sparsify_dynamics(Θ, dx, λ, n_vars)
 
 
 ## ============================================ ##
 # setting up GP stuff 
 
 # initial hyperparameters 
-sig_f0 = 1  
-l0     = 1 
-sig_n0 = 0.1 
+σ_f0 = 1  
+l0   = 1 
+σ_n0 = 0.1 
 
 # try first state 
 ξ  = XI[:,1] ;   
-dx = xdot[:,1] ; 
+dx = dx[:,1] ; 
 
 # log_Z function 
-log_Z(( sig_f, l, sig_n )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + sig_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
+log_Z(( σ_f, l, σ_n )) = 1/2*( dx - Θ*ξ )'*inv( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + σ_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
 
-σ0 = [1.0, 1.0, 0.1]
-result = optimize(log_Z, σ0) 
+σ_0 = [1.0, 1.0, 0.1]
+result = optimize(log_Z, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -119,11 +120,11 @@ y = 0*ξ
 z = 0*ξ
 α = 1.0 
 
-function aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+function aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 
     term = zeros(5) 
-    term[1] = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) + sig_n^2*I )*( dx - Θ*ξ  ) 
-    term[2] = 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )) 
+    term[1] = 1/2*( dx - Θ*ξ )'*inv( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) + σ_n^2*I )*( dx - Θ*ξ  ) 
+    term[2] = 1/2*log(det( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )) 
     term[3] = λ*sum(abs.(z)) 
     term[4] = y'*(ξ-z) 
     term[5] = ρ/2*( norm(ξ-z) )^2 
@@ -133,12 +134,12 @@ function aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
 end 
 
 # test 
-aug_L(( sig_f0, l0, sig_n0, dx, ξ, Θ, y, z, λ, ρ ))
+aug_L(( σ_f0, l0, σ_n0, dx, ξ, Θ, y, z, λ, ρ ))
 
-aug_L_hp(( sig_f, l, sig_n )) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
-aug_L_hp((sig_f0, l0, sig_n0))
+aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+aug_L_hp(( σ_f0, l0, σ_n0 ))
 
-result = optimize(aug_L_hp, σ0)
+result = optimize(aug_L_hp, σ_0)
 println("aug_L_hp min = ", result.minimizer) 
 
 
@@ -160,33 +161,33 @@ max_iter = 1000
 abstol   = 1e-4 
 reltol   = 1e-2 
 
-sig_f = 1.0 
-l     = 1.0 
-sig_n = 0.1 
+σ_f = 1.0 
+l   = 1.0 
+σ_n = 0.1 
 
 for k = 1:max_iter 
 
 # hyperparameter-update 
-    aug_L_hp(( sig_f, l, sig_n )) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+    aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 
-    σ0     = [sig_f, l, sig_n]
-    result = optimize(aug_L_hp, σ0)
+    σ_0     = [σ_f, l, σ_n] 
+    result = optimize(aug_L_hp, σ_0) 
     println("aug_L_hp min = ", result.minimizer) 
 
-    # assign hyperparameters 
-    sig_f = result.minimizer[1] 
-    l     = result.minimizer[2] 
-    sig_n = result.minimizer[3] 
+    # asσn hyperparameters 
+    σ_f = result.minimizer[1] 
+    l   = result.minimizer[2] 
+    σ_n = result.minimizer[3] 
 
     ## ============================================ ##
     # x-update 
-    aug_L_ξ(ξ) = aug_L(( sig_f, l, sig_n, dx, ξ, Θ, y, z, λ, ρ ))
+    aug_L_ξ(ξ) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 
-    σ0 = ξ
-    result = optimize(log_Z, σ0) 
+    σ_0 = ξ
+    result = optimize(log_Z, σ_0) 
     println("minimizer = ", result.minimizer) 
 
-    # assign ξ
+    # asσn ξ
     ξ = result.minimizer 
 
     ## ============================================ ##

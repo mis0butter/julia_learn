@@ -16,8 +16,8 @@ xAx = x'*A*x
 loss( σ )  = σ^2 * x'*A*x
 loss2( σ ) = σ[1]^2 * xAx + σ[2]
 
-σ0 = [1.0, 1.0] 
-result = optimize( loss2, σ0 )
+σ_0 = [1.0, 1.0] 
+result = optimize( loss2, σ_0 )
 println("result = ", result) 
 
 ## ============================================ ##
@@ -45,8 +45,8 @@ dx = rand(3)
 ξ  = rand(3) 
 loss( σ ) = 1/2*( dx - Θ*ξ )'*inv( σ[1]^2*σ[2] )*( dx - Θ*ξ  ) 
 
-σ0 = rand(2) 
-result = optimize(loss, σ0) 
+σ_0 = rand(2) 
+result = optimize(loss, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -56,8 +56,8 @@ dx = rand(3)
 ξ  = rand(3) 
 loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2*l )*( dx - Θ*ξ  ) 
 
-σ0 = rand(2) 
-result = optimize(loss, σ0) 
+σ_0 = rand(2) 
+result = optimize(loss, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -67,8 +67,8 @@ dx = rand(3)
 ξ  = rand(3) 
 loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2*l )*( dx - Θ*ξ  ) 
 
-σ0 = rand(2) 
-result = optimize(loss, σ0) 
+σ_0 = rand(2) 
+result = optimize(loss, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -78,8 +78,8 @@ dx = rand(3)
 ξ  = rand(3) 
 loss(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp(-1/(2*l^2)) )*( dx - Θ*ξ  ) 
 
-σ0 = rand(2) 
-result = optimize(loss, σ0) 
+σ_0 = rand(2) 
+result = optimize(loss, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -90,8 +90,8 @@ dx = rand(n)
 ξ  = rand(n) 
 log_Z(( sig_f, l )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
 
-σ0 = [1.0, 1.0]
-result = optimize(log_Z, σ0) 
+σ_0 = [1.0, 1.0]
+result = optimize(log_Z, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 ## ============================================ ##
@@ -102,8 +102,8 @@ dx = rand(n)
 ξ  = rand(n) 
 log_Z(( sig_f, l, sig_n )) = 1/2*( dx - Θ*ξ )'*inv( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) + sig_n^2 * I )*( dx - Θ*ξ  ) + 1/2*log(det( sig_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
 
-σ0 = [1.0, 1.0, 1.0]
-result = optimize(log_Z, σ0) 
+σ_0 = [1.0, 1.0, 1.0]
+result = optimize(log_Z, σ_0) 
 println("minimizer = ", result.minimizer) 
 
 

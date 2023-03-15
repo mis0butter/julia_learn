@@ -26,6 +26,7 @@ end
 
 # fill out 1st column of THETA with ones (poly_order = 0) 
 ind = 1; 
+THETA = Any[] 
 THETA[:, ind] = ones(m, ind); 
 terms = Any[] ; 
 terms(ind, 1) = '1'; 
