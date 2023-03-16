@@ -71,7 +71,7 @@ L, U = factor(A, rho)
 # lasso_admm 
 
 function lasso_admm(A, b, lamda, rho, alpha) 
-    # ------------------------------------------------------------------------
+    # ----------------------------------------
     # lasso  Solve lasso problem via ADMM
     #
     # [z, history] = lasso(A, b, lambda, rho, alpha);
@@ -96,7 +96,7 @@ function lasso_admm(A, b, lamda, rho, alpha)
     # 
     # Reference: 
     # http://www.stanford.edu/~boyd/papers/distr_opt_stat_learning_admm.html
-    # ------------------------------------------------------------------------
+    # ----------------------------------------
     
         # define constants 
         max_iter = 1000  

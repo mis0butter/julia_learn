@@ -174,7 +174,7 @@ for k = 1:max_iter
     result = optimize(aug_L_hp, σ_0) 
     println("aug_L_hp min = ", result.minimizer) 
 
-    # asσn hyperparameters 
+    # assign hyperparameters 
     σ_f = result.minimizer[1] 
     l   = result.minimizer[2] 
     σ_n = result.minimizer[3] 
