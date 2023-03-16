@@ -62,17 +62,9 @@ for i = 1 : length(x)
     dx_true[i] = ODE_test([0.0, 0.0], x[i], 0.0, 0.0 ) ; 
 end 
 
-println("t type = ", typeof(t)) 
-println("dx_true type = ", typeof(dx_true)) 
-println("dx type = ", typeof(dx)) 
-
 # convert vector of vectors into matrix 
 dx_true = mapreduce(permutedims, vcat, dx_true) 
 dx      = mapreduce(permutedims, vcat, dx) 
-
-println("t type = ", typeof(t)) 
-println("dx_true type = ", typeof(dx_true)) 
-println("dx type = ", typeof(dx)) 
 
 # add to plot 
 plot(t, dx_true, lw = 2) 
@@ -82,22 +74,19 @@ xlabel!("t")
   
   
 ## ============================================ ##
-# TRY FUNCTION 
+# SINDy 
 
 #define inputs 
 n_vars     = 2 ; 
 poly_order = n_vars ;
 
+# construct data library 
 Θ = pool_data(x, n_vars, poly_order) ; 
-  
-
-## ============================================ ##
-# TRY FUNCTION 
 
 # sparsification knob 
 λ = 0.1 ; 
 
-typeof(dx) 
+# first cut - SINDy 
 Ξ = sparsify_dynamics(Θ, dx, λ, n_vars)
 
 
@@ -110,7 +99,7 @@ l_0  = 1
 σ_n0 = 0.1 
 
 # try first state 
-ξ  = XI[:,1] ;   
+ξ  = Ξ[:,1] ;   
 dx = dx[:,1] ; 
 
 function log_p(( σ_f, l, σ_n, x, y, μ_y ))
@@ -132,12 +121,10 @@ end
 
 log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, dx, dx, Θ*ξ ))
 
-# # log_Z function 
-# log_Z(( σ_f, l, σ_n )) = 1/2*( dx - Θ*ξ )'*inv( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) )  + σ_n^2*I )*( dx - Θ*ξ  ) + 1/2*log(det( σ_f^2 * exp( -1/(2*l^2) * sq_dist(dx,dx) ) ))
-
 σ_0 = [σ_f0, l_0, σ_n0]
 result = optimize(log_p_hp, σ_0) 
 println("minimizer = ", result.minimizer) 
+
 
 ## ============================================ ##
 # full augmented Lagrangian 
@@ -169,8 +156,10 @@ function aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 end 
 
 # test 
-aug_L(( σ_f0, l0, σ_n0, dx, ξ, Θ, y, z, λ, ρ ))
+out = aug_L(( σ_f0, l0, σ_n0, dx, ξ, Θ, y, z, λ, ρ ))
+println("testing augmented L = ", out)
 
+# test optimization, reassign function 
 aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 aug_L_hp(( σ_f0, l0, σ_n0 ))
 
