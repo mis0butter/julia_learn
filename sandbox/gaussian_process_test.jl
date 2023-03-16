@@ -115,6 +115,7 @@ Ks = k_fn(σ_f0, l_0, x_train, x_test)
 
 ## ============================================ ##
 # marginal log-likelihood for Gaussian Process 
+
 function log_p(( σ_f, l, σ_n, y, x ))
     
     # kernel function 
@@ -125,7 +126,8 @@ function log_p(( σ_f, l, σ_n, y, x ))
     Ky += σ_n^2 * I 
 
     term = zeros(2)
-    term[1] = 1/2*( y )'*inv( Ky )*( y ) 
+    # term[1] = 1/2*( y )'*inv( Ky )*( y ) 
+    term[1] = 1/2*( y .- mean(y) )'*inv( Ky )*( y .- mean(y) ) 
     term[2] = 1/2*log(det( Ky )) 
 
     return sum(term)
@@ -137,7 +139,6 @@ log_p(( σ_f, l, σ_n, y_train, x_train ))
 
 ## ============================================ ##
 # solve for hyperparameters
-# log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, y_train, x_train ))
 
 # test reassigning function 
 test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, y_train, x_train ))
@@ -149,4 +150,19 @@ test_log_p(( σ_f, l, σ_n ))
 result = optimize(test_log_p, σ_0) 
 println("log_p min = ", result.minimizer) 
 
+## ============================================ ##
+# test minimizing 1-norm 
 
+test_fn(z) = sum(abs.(z)) .+ z'*z
+x = -10 : 0.1 : 10 
+x = collect(x) 
+
+y = 0*x 
+for i = 1:length(x) 
+    y[i] = test_fn(x[i])
+end 
+
+result = optimize(test_fn, 0.1) 
+println("minimizer = ", result.minimizer)
+
+plot(x,y) 
