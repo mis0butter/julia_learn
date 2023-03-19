@@ -7,6 +7,7 @@ using GaussianProcesses
 using Random 
 
 ## ============================================ ##
+## ============================================ ##
 # functions 
 
 # define square distance function 
@@ -108,7 +109,8 @@ k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )
 # y_train = gauss_sample( 0*x_train, Σ_train ) 
 y_train = sin.(x_train) .+ 0.1*randn(N) 
 
-scatter(x_train, y_train) 
+scatter(x_train, y_train, 
+    c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP" ) 
 
 
 ## ============================================ ##
@@ -121,24 +123,18 @@ scatter(x_train, y_train)
 # joint distribution 
 #   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
 #   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
-
-x_test = x_train 
-
-σ_f0 = 1.0 
-l_0 = 2.5 
-σ_n0 = sqrt(0.04)
+x_test = collect( 0 : 0.01 : 2π )
 
 # covariance from training data 
-K   = k_fn(σ_f0, l_0, x_train, x_train) ; 
-K   = K + σ_n0^2 * I;      # add noise for positive definite 
-Ks  = k_fn(σ_f0, l_0, x_train, x_test); 
-Kss = k_fn(σ_f0, l_0, x_test, x_test); 
+K    = k_fn(σ_f0, l_0, x_train, x_train) ; 
+K   += σ_n0^2 * I;      # add noise for positive definite 
+Ks   = k_fn(σ_f0, l_0, x_train, x_test); 
+Kss  = k_fn(σ_f0, l_0, x_test, x_test); 
 
 # conditional distribution 
 # mu_cond    = K(Xs,X)*inv(K(X,X))*y
 # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
 # fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ); 
-
 μ_post = Ks' * K^-1 * y_train ; 
 Σ_post = Kss - (Ks' * K^-1 * Ks) ; 
 
@@ -147,10 +143,10 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior);
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post); 
 
 # plot fitted / predict / post data 
-# plot(x_test, μ_post)
+plot!(x_test, μ_post, c = 1, label = "fitted mean (untrained) ")
 
 # shade covariance 
-plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ Confidence band")
+plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ covariance (untrained)")
 
 
 # draw random samples from posterior distribution 
@@ -159,33 +155,28 @@ plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalp
 
 
 
-
-
 ## ============================================ ##
 # solve for hyperparameters
 
-println("samples = ", N)
+println("samples = ", N) 
 
 # test reassigning function 
-test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, μ_post )) 
+test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
 test_log_p(( σ_f, l, σ_n )) 
 
 # σ_0    = [σ_f0, l_0, σ_n0] 
 σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
 
-result = optimize( test_log_p, σ_0, NelderMead() ) 
-println("log_p min (NelderMead) = \n ", result.minimizer) 
+result1 = optimize( test_log_p, σ_0, NelderMead() ) 
+println("log_p min (NelderMead) = \n ", result1.minimizer) 
 
-# tick() ; 
-# result = optimize( test_log_p, σ_0, GradientDescent() ) 
-# println("log_p min (GradientDescent) = \n ", result.minimizer) 
-# tock() 
+# result2 = optimize( test_log_p, σ_0, BFGS() ) 
+# println("log_p min (BFGS) = \n ", result2.minimizer) 
 
-# result = optimize( test_log_p, σ_0, BFGS() ) 
-# println("log_p min (BFGS) = \n ", result.minimizer) 
+result3 = optimize( test_log_p, σ_0, LBFGS() ) 
+println("log_p min (LBFGS) = \n ", result3.minimizer) 
 
-# result = optimize( test_log_p, σ_0, LBFGS() ) 
-# println("log_p min (LBFGS) = \n ", result.minimizer) 
+result = result3 
 
 # assign optimized hyperparameters 
 σ_f = result.minimizer[1] 
@@ -203,32 +194,32 @@ l   = result.minimizer[2]
 # joint distribution 
 #   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
 #   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
-
-x_test = x_train 
+x_test = x_test 
 
 # covariance from training data 
-K   = k_fn(σ_f, l, x_train, x_train) ; 
-K   = K + σ_n^2 * I;      # add signal noise 
-Ks  = k_fn(σ_f, l, x_train, x_test); 
-Kss = k_fn(σ_f, l, x_test, x_test); 
+K    = k_fn(σ_f, l, x_train, x_train)   
+K   +=  σ_n^2 * I       # add signal noise 
+Ks   = k_fn(σ_f, l, x_train, x_test)  
+Kss  = k_fn(σ_f, l, x_test, x_test) 
 
 # conditional distribution 
 # mu_cond    = K(Xs,X)*inv(K(X,X))*y
 # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
 # fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ); 
-
-μ_post = Ks' * K^-1 * y_train ; 
-Σ_post = Kss - (Ks' * K^-1 * Ks) ; 
+μ_post = Ks' * K^-1 * y_train 
+Σ_post = Kss - (Ks' * K^-1 * Ks)  
 
 # get covariances and stds 
-cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior); 
-cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post); 
+cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior) 
+cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(x_test, μ_post)
+plot!(x_test, μ_post, c = 2, label = "fitted mean (trained) ")
 
 # shade covariance 
-plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ Confidence band")
+plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
+
+
 
 ## ============================================ ## 
 # fit GP 
@@ -243,14 +234,15 @@ gp  = GP(x_train, y_train, mZero, kern, log_noise) ;
 # optimize in a box with lower bounds [-1,-1] and upper bounds [1,1]
 # optimize!(gp; kernbounds = [ [-1,-1] , [1,1] ]) 
 
-
-μ, σ² = predict_y( gp, x_train ) 
-
+μ, σ² = predict_y( gp, x_test ) 
 
 # plot 
 using Plots 
-plot!(gp; xlabel="x", ylabel="y", title="Gaussian Process", legend=false, fmt=:png) 
-plot!(x_train, y_train) 
+plot!( x_test, μ, c = 3, label = "gp mean" )
+plot!( x_test, μ .- 3*std_post, fillrange = μ .+ 3*std_post , fillalpha = 0.35, c = 3, label = "3σ covariance (gp)" )
+
+# plot!(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
+
 
 ## ============================================ ##
 # test minimizing 1-norm 
