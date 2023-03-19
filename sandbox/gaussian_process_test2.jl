@@ -96,7 +96,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.2 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 20
+N = 100 
 x_train = sort( 2π*rand(N) ) 
 
 # kernel function 
@@ -106,8 +106,8 @@ k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )
 Σ_train += σ_n0^2 * I 
 
 # training data --> "measured" output at x_train 
-# y_train = gauss_sample( 0*x_train, Σ_train ) 
-y_train = sin.(x_train) .+ 0.1*randn(N) 
+y_train = gauss_sample( 0*x_train, Σ_train ) 
+# y_train = sin.(x_train) .+ 0.1*randn(N) 
 
 scatter(x_train, y_train, 
     c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP" ) 
@@ -126,10 +126,10 @@ scatter(x_train, y_train,
 x_test = collect( 0 : 0.01 : 2π )
 
 # covariance from training data 
-K    = k_fn(σ_f0, l_0, x_train, x_train) ; 
-K   += σ_n0^2 * I;      # add noise for positive definite 
-Ks   = k_fn(σ_f0, l_0, x_train, x_test); 
-Kss  = k_fn(σ_f0, l_0, x_test, x_test); 
+K    = k_fn(σ_f0, l_0, x_train, x_train)  
+K   += σ_n0^2 * I       # add noise for positive definite 
+Ks   = k_fn(σ_f0, l_0, x_train, x_test)  
+Kss  = k_fn(σ_f0, l_0, x_test, x_test) 
 
 # conditional distribution 
 # mu_cond    = K(Xs,X)*inv(K(X,X))*y
@@ -147,12 +147,6 @@ plot!(x_test, μ_post, c = 1, label = "fitted mean (untrained) ")
 
 # shade covariance 
 plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ covariance (untrained)")
-
-
-# draw random samples from posterior distribution 
-# y_post = gauss_sample(μ_post, Σ_post ) ; 
-# plot!(x_test, y_post)
-
 
 
 ## ============================================ ##
@@ -226,20 +220,21 @@ plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalp
 
 # mean and covariance 
 mZero = MeanZero() ;            # zero mean function 
-kern  = SE(σ_f0, σ_n0) ;          # squared eponential kernel (hyperparams on log scale) 
-log_noise = log(σ_n0) ;              # (optional) log std dev of obs noise 
+kern  = SE(σ_f, σ_n) ;          # squared eponential kernel (hyperparams on log scale) 
+log_noise = log(σ_n) ;              # (optional) log std dev of obs noise 
 
 # fit GP 
 gp  = GP(x_train, y_train, mZero, kern, log_noise) ; 
 # optimize in a box with lower bounds [-1,-1] and upper bounds [1,1]
-# optimize!(gp; kernbounds = [ [-1,-1] , [1,1] ]) 
+optimize!(gp; method = LBFGS() ) 
 
 μ, σ² = predict_y( gp, x_test ) 
 
 # plot 
 using Plots 
-plot!( x_test, μ, c = 3, label = "gp mean" )
-plot!( x_test, μ .- 3*std_post, fillrange = μ .+ 3*std_post , fillalpha = 0.35, c = 3, label = "3σ covariance (gp)" )
+c = 3 ; 
+plot!( x_test, μ, c = c, label = "gp mean" )
+plot!( x_test, μ .- 3*std_post, fillrange = μ .+ 3*std_post , fillalpha = 0.35, c = c, label = "3σ covariance (gp)" )
 
 # plot!(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
 
