@@ -2,6 +2,7 @@ using Optim
 using LinearAlgebra
 using Statistics 
 using Plots 
+using TickTock 
 
 ## ============================================ ##
 # functions 
@@ -76,7 +77,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 100 
+N = 90
 x_train = sort( 10*rand(N) )      
 
 # kernel function 
@@ -86,7 +87,7 @@ k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )
 Σ_train += σ_n0^2 * I 
 
 # training data --> "measured" output at x_train 
-y_train = gauss_sample(0*x_train, Σ_train) 
+y_train = gauss_sample( 0*x_train, Σ_train ) 
 
 ## ============================================ ##
 # generate test points 
@@ -102,11 +103,11 @@ meanZero = 0 * x_test
 Kss = k_fn( σ_f0, l_0, x_test, x_test ) 
 
 # posterior distribution 
-K = k_fn(σ_f0, l_0, x_train, x_train) 
+K = k_fn( σ_f0, l_0, x_train, x_train ) 
 K += σ_n0^2 * I 
 
 # covariance from training / measuremenet data AND test data 
-Ks = k_fn(σ_f0, l_0, x_train, x_test) 
+Ks = k_fn( σ_f0, l_0, x_train, x_test ) 
 
 # conditional distribution / PREDICTION 
 μ_post = Ks' * inv(K) * y_train 
@@ -126,8 +127,8 @@ function log_p(( σ_f, l, σ_n, y, x ))
     Ky += σ_n^2 * I 
 
     term = zeros(2)
-    # term[1] = 1/2*( y )'*inv( Ky )*( y ) 
-    term[1] = 1/2*( y .- mean(y) )'*inv( Ky )*( y .- mean(y) ) 
+    term[1] = 1/2*( y )'*inv( Ky )*( y ) 
+    # term[1] = 1/2*( y .- mean(y) )'*inv( Ky )*( y .- mean(y) ) 
     term[2] = 1/2*log(det( Ky )) 
 
     return sum(term)
@@ -147,22 +148,39 @@ test_log_p(( σ_f, l, σ_n ))
 # σ_0    = [σ_f0, l_0, σ_n0] 
 σ_0    = [ σ_f, l_0, σ_n ] * 1.1
 
-result = optimize(test_log_p, σ_0) 
-println("log_p min = ", result.minimizer) 
+tick() ; 
+result = optimize( test_log_p, σ_0, NelderMead() ) 
+println("log_p min (NelderMead) = \n ", result.minimizer) 
+tock() 
+
+# tick() ; 
+# result = optimize( test_log_p, σ_0, GradientDescent() ) 
+# println("log_p min (GradientDescent) = \n ", result.minimizer) 
+# tock() 
+
+tick() ; 
+result = optimize( test_log_p, σ_0, BFGS() ) 
+println("log_p min (BFGS) = \n ", result.minimizer) 
+tock() 
+
+tick() ; 
+result = optimize( test_log_p, σ_0, LBFGS() ) 
+println("log_p min (LBFGS) = \n ", result.minimizer) 
+tock() 
 
 ## ============================================ ##
 # test minimizing 1-norm 
 
-test_fn(z) = sum(abs.(z)) .+ z'*z
-x = -10 : 0.1 : 10 
-x = collect(x) 
+# test_fn(z) = sum(abs.(z)) .+ z'*z
+# x = -10 : 0.1 : 10 
+# x = collect(x) 
 
-y = 0*x 
-for i = 1:length(x) 
-    y[i] = test_fn(x[i])
-end 
+# y = 0*x 
+# for i = 1:length(x) 
+#     y[i] = test_fn(x[i])
+# end 
 
-result = optimize(test_fn, 0.1) 
-println("minimizer = ", result.minimizer)
+# result = optimize(test_fn, 0.1) 
+# println("minimizer = ", result.minimizer)
 
-plot(x,y) 
+# plot(x,y) 
