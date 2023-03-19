@@ -109,7 +109,7 @@ k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )
 y_train = gauss_sample( 0*x_train, Σ_train ) 
 # y_train = sin.(x_train) .+ 0.1*randn(N) 
 
-scatter(x_train, y_train, 
+p1 = scatter(x_train, y_train, 
     c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP" ) 
 
 
@@ -143,13 +143,13 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior);
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post); 
 
 # plot fitted / predict / post data 
-plot!(x_test, μ_post, c = 1, label = "fitted mean (untrained) ")
+plot!(p1, x_test, μ_post, c = 1, label = "fitted mean (untrained) ")
 
 # shade covariance 
-plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ covariance (untrained)")
+plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ covariance (untrained)")
 
 
-## ============================================ ##
+## ============================================ ## 
 # solve for hyperparameters
 
 println("samples = ", N) 
@@ -208,11 +208,15 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior)
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(x_test, μ_post, c = 2, label = "fitted mean (trained) ")
+plot!(p1, x_test, μ_post, c = 2, label = "fitted mean (trained) ")
 
 # shade covariance 
-plot!(x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
+plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
 
+
+# create new plot 
+p2 = plot(x_test, μ_post, c = 2, label = "fitted mean (trained) ")
+plot!(p2, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
 
 
 ## ============================================ ## 
@@ -233,11 +237,15 @@ optimize!(gp; method = LBFGS() )
 # plot 
 using Plots 
 c = 3 ; 
-plot!( x_test, μ, c = c, label = "gp mean" )
-plot!( x_test, μ .- 3*std_post, fillrange = μ .+ 3*std_post , fillalpha = 0.35, c = c, label = "3σ covariance (gp)" )
+plot!( p2, x_test, μ, c = c, label = "gp mean" )
+plot!( p2, x_test, μ .- 3*std_post, fillrange = μ .+ 3*std_post , fillalpha = 0.35, c = c, label = "3σ covariance (gp)" )
 
 # plot!(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
 
+## ============================================ ##
+# plot everything 
+
+plot(p1, p2, layout = (2,1) )
 
 ## ============================================ ##
 # test minimizing 1-norm 
