@@ -109,6 +109,7 @@ x_train = [ 0.18628169826803306
             4.859123522452421
             5.909868735953643
             6.136597975600844 ] 
+N = length(x_train) 
 
 # kernel function 
 k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
@@ -169,16 +170,23 @@ println("samples = ", N)
 test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
 test_log_p(( σ_f, l, σ_n )) 
 
-# σ_0    = [σ_f0, l_0, σ_n0] 
-σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
+σ_0    = [σ_f0, l_0, σ_n0] * 1.1  
+# σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
+lower = [0.0, 0.0, 0.0] 
+upper = [Inf, Inf, Inf]
 
-result1 = optimize( test_log_p, σ_0, NelderMead() ) 
+# result1 = optimize( test_log_p, σ_0, NelderMead() ) 
+result3 = optimize( test_log_p, lower, upper, σ_0,  Fminbox(NelderMead()) ) 
 println("log_p min (NelderMead) = \n ", result1.minimizer) 
 
 # result2 = optimize( test_log_p, σ_0, BFGS() ) 
 # println("log_p min (BFGS) = \n ", result2.minimizer) 
 
+using Optim 
+
 result3 = optimize( test_log_p, σ_0, LBFGS() ) 
+# results = Optim.optimize(fmin, lower, upper, initial_x, Fminbox( LBFGS() ) )
+result3 = optimize( test_log_p, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
 println("log_p min (LBFGS) = \n ", result3.minimizer) 
 
 result = result1

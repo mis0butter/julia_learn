@@ -163,8 +163,8 @@ y = 0*ξ
 z = 0*ξ
 α = 1.0 
 
-max_iter = 10
-abstol   = 1e-4 
+max_iter = 1
+abstol   = 1e-2
 reltol   = 1e-2 
 
 σ_f = 1.0 
@@ -183,12 +183,13 @@ for k = 1:max_iter
     # l   = result.minimizer[2] 
     # σ_n = result.minimizer[3] 
 
-    ## ============================================ ##
+    # ----------------------- #
     # x-update 
+    
     aug_L_ξ(ξ) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ )) 
     
     println( "ξ norm = ", norm(ξ) )
-    println( "aug_L_ξ = ", aug_L_ξ(ξ) )    
+    println( "aug_L_ξ = ", aug_L_ξ(ξ), "\n\n" )    
 
     σ_0 = ξ
     result = optimize(aug_L_ξ, σ_0) 
@@ -196,11 +197,12 @@ for k = 1:max_iter
     # assign ξ
     ξ = result.minimizer 
 
-    ## ============================================ ##
+    # ----------------------- #    
     # z-update
+
     aug_L_z(z) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
     println( "z norm = ", norm(z) )
-    println( "aug_L_z = ", aug_L_z(z) )    
+    println( "aug_L_z = ", aug_L_z(z), "\n\n" )    
 
     # σ_0 = z 
     # result = optimize(aug_L_ξ, z) 
@@ -209,16 +211,20 @@ for k = 1:max_iter
     z_old = z 
     # ξ_hat = α*ξ + ( 1 .- α*z_old )
     v = ξ - 1/ρ * y 
-    z = shrinkage(-v, λ/ρ)
+    z = shrinkage(v, λ/ρ)
 
-    ## ============================================ ##
+    # dumb pause 
+    # readline() 
+
+    # ----------------------- #
     # y-update 
 
     # y += ( ξ_hat .- z ) 
     y += ρ*( ξ-z )
 
-    ## ============================================ ##
+    # ----------------------- #
     # diagnostics 
+
     n = length(ξ) ; u = y/ρ 
     push!( hist.r_norm, norm(ξ - z) )
     push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
@@ -228,6 +234,10 @@ for k = 1:max_iter
     if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
         println("converged!") 
         break 
+    end 
+
+    if k == max_iter 
+        println("reached max_iter = ", max_iter)
     end 
 
 end 
