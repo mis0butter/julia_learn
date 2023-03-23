@@ -5,6 +5,7 @@ using Plots
 using TickTock 
 using GaussianProcesses 
 using Random 
+using Plots 
 
 ## ============================================ ##
 ## ============================================ ##
@@ -156,7 +157,7 @@ cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post);
 plot!(p1, x_test, μ_post, c = 1, label = "fitted mean (untrained) ")
 
 # shade covariance 
-plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ covariance (untrained)")
+plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 1, label = "3σ (untrained)")
 
 
 ## ============================================ ## 
@@ -221,14 +222,14 @@ cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post)
 plot!(p1, x_test, μ_post, c = 2, label = "fitted mean (trained) ")
 
 # shade covariance 
-plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
+plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ (trained)")
 
 # create new plot 
 p2 = scatter(x_train, y_train, 
     c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP", legend = :outerbottom ) 
 
 plot!(p2, x_test, μ_post, c = 2, label = "fitted mean (trained) ")
-plot!(p2, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ covariance (trained)")
+plot!(p2, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = 2, label = "3σ (trained)")
 
 
 ## ============================================ ## 
@@ -243,43 +244,62 @@ log_noise = log(σ_n0) ;              # (optional) log std dev of obs noise
 gp  = GP(x_train, y_train, mZero, kern, log_noise) ; 
 # optimize in a box with lower bounds [-1,-1] and upper bounds [1,1]
 # optimize!(gp; kernbounds = [ [-1,-1] , [1,1] ])
+p3 = plot(gp; xlabel="x", ylabel="y", title="GP vs predict_y", fmt=:png) ; 
+p4 = plot(gp; xlabel="x", ylabel="y", title="GP vs predict_y (opt)", fmt=:png) ; 
+
+# predict at test points, should be same as gp plot?? 
 μ_gp, σ²_gp = predict_y( gp, x_test ) 
 
 # optimize gp 
 test = optimize!(gp; method = LBFGS() ) 
 μ_gp_opt, σ²_gp_opt = predict_y( gp, x_test ) 
 
-# plot 
-using Plots 
-
-# un-optimized 
+# "un-optimized" 
 c = 3 ; 
-plot!( p2, x_test, μ_gp, c = c, label = "fitted mean (gp)" )
-plot!( p2, x_test, μ_gp .- 3*sqrt.(σ²_gp), fillrange = μ .+ 3*sqrt.(σ²_gp) , fillalpha = 0.35, c = c, label = "3σ covariance (gp)" )
+plot!( p3, x_test, μ_gp, c = c, label = "mean (predict_y)" )
+plot!( p3, x_test, μ_gp .- 3*sqrt.(σ²_gp), fillrange = μ .+ 3*sqrt.(σ²_gp) , fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
 
 # optimized 
 c = 5 ; 
-plot!( p2, x_test, μ_gp_opt, c = c, label = "fitted mean (gp, opt)" )
-plot!( p2, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.35, c = c, label = "3σ covariance (gp, opt)" )
+plot!( p4, x_test, μ_gp_opt, c = c, label = "mean (predict_y, opt)" )
+plot!( p4, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
 
+# plot un-optimized and optimized 
+c = 3 ; 
+p5 = plot( x_test, μ_gp, c = c, label = "mean (predict_y)", title = "predict_y vs predict_y (opt)" )
+plot!( p5, x_test, μ_gp .- 3*sqrt.(σ²_gp), fillrange = μ .+ 3*sqrt.(σ²_gp) , fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
+
+c = 5 ; 
+plot!( p5, x_test, μ_gp_opt, c = c, label = "mean (predict_y, opt)" )
+plot!( p5, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
+
+
+p6 = plot(gp; xlabel="x", ylabel="y", title="GP vs fitted", fmt=:png) 
+c = 3 ; 
+
+# plot fitted / predict / post data 
+plot!(p6, x_test, μ_post, c = 2, label = "mean (fitted) ")
+
+# shade covariance 
+plot!(p6, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.1, c = 2, label = "3σ (fitted)")
+
+# plot everything 
+p7 = plot( p3, p4, p6, p5, layout = (4,1), size = [600 1000] )
 
 ## ============================================ ##
 # plot everything 
 
-plot(p1, p2, layout = (2,1), size = [600 800] )
+p8 = plot(p1, p2, layout = (2,1), size = [600 800] )
 
-p3 = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
+p6 = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
 c = 3 ; 
 
-# # gp toolbox ? 
-# plot!( p3, x_test, μ, c = c, label = "fitted mean (gp)" )
-# plot!( p3, x_test, μ .- 3*sqrt.(σ²), fillrange = μ .+ 3*sqrt.(σ²) , fillalpha = 0.35, c = c, label = "3σ covariance (gp)" )
-
 # plot fitted / predict / post data 
-plot!(p3, x_test, μ_post, c = 2, label = "fitted mean (trained) ")
+plot!(p6, x_test, μ_post, c = 2, label = "fitted mean (trained) ")
 
 # shade covariance 
-plot!(p3, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.1, c = 2, label = "3σ covariance (trained)")
+plot!(p6, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.1, c = 2, label = "3σ (trained)")
+
 
 ## ============================================ ##
 # test minimizing 1-norm 
