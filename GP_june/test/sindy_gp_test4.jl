@@ -16,6 +16,7 @@ using Optim
 
 ## ============================================ ##
 # ODE function 
+
 function ODE_test(dx, x, p, t)
 
     dx[1] = -1/4 * sin(x[1]) ; 
@@ -148,8 +149,21 @@ println("testing aug_L = ", out)
 aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 aug_L_hp(( σ_f0, l_0, σ_n0 ))
 
-result = optimize(aug_L_hp, σ_0)
-println("aug_L_hp min = ", result.minimizer) 
+# creating bounds 
+lower = [0.0, 0.0, 0.0] 
+upper = [Inf, Inf, Inf]
+
+σ_0 = [σ_f0, l_0, σ_n0]
+result = optimize( aug_L_hp, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
+println("log_p min (LBFGS) = \n ", result.minimizer) 
+
+# assign hyperparameters 
+σ_f = result.minimizer[1] 
+l   = result.minimizer[2] 
+σ_n = result.minimizer[3] 
+
+# result = optimize(aug_L_hp, σ_0)
+# println("aug_L_hp min = ", result.minimizer) 
 
 
 ## ============================================ ##
@@ -163,25 +177,36 @@ y = 0*ξ
 z = 0*ξ
 α = 1.0 
 
-max_iter = 1
+max_iter = 10
 abstol   = 1e-2
 reltol   = 1e-2 
 
-σ_f = 1.0 
-l   = 1.0 
-σ_n = 0.1 
+# σ_f = 1.0 
+# l   = 1.0 
+# σ_n = 0.1 
+
+σ_0   = [σ_f0, l_0, σ_n0] 
+# σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
+lower = [0.0, 0.0, 0.0] 
+upper = [Inf, Inf, Inf]
+
+iter = 0 
 
 for k = 1:max_iter 
 
-    # # hyperparameter-update 
-    # aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+    iter += 1 
 
-    # σ_0     = [σ_f, l, σ_n] 
+    # hyperparameter-update 
+    aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
 
-    # # assign hyperparameters 
-    # σ_f = result.minimizer[1] 
-    # l   = result.minimizer[2] 
-    # σ_n = result.minimizer[3] 
+    σ_0     = [σ_f, l, σ_n] 
+    result = optimize( aug_L_hp, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
+    println("log_p min (LBFGS) = \n ", result.minimizer) 
+
+    # assign hyperparameters 
+    σ_f = result.minimizer[1] 
+    l   = result.minimizer[2] 
+    σ_n = result.minimizer[3] 
 
     # ----------------------- #
     # x-update 
@@ -234,6 +259,9 @@ for k = 1:max_iter
     if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
         println("converged!") 
         break 
+    elseif hist.r_norm[k] > 100 
+        println("norm(ξ - z) too big")
+        break 
     end 
 
     if k == max_iter 
@@ -242,5 +270,8 @@ for k = 1:max_iter
 
 end 
 
+p4 = plot(1:iter, hist.r_norm, title = "|r| = norm(ξ-z)")
+p5 = plot(1:iter, hist.s_norm, title = "|s| = norm(-ρ(z-z_old))") 
 
+p6 = plot(p4, p5, layout = (2,1), size = [600, 800])
 
