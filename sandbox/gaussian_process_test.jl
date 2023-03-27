@@ -14,25 +14,18 @@ using BenchmarkTools
 # functions 
 
 # define square distance function 
-function sq_dist2(a::Vector, b::Vector) 
+function sq_dist(a::Vector, b::Vector) 
 
-    r = length(a) ; 
-    p = length(b) 
+    amat = repeat(a, 1, length(b))
+    bmat = repeat(b', length(a), 1)
+    Cmat = ( amat .- bmat ).^2 
 
-    # iterate 
-    C = zeros(r,p) 
-    for i = 1:r 
-        for j = 1:p 
-            C[i,j] = ( a[i] - b[j] )^2 
-        end 
-    end 
-
-    return C 
+    return Cmat 
 
 end 
 
 # define square distance function 
-function sq_dist(a::Vector, b::Vector) 
+function sq_dist2(a::Vector, b::Vector) 
 
     r = length(a) ; 
     p = length(b) 
@@ -118,7 +111,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 10
+N = 100 
 x_train = sort( 2π*rand(N) ) 
 N = length(x_train) 
 
@@ -286,7 +279,7 @@ p_gp_train = plot(gp; xlabel="x", ylabel="y", title="GP vs fitted", fmt=:png)
 c = 3 ; 
 
 # plot fitted / predict / post data 
-plot!( p_gp_train, x_test, μ_post, ribbon = 3*std_post , lw = 3, fillalpha = 0.1, c = 2, label = "3σ (fitted)" ) 
+plot!( p_gp_train, x_test, μ_post, ribbon = 3*std_post , lw = 3, fillalpha = 0.15, c = 2, label = "3σ (fitted)" ) 
 
 # plot everything 
 fig_gp_compare = plot( p_gp_y, p_gp_y_opt, p_gp_train, p_y_y_opt, layout = (4,1), size = [600 1000] )
@@ -310,9 +303,9 @@ display(fig_gp_fit)
 # c   = color, 
 # ms  = markersize 
 # leg = legend 
-p_test = plot( x_test, μ_gp_opt, 
-    rib = 3 * sqrt.( σ²_gp_opt ), 
-    fa  = 0.15, 
-    c   = :green, 
-    lw  = 3, 
-    lab = "3σ estimate" )
+# p_test = plot( x_test, μ_gp_opt, 
+#     rib = 3 * sqrt.( σ²_gp_opt ), 
+#     fa  = 0.15, 
+#     c   = :green, 
+#     lw  = 3, 
+#     lab = "3σ estimate" )
