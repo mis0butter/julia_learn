@@ -14,18 +14,18 @@ using BenchmarkTools
 # functions 
 
 # define square distance function 
-function sq_dist(a::Vector, b::Vector) 
+function sq_dist2(a::Vector, b::Vector) 
 
     amat = repeat(a, 1, length(b))
     bmat = repeat(b', length(a), 1)
-    Cmat = ( amat .- bmat ).^2 
+    Cmat = ( amat - bmat ).^2 
 
     return Cmat 
 
 end 
 
 # define square distance function 
-function sq_dist2(a::Vector, b::Vector) 
+function sq_dist(a::Vector, b::Vector) 
 
     r = length(a) ; 
     p = length(b) 
@@ -43,11 +43,17 @@ function sq_dist2(a::Vector, b::Vector)
 end 
 
 # test function 
-a = [1, 2, 3]
-b = ones(5) 
+a = rand(1000) 
+b = rand(1000) 
 
-C = sq_dist(b,a) 
-display(C) 
+println("efficient way? Cmat") 
+@time C = sq_dist(b,a) ; 
+
+display("for loops galore. C") 
+@time C = sq_dist2(b,a) 
+
+println("\n\n")
+
 
 ## ============================================ ##
 # sample from given mean and covariance 
@@ -79,25 +85,76 @@ gauss_sample(rand(3), K)
 function log_p(( σ_f, l, σ_n, x, y, μ ))
     
     # kernel function 
-    k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
-
+    # k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
     # training kernel function 
-    Ky = k_fn(σ_f, l, x, x) 
-    Ky += σ_n^2 * I 
+    # Ky = k_fn(σ_f, l, x, x) + σ_n^2 * I 
+    # Ky += σ_n^2 * I 
 
-    term = zeros(2)
-    # term[1] = 1/2*( y )'*inv( Ky )*( y ) 
-    term[1] = 1/2*( y .- μ )'*inv( Ky )*( y .- μ ) 
-    term[2] = 1/2*log(det( Ky )) 
+    term_1 = 0 
+    term_2 = 0 
+    
+    term_1 = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
 
-    return sum(term)
+    term_2 = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
+
+    return term_1 + term_2
 
 end 
 
 # test log-likelihood function 
 N = 10
-log_p(( 1.0, 1.0, 0.1, sort(rand(N)), randn(N), zeros(N) ))
+x = sort(rand(N))
+y = randn(N) 
+μ = zeros(N) 
 
+# test log_p 
+log_p(( 1.0, 1.0, 0.1, x, y, μ ))
+
+# test reassigning 
+test_log_p( (σ_f, l, σ_n) ) = log_p( ( σ_f, l, σ_n, x, y, μ ) )
+
+a = [1.0, 1.0, 0.1]
+test_log_p(a)
+
+ForwardDiff.gradient(test_log_p, a)
+
+## ============================================ ##
+
+function log_p2(( σ_f, l, σ_n ))
+    
+    x    = sort(rand(3)) 
+    y    = randn(3) 
+
+    term_1 = 0 
+    term_2 = 0 
+    
+    term_1 = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
+
+    term_2 = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
+
+    return term_1 + term_2
+
+end 
+
+x = sort(rand(3))
+y = randn(3) 
+
+a = [1.0, 1.0, 0.1]
+log_p2(a) 
+
+f_test(( σ_f, l, σ_n )) = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
+
+f_test(a) 
+
+f_test2(( σ_f, l, σ_n )) = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
+
+f_test3(( σ_f, l, σ_n )) = f_test(( σ_f, l, σ_n )) + f_test2(( σ_f, l, σ_n )) 
+
+f_test3(a) 
+
+# gradient(log_p2, a) 
+# ForwardDiff.gradient(f_test3, a)
+ForwardDiff.gradient(log_p2, a)
 
 ## ============================================ ##
 ## ============================================ ##
@@ -111,7 +168,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 100 
+N = 10 
 x_train = sort( 2π*rand(N) ) 
 N = length(x_train) 
 
@@ -151,16 +208,16 @@ Kss  = k_fn(σ_f0, l_0, x_test, x_test)
 # conditional distribution 
 # mu_cond    = K(Xs,X)*inv(K(X,X))*y
 # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
-# fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ); 
-μ_post = Ks' * K^-1 * y_train ; 
-Σ_post = Kss - (Ks' * K^-1 * Ks) ; 
+# fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ) 
+μ_post = Ks' * K^-1 * y_train 
+Σ_post = Kss - (Ks' * K^-1 * Ks)  
 
 # get covariances and stds 
 cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior); 
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post); 
 
 # plot fitted / predict / post data 
-plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :red, label = "3σ (σ_0)")
+plot!(p_train, x_test, μ_post, rib = 3*std_post , lw = 3, fa = 0.15, c = :red, label = "μ ± 3σ (σ_0)")
 
 
 ## ============================================ ## 
@@ -169,7 +226,8 @@ plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :red, l
 println("samples = ", N) 
 
 # test reassigning function 
-test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
+# test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
+test_log_p(x) = log_p(( x[1], x[2], x[3], x_train, y_train, 0*y_train )) 
 test_log_p(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0]  
@@ -177,7 +235,7 @@ test_log_p(( σ_f, l, σ_n ))
 lower = [0.0, 0.0, 0.0] 
 upper = [Inf, Inf, Inf]
 
-result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+@time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
 # od = OnceDifferentiable(test_log_p, σ_0; autodiff = :forward) 
 # result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
 println("log_p min (LBFGS) = \n ", result.minimizer) 
@@ -189,16 +247,39 @@ l   = result.minimizer[2]
 
 
 ## ============================================ ##
+# test hyperparameters
+
+# test_log_p(x) = log_p(( x[1], x[2], x[3], x_train, y_train, 0*y_train )) 
+test_log_p(x) = x[1]^2 + x[2]^2 + (x[3]-5)^2 - 10 
+test_log_p(( σ_f, l, σ_n )) 
+
+σ_0   = [σ_f0, l_0, σ_n0]  
+# σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
+lower = [0.0, 0.0, 0.0] 
+upper = [Inf, Inf, Inf]
+
+# @time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+od = OnceDifferentiable(test_log_p, σ_0 ; autodiff = :forward) 
+@time result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+println("log_p min (LBFGS) = \n ", result.minimizer) 
+
+# assign optimized hyperparameters 
+σ_f = result.minimizer[1] 
+l   = result.minimizer[2] 
+σ_n = result.minimizer[3] 
+
+
+## ============================================ ##
 # optimize bounds test 
 
-# f_test(x) = (x[1]-1)^2 + x[2]^2 
-# x0     =  [2.0, 2.0] 
-# # lower  = [-10.0, -10.0] 
-# lower  = -[Inf, Inf]  
-# upper  =  [Inf, Inf] 
-# od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
-# result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-# println("od = ", result.minimizer)
+f_test(x) = (x[1]-1)^2 + x[2]^2 
+x0     =  [2.0, 2.0] 
+# lower  = [-10.0, -10.0] 
+lower  = -[Inf, Inf]  
+upper  =  [Inf, Inf] 
+od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
+result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
+println("od = ", result.minimizer)
 
 
 ## ============================================ ##
@@ -231,7 +312,7 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior)
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :blue, label = "3σ (σ_opt)")
+plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :blue, label = "μ ± 3σ (σ_opt)")
 
 xlabel!("x") 
 ylabel!("y") 
@@ -261,25 +342,25 @@ test = GaussianProcesses.optimize!( gp; method = LBFGS() )
 
 # "un-optimized" 
 c = 3 ; 
-plot!( p_gp_y, x_test, μ_gp, rib = 3*sqrt.(σ²_gp) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
+plot!( p_gp_y, x_test, μ_gp, rib = 3*sqrt.(σ²_gp) , lw = 3, fillalpha = 0.15, c = c, label = "μ ± 3σ (predict_y)" )
 
 # optimized 
 c = 5 ; 
-plot!( p_gp_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
+plot!( p_gp_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "μ ± 3σ (predict_y, opt)" )
 
 # plot un-optimized and optimized 
 c = 3 ; 
-p_y_y_opt = plot( x_test, μ_gp, c = c, rib = 3*sqrt.( σ²_gp ), lw = 3, fa = 0.15, label = "3σ (predict_y)", title = "predict_y vs predict_y (opt)" )
+p_y_y_opt = plot( x_test, μ_gp, c = c, rib = 3*sqrt.( σ²_gp ), lw = 3, fa = 0.15, label = "μ ± 3σ (predict_y)", title = "predict_y vs predict_y (opt)" )
 
 c = 5 ; 
-plot!( p_y_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
+plot!( p_y_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "μ ± 3σ (predict_y, opt)" )
 
 # plot gp vs fitted 
 p_gp_train = plot(gp; xlabel="x", ylabel="y", title="GP vs fitted", fmt=:png) 
 c = 3 ; 
 
 # plot fitted / predict / post data 
-plot!( p_gp_train, x_test, μ_post, ribbon = 3*std_post , lw = 3, fillalpha = 0.15, c = 2, label = "3σ (fitted)" ) 
+plot!( p_gp_train, x_test, μ_post, ribbon = 3*std_post , lw = 3, fillalpha = 0.35, c = 2, label = "μ ± 3σ (fitted)" ) 
 
 # plot everything 
 fig_gp_compare = plot( p_gp_y, p_gp_y_opt, p_gp_train, p_y_y_opt, layout = (4,1), size = [600 1000] )
@@ -308,4 +389,4 @@ display(fig_gp_fit)
 #     fa  = 0.15, 
 #     c   = :green, 
 #     lw  = 3, 
-#     lab = "3σ estimate" )
+#     lab = "μ ± 3σ estimate" )
