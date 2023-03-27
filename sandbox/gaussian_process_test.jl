@@ -14,6 +14,24 @@ using BenchmarkTools
 # functions 
 
 # define square distance function 
+function sq_dist2(a::Vector, b::Vector) 
+
+    r = length(a) ; 
+    p = length(b) 
+
+    # iterate 
+    C = zeros(r,p) 
+    for i = 1:r 
+        for j = 1:p 
+            C[i,j] = ( a[i] - b[j] )^2 
+        end 
+    end 
+
+    return C 
+
+end 
+
+# define square distance function 
 function sq_dist(a::Vector, b::Vector) 
 
     r = length(a) ; 
@@ -61,6 +79,7 @@ C = rand(3,3)
 K = C + C' + 10*I 
 gauss_sample(rand(3), K)
 
+
 ## ============================================ ##
 # marginal log-likelihood for Gaussian Process 
 
@@ -84,7 +103,7 @@ end
 
 # test log-likelihood function 
 N = 10
-log_p(( σ_f, l, σ_n, sort(rand(N)), randn(N), zeros(N) ))
+log_p(( 1.0, 1.0, 0.1, sort(rand(N)), randn(N), zeros(N) ))
 
 
 ## ============================================ ##
@@ -99,7 +118,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 100
+N = 10
 x_train = sort( 2π*rand(N) ) 
 N = length(x_train) 
 
@@ -114,7 +133,7 @@ k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )
 y_train = sin.(x_train) .+ 0.1*randn(N) 
 
 # scatter plot of training data 
-p1 = scatter(x_train, y_train, 
+p_train = scatter(x_train, y_train, 
     c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP", legend = :outerbottom ) 
 
 
@@ -148,9 +167,7 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior);
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post); 
 
 # plot fitted / predict / post data 
-plot!(p1, x_test, μ_post, c = :red, label = "fitted mean (σ_0) ")
-# shade covariance 
-plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = :red, label = "3σ (σ_0)")
+plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :red, label = "3σ (σ_0)")
 
 
 ## ============================================ ## 
@@ -162,14 +179,15 @@ println("samples = ", N)
 test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
 test_log_p(( σ_f, l, σ_n )) 
 
-σ_0   = [σ_f0, l_0, σ_n0] * 1.1  
+σ_0   = [σ_f0, l_0, σ_n0]  
 # σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
 lower = [0.0, 0.0, 0.0] 
 upper = [Inf, Inf, Inf]
 
-# result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ; autodiff = :forward) 
 result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-println("log_p min (LBFGS) = \n ", result3.minimizer) 
+# od = OnceDifferentiable(test_log_p, σ_0; autodiff = :forward) 
+# result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+println("log_p min (LBFGS) = \n ", result.minimizer) 
 
 # assign optimized hyperparameters 
 σ_f = result.minimizer[1] 
@@ -178,18 +196,17 @@ l   = result.minimizer[2]
 
 
 ## ============================================ ##
+# optimize bounds test 
 
-f_test(x) = x[1]^2 + x[2]^2 
-x0 = [2.0, 2.0]
-lower = [0, 0] 
-upper = [Inf, Inf]
-od = OnceDifferentiable(f_test, x0; autodiff = :forward)
-result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-println("od = ", result.minimizer)
+# f_test(x) = (x[1]-1)^2 + x[2]^2 
+# x0     =  [2.0, 2.0] 
+# # lower  = [-10.0, -10.0] 
+# lower  = -[Inf, Inf]  
+# upper  =  [Inf, Inf] 
+# od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
+# result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
+# println("od = ", result.minimizer)
 
-td = TwiceDifferentiable(f_test, x0; autodiff = :forward)
-result = optimize( td, lower, upper, x0, Fminbox(LBFGS()) ) 
-println("td = ", result.minimizer)
 
 ## ============================================ ##
 # posterior distribution ROUND 2 
@@ -221,105 +238,81 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior)
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(p1, x_test, μ_post, c = :blue, label = "fitted mean (σ_opt) ")
-# shade covariance 
-plot!(p1, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.35, c = :blue, label = "3σ (σ_opt)")
+plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :blue, label = "3σ (σ_opt)")
 
-xlabel!("x")
-ylabel!("y")
+xlabel!("x") 
+ylabel!("y") 
 
 
 ## ============================================ ## 
 # fit GP 
 
 # mean and covariance 
-mZero = MeanZero() ;            # zero mean function 
-kern  = SE(σ_f0, l_0) ;          # squared eponential kernel (hyperparams on log scale) 
-log_noise = log(σ_n0) ;              # (optional) log std dev of obs noise 
+mZero = MeanZero() ;                # zero mean function 
+kern  = SE(σ_f0, l_0) ;             # squared eponential kernel (hyperparams on log scale) 
+log_noise = log(σ_n0) ;             # (optional) log std dev of obs noise 
 
 # fit GP 
-gp  = GP(x_train, y_train, mZero, kern, log_noise) ; 
+gp = GP( x_train, y_train, mZero, kern, log_noise ) ; 
 # optimize in a box with lower bounds [-1,-1] and upper bounds [1,1]
 # optimize!(gp; kernbounds = [ [-1,-1] , [1,1] ])
-p3 = plot(gp; xlabel="x", ylabel="y", title="GP vs predict_y", fmt=:png) ; 
-p4 = plot(gp; xlabel="x", ylabel="y", title="GP vs predict_y (opt)", fmt=:png) ; 
+p_gp_y = plot( gp; xlabel="x", ylabel="y", title="GP vs predict_y", fmt=:png ) ; 
+p_gp_y_opt = plot( gp; xlabel="x", ylabel="y", title="GP vs predict_y (opt)", fmt=:png ) ; 
 
 # predict at test points, should be same as gp plot?? 
 μ_gp, σ²_gp = predict_y( gp, x_test ) 
 
 # optimize gp 
-test = GaussianProcesses.optimize!(gp; method = LBFGS() ) 
+test = GaussianProcesses.optimize!( gp; method = LBFGS() ) 
 μ_gp_opt, σ²_gp_opt = predict_y( gp, x_test ) 
 
 # "un-optimized" 
 c = 3 ; 
-plot!( p3, x_test, μ_gp, c = c, label = "mean (predict_y)" )
-plot!( p3, x_test, μ_gp .- 3*sqrt.(σ²_gp), fillrange = μ .+ 3*sqrt.(σ²_gp) , fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
+plot!( p_gp_y, x_test, μ_gp, rib = 3*sqrt.(σ²_gp) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
 
 # optimized 
 c = 5 ; 
-plot!( p4, x_test, μ_gp_opt, c = c, label = "mean (predict_y, opt)" )
-plot!( p4, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
+plot!( p_gp_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
 
 # plot un-optimized and optimized 
 c = 3 ; 
-p5 = plot( x_test, μ_gp, c = c, label = "mean (predict_y)", title = "predict_y vs predict_y (opt)" )
-plot!( p5, x_test, μ_gp .- 3*sqrt.(σ²_gp), fillrange = μ .+ 3*sqrt.(σ²_gp) , fillalpha = 0.15, c = c, label = "3σ (predict_y)" )
+p_y_y_opt = plot( x_test, μ_gp, c = c, rib = 3*sqrt.( σ²_gp ), lw = 3, fa = 0.15, label = "3σ (predict_y)", title = "predict_y vs predict_y (opt)" )
 
 c = 5 ; 
-plot!( p5, x_test, μ_gp_opt, c = c, label = "mean (predict_y, opt)" )
-plot!( p5, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
+plot!( p_y_y_opt, x_test, μ_gp_opt, rib = 3*sqrt.(σ²_gp_opt) , lw = 3, fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
 
-
-p6 = plot(gp; xlabel="x", ylabel="y", title="GP vs fitted", fmt=:png) 
+# plot gp vs fitted 
+p_gp_train = plot(gp; xlabel="x", ylabel="y", title="GP vs fitted", fmt=:png) 
 c = 3 ; 
 
 # plot fitted / predict / post data 
-plot!(p6, x_test, μ_post, c = 2, label = "mean (fitted) ")
-
-# shade covariance 
-plot!(p6, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.1, c = 2, label = "3σ (fitted)")
+plot!( p_gp_train, x_test, μ_post, ribbon = 3*std_post , lw = 3, fillalpha = 0.1, c = 2, label = "3σ (fitted)" ) 
 
 # plot everything 
-fig_gp_compare = plot( p3, p4, p6, p5, layout = (4,1), size = [600 1000] )
+fig_gp_compare = plot( p_gp_y, p_gp_y_opt, p_gp_train, p_y_y_opt, layout = (4,1), size = [600 1000] )
+display(fig_gp_compare) 
 
 
 ## ============================================ ##
 # plot everything 
 
-# p7 = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process", fmt=:png) 
-
-# scatter plot of training data 
-p7 = scatter(x_train, y_train, 
-    c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP", legend = :outerbottom ) 
-
-c = 3 ; 
-# plot fitted / predict / post data 
-plot!(p7, x_test, μ_post, c = :blue, label = "fitted mean (σ_opt) ")
-# shade covariance 
-plot!(p7, x_test, μ_post .- 3*std_post, fillrange = μ_post .+ 3*std_post , fillalpha = 0.1, c = :blue, label = "3σ (σ_opt)")
-
-# optimized 
-c = 5 ; 
-plot!( p7, x_test, μ_gp_opt, c = c, label = "fitted mean (predict_y, opt)" )
-plot!( p7, x_test, μ_gp_opt .- 3*sqrt.(σ²_gp_opt), fillrange = μ .+ 3*sqrt.(σ²_gp_opt) , fillalpha = 0.15, c = c, label = "3σ (predict_y, opt)" )
-
-fig_gp_fit = plot( p1, p7, layout = (2,1), size = [ 600, 800 ] )
+fig_gp_fit = plot( p_train, p_gp_train, layout = (2,1), size = [ 600, 800 ] )
+display(fig_gp_fit) 
 
 
 ## ============================================ ##
-# test minimizing 1-norm 
+# test 
 
-# test_fn(z) = sum(abs.(z)) .+ z'*z 
-# x = -10 : 0.1 : 10 
-# x = collect(x) 
-
-# y = 0*x 
-# for i = 1:length(x) 
-#     y[i] = test_fn(x[i])
-# end 
-
-# result = optimize(test_fn, 0.1) 
-# println("minimizer = ", result.minimizer)
-
-# plot(x,y) 
+# fa  = fillalpha, 
+# lw  = linewidth, 
+# lab = label, 
+# rib = ribbon, 
+# c   = color, 
+# ms  = markersize 
+# leg = legend 
+p_test = plot( x_test, μ_gp_opt, 
+    rib = 3 * sqrt.( σ²_gp_opt ), 
+    fa  = 0.15, 
+    c   = :green, 
+    lw  = 3, 
+    lab = "3σ estimate" )
