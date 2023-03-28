@@ -85,17 +85,14 @@ gauss_sample(rand(3), K)
 function log_p(( σ_f, l, σ_n, x, y, μ ))
     
     # kernel function 
-    # k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+    k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+
     # training kernel function 
-    # Ky = k_fn(σ_f, l, x, x) + σ_n^2 * I 
-    # Ky += σ_n^2 * I 
+    Ky = k_fn(σ_f, l, x, x) + σ_n^2 * I 
+    Ky += σ_n^2 * I 
 
-    term_1 = 0 
-    term_2 = 0 
-    
-    term_1 = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
-
-    term_2 = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
+    term_1 = 1/2 * y' * inv( Ky ) * y 
+    term_2 = 1/2 * log( det( Ky ) ) 
 
     return term_1 + term_2
 
@@ -118,43 +115,6 @@ test_log_p(a)
 
 ForwardDiff.gradient(test_log_p, a)
 
-## ============================================ ##
-
-function log_p2(( σ_f, l, σ_n ))
-    
-    x    = sort(rand(3)) 
-    y    = randn(3) 
-
-    term_1 = 0 
-    term_2 = 0 
-    
-    term_1 = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
-
-    term_2 = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
-
-    return term_1 + term_2
-
-end 
-
-x = sort(rand(3))
-y = randn(3) 
-
-a = [1.0, 1.0, 0.1]
-log_p2(a) 
-
-f_test(( σ_f, l, σ_n )) = 1/2 * y' * inv( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x,x) + σ_n^2*I ) ) * y 
-
-f_test(a) 
-
-f_test2(( σ_f, l, σ_n )) = 1/2*log(det( σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(x, x) ) + σ_n^2 * I )) 
-
-f_test3(( σ_f, l, σ_n )) = f_test(( σ_f, l, σ_n )) + f_test2(( σ_f, l, σ_n )) 
-
-f_test3(a) 
-
-# gradient(log_p2, a) 
-# ForwardDiff.gradient(f_test3, a)
-ForwardDiff.gradient(log_p2, a)
 
 ## ============================================ ##
 ## ============================================ ##
@@ -168,7 +128,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 10 
+N = 100
 x_train = sort( 2π*rand(N) ) 
 N = length(x_train) 
 
@@ -220,46 +180,22 @@ cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post);
 plot!(p_train, x_test, μ_post, rib = 3*std_post , lw = 3, fa = 0.15, c = :red, label = "μ ± 3σ (σ_0)")
 
 
-## ============================================ ## 
-# solve for hyperparameters
+# ## ============================================ ## 
+# # solve for hyperparameters
 
 println("samples = ", N) 
 
 # test reassigning function 
-# test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
-test_log_p(x) = log_p(( x[1], x[2], x[3], x_train, y_train, 0*y_train )) 
+test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
 test_log_p(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0]  
 # σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
-lower = [0.0, 0.0, 0.0] 
-upper = [Inf, Inf, Inf]
-
-@time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-# od = OnceDifferentiable(test_log_p, σ_0; autodiff = :forward) 
-# result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-println("log_p min (LBFGS) = \n ", result.minimizer) 
-
-# assign optimized hyperparameters 
-σ_f = result.minimizer[1] 
-l   = result.minimizer[2] 
-σ_n = result.minimizer[3] 
-
-
-## ============================================ ##
-# test hyperparameters
-
-# test_log_p(x) = log_p(( x[1], x[2], x[3], x_train, y_train, 0*y_train )) 
-test_log_p(x) = x[1]^2 + x[2]^2 + (x[3]-5)^2 - 10 
-test_log_p(( σ_f, l, σ_n )) 
-
-σ_0   = [σ_f0, l_0, σ_n0]  
-# σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
-lower = [0.0, 0.0, 0.0] 
-upper = [Inf, Inf, Inf]
+lower = [0.0, 0.0, 0.0]  
+upper = [Inf, Inf, Inf] 
 
 # @time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-od = OnceDifferentiable(test_log_p, σ_0 ; autodiff = :forward) 
+od = OnceDifferentiable( test_log_p, σ_0 ; autodiff = :forward ) 
 @time result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
 println("log_p min (LBFGS) = \n ", result.minimizer) 
 
@@ -269,17 +205,17 @@ l   = result.minimizer[2]
 σ_n = result.minimizer[3] 
 
 
-## ============================================ ##
-# optimize bounds test 
+# ## ============================================ ##
+# # optimize bounds test 
 
-f_test(x) = (x[1]-1)^2 + x[2]^2 
-x0     =  [2.0, 2.0] 
-# lower  = [-10.0, -10.0] 
-lower  = -[Inf, Inf]  
-upper  =  [Inf, Inf] 
-od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
-result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-println("od = ", result.minimizer)
+# f_test(x) = (x[1]-1)^2 + x[2]^2 
+# x0     =  [2.0, 2.0] 
+# # lower  = [-10.0, -10.0] 
+# lower  = -[Inf, Inf]  
+# upper  =  [Inf, Inf] 
+# od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
+# result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
+# println("od = ", result.minimizer)
 
 
 ## ============================================ ##
