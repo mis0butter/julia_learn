@@ -83,14 +83,14 @@ n_vars     = 2 ;
 poly_order = n_vars ;
 
 # construct data library 
-Θ = pool_data(x, n_vars, poly_order) ; 
+Θx = pool_data(x, n_vars, poly_order) ; 
 
 # sparsification knob 
 λ = 0.1 ; 
 
 # first cut - SINDy 
-Ξ_true = sparsify_dynamics(Θ, dx_true, λ, n_vars)
-Ξ      = sparsify_dynamics(Θ, dx, λ, n_vars)
+Ξ_true = sparsify_dynamics(Θx, dx_true, λ, n_vars)
+Ξ      = sparsify_dynamics(Θx, dx, λ, n_vars)
 
 
 ## ============================================ ##
@@ -98,14 +98,14 @@ poly_order = n_vars ;
 
 # initial hyperparameters 
 σ_f0 = 1.0 ; σ_f = σ_f0 ; 
-l_0  = 1.0 ; l   = l_0 ; 
+l_0  = 1.0 ; l   = l_0  ; 
 σ_n0 = 0.1 ; σ_n = σ_n0 ; 
 
 # try first state 
-ξ  = Ξ[:,1] ;   
-dx = dx[:,1] ; 
+ξ  = Ξ[:,1] 
+dx = dx[:,1]  
 
-log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, dx, dx, Θ*ξ ))
+log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, dx, dx, Θx*ξ ))
 
 σ_0 = [σ_f0, l_0, σ_n0]
 result = optimize(log_p_hp, σ_0) 
@@ -121,7 +121,7 @@ y = 0*ξ
 z = 0*ξ
 α = 1.0 
 
-function aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+function aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ ))
     
     # kernel function 
     k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
@@ -130,37 +130,36 @@ function aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
     Ky = k_fn(σ_f, l, dx, dx) 
     Ky += σ_n^2 * I 
 
-    term = zeros(5) 
-    term[1] = 1/2*( dx - Θ*ξ )'*inv( Ky )*( dx - Θ*ξ  ) 
-    term[2] = 1/2*log(det( Ky )) 
-    term[3] = λ*sum(abs.(z)) 
-    term[4] = y'*(ξ-z) 
-    term[5] = ρ/2*( norm(ξ-z) )^2 
+    term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+    term += 1/2*log(det( Ky )) 
+    term += λ*sum(abs.(z)) 
+    term += y'*(ξ-z) 
+    term += ρ/2*( norm(ξ-z) )^2 
 
-    return sum(term)
+    return 
 
 end 
 
 # test 
-out = aug_L(( σ_f0, l_0, σ_n0, dx, ξ, Θ, y, z, λ, ρ ))
+out = aug_L(( σ_f0, l_0, σ_n0, dx, ξ, Θx, y, z, λ, ρ ))
 println("testing aug_L = ", out)
 
 # test optimization, reassign function 
-aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ ))
 aug_L_hp(( σ_f0, l_0, σ_n0 ))
 
 # creating bounds 
 lower = [0.0, 0.0, 0.0] 
 upper = [Inf, Inf, Inf]
 
-σ_0 = [σ_f0, l_0, σ_n0]
-result = optimize( aug_L_hp, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
-println("log_p min (LBFGS) = \n ", result.minimizer) 
+# σ_0 = [σ_f0, l_0, σ_n0]
+# result = optimize( aug_L_hp, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
+# println("log_p min (LBFGS) = \n ", result.minimizer) 
 
-# assign hyperparameters 
-σ_f = result.minimizer[1] 
-l   = result.minimizer[2] 
-σ_n = result.minimizer[3] 
+# # assign hyperparameters 
+# σ_f = result.minimizer[1] 
+# l   = result.minimizer[2] 
+# σ_n = result.minimizer[3] 
 
 # result = optimize(aug_L_hp, σ_0)
 # println("aug_L_hp min = ", result.minimizer) 
@@ -197,7 +196,7 @@ for k = 1:max_iter
     iter += 1 
 
     # hyperparameter-update 
-    aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+    aug_L_hp(( σ_f, l, σ_n )) = aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ ))
 
     σ_0     = [σ_f, l, σ_n] 
     result = optimize( aug_L_hp, lower, upper, σ_0,  Fminbox(LBFGS()) ) 
@@ -211,7 +210,7 @@ for k = 1:max_iter
     # ----------------------- #
     # x-update 
     
-    aug_L_ξ(ξ) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ )) 
+    aug_L_ξ(ξ) = aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ )) 
     
     println( "ξ norm = ", norm(ξ) )
     println( "aug_L_ξ = ", aug_L_ξ(ξ), "\n\n" )    
@@ -225,7 +224,7 @@ for k = 1:max_iter
     # ----------------------- #    
     # z-update
 
-    aug_L_z(z) = aug_L(( σ_f, l, σ_n, dx, ξ, Θ, y, z, λ, ρ ))
+    aug_L_z(z) = aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ ))
     println( "z norm = ", norm(z) )
     println( "aug_L_z = ", aug_L_z(z), "\n\n" )    
 

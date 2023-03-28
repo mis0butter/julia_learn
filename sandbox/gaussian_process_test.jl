@@ -78,6 +78,19 @@ C = rand(3,3)
 K = C + C' + 10*I 
 gauss_sample(rand(3), K)
 
+## ============================================ ##
+# kernel function 
+
+function k_fn(( σ_f, l, xp, xq ))
+
+    return σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+
+end 
+
+# test 
+k_fn(( 1.0, 1.0, sort(rand(3)), sort(rand(3)) ))
+
+
 
 ## ============================================ ##
 # marginal log-likelihood for Gaussian Process 
@@ -85,7 +98,7 @@ gauss_sample(rand(3), K)
 function log_p(( σ_f, l, σ_n, x, y, μ ))
     
     # kernel function 
-    k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+    # k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
 
     # training kernel function 
     Ky = k_fn(σ_f, l, x, x) + σ_n^2 * I 
@@ -117,6 +130,35 @@ ForwardDiff.gradient(test_log_p, a)
 
 
 ## ============================================ ##
+# posterior distribution 
+
+function post_dist(( x_train, y_train, x_test, σ_f, l, σ_n ))
+
+    # x  = training data  
+    # xs = test data 
+    # joint distribution 
+    #   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
+    #   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
+
+    # covariance from training data 
+    K    = k_fn(σ_f, l, x_train, x_train)  
+    K   += σ_n^2 * I       # add noise for positive definite 
+    Ks   = k_fn(σ_f, l, x_train, x_test)  
+    Kss  = k_fn(σ_f, l, x_test, x_test) 
+
+    # conditional distribution 
+    # mu_cond    = K(Xs,X)*inv(K(X,X))*y
+    # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
+    # fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ) 
+    μ_post = Ks' * K^-1 * y_train 
+    Σ_post = Kss - (Ks' * K^-1 * Ks)  
+
+    return μ_post, Σ_post
+
+end 
+
+
+## ============================================ ##
 ## ============================================ ##
 # create GP !!!  
 
@@ -133,7 +175,7 @@ x_train = sort( 2π*rand(N) )
 N = length(x_train) 
 
 # kernel function 
-k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+# k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
 
 Σ_train = k_fn( σ_f0, l_0, x_train, x_train ) 
 Σ_train += σ_n0^2 * I 
@@ -152,25 +194,11 @@ p_train = scatter(x_train, y_train,
 # (based on training data) 
 # NO hyperparameters tuned yet 
 
-# x  = training data  
-# xs = test data 
-# joint distribution 
-#   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
-#   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
+# test data 
 x_test = collect( 0 : 0.1 : 2π )
 
-# covariance from training data 
-K    = k_fn(σ_f0, l_0, x_train, x_train)  
-K   += σ_n0^2 * I       # add noise for positive definite 
-Ks   = k_fn(σ_f0, l_0, x_train, x_test)  
-Kss  = k_fn(σ_f0, l_0, x_test, x_test) 
-
-# conditional distribution 
-# mu_cond    = K(Xs,X)*inv(K(X,X))*y
-# sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
-# fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ) 
-μ_post = Ks' * K^-1 * y_train 
-Σ_post = Kss - (Ks' * K^-1 * Ks)  
+# fit data 
+μ_post, cov_post = post_dist(( x_train, y_train, x_test, σ_f0, l_0, σ_n0 ))
 
 # get covariances and stds 
 cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior); 
@@ -223,25 +251,10 @@ l   = result.minimizer[2]
 # (based on training data) 
 # YES hyperparameters tuned 
 
-# x  = training data  
-# xs = test data 
-# joint distribution 
-#   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
-#   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
+# test data 
 x_test = x_test 
 
-# covariance from training data 
-K    = k_fn(σ_f, l, x_train, x_train)   
-K   +=  σ_n^2 * I       # add signal noise 
-Ks   = k_fn(σ_f, l, x_train, x_test)  
-Kss  = k_fn(σ_f, l, x_test, x_test) 
-
-# conditional distribution 
-# mu_cond    = K(Xs,X)*inv(K(X,X))*y
-# sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
-# fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ); 
-μ_post = Ks' * K^-1 * y_train 
-Σ_post = Kss - (Ks' * K^-1 * Ks)  
+μ_post, Σ_post = post_dist(( x_train, y_train, x_test, σ_f, l, σ_n ))
 
 # get covariances and stds 
 cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior) 
