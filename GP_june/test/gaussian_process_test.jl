@@ -25,30 +25,23 @@ l_0  = 1.0 ;    l   = l_0
 # generate training data 
 N = 100
 x_train = sort( 2π*rand(N) ) 
-N = length(x_train) 
+y_train = sin.(x_train) .+ 0.1*randn(N) 
 
-# kernel function 
-# k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
-
+# training data covariance 
 Σ_train = k_fn(( σ_f0, l_0, x_train, x_train ))
 Σ_train += σ_n0^2 * I 
-
-# training data --> "measured" output at x_train 
-# y_train = gauss_sample( 0*x_train, Σ_train ) 
-y_train = sin.(x_train) .+ 0.1*randn(N) 
 
 # scatter plot of training data 
 p_train = scatter(x_train, y_train, 
     c = :black, markersize = 5, label = "training points", markershape = :cross, title = "Fit GP", legend = :outerbottom ) 
 
+# test data points 
+x_test = collect( 0 : 0.1 : 2π )
 
 ## ============================================ ##
-# posterior distribution ROUND 1 
+# posterior distribution ROUND 1 (NO hyperparameters tuned yet)
 # (based on training data) 
-# NO hyperparameters tuned yet 
 
-# test data 
-x_test = collect( 0 : 0.1 : 2π )
 Kss = k_fn(( σ_f0, l_0, x_test, x_test ))
 
 # fit data 
@@ -72,7 +65,6 @@ test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_tra
 test_log_p(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0]  
-# σ_0    = [ σ_f, l_0, σ_n ] * 1.1 
 lower = [0.0, 0.0, 0.0]  
 upper = [Inf, Inf, Inf] 
 
@@ -88,12 +80,8 @@ l   = result.minimizer[2]
 
 
 ## ============================================ ##
-# posterior distribution ROUND 2 
+# posterior distribution ROUND 2 (YES hyperparameters tuned)
 # (based on training data) 
-# YES hyperparameters tuned 
-
-# test data 
-x_test = x_test 
 
 μ_post, Σ_post = post_dist(( x_train, y_train, x_test, σ_f, l, σ_n ))
 
@@ -102,7 +90,7 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior)
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(p_train, x_test, μ_post, rib = 3*std_post , fillalpha = 0.15, c = :blue, label = "μ ± 3σ (σ_opt)")
+plot!(p_train, x_test, μ_post, rib = 3*std_post, fillalpha = 0.15, c = :blue, label = "μ ± 3σ (σ_opt)")
 
 xlabel!("x") 
 ylabel!("y") 

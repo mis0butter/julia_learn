@@ -2,10 +2,11 @@
 
 ## ============================================ ##
 # solve sparse regression 
+
 export sparsify_dynamics 
 
 function sparsify_dynamics( Θ, dx, λ, n_vars ) 
-# ------------------------------------------------------------------------
+# ----------------------- #
 # Purpose: Solve for active terms in dynamics through sparse regression 
 # 
 # Inputs: 
@@ -16,7 +17,7 @@ function sparsify_dynamics( Θ, dx, λ, n_vars )
 # 
 # Outputs: 
 #   XI     = sparse coefficients of dynamics 
-# ------------------------------------------------------------------------
+# ----------------------- #
 
     # first perform least squares 
     Ξ = Θ \ dx ; 
@@ -46,10 +47,11 @@ end
 
 ## ============================================ ##
 # build data matrix 
+
 export pool_data 
 
 function pool_data(x, n_vars, poly_order) 
-# ------------------------------------------------------------------------
+# ----------------------- #
 # Purpose: Build data matrix based on possible functions 
 # 
 # Inputs: 
@@ -59,7 +61,7 @@ function pool_data(x, n_vars, poly_order)
 # 
 # Outputs: 
 #   THETA       = data matrix passed through function library 
-# ------------------------------------------------------------------------
+# ----------------------- #
 
     # turn x into matrix and get length 
     xmat = mapreduce(permutedims, vcat, x) ; 

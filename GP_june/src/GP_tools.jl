@@ -3,6 +3,7 @@ using LinearAlgebra
 
 ## ============================================ ##
 # sample from given mean and covariance 
+
 export gauss_sample 
 
 # sample from given mean and covariance 
@@ -25,6 +26,7 @@ end
 
 ## ============================================ ##
 # sample from given mean and covariance 
+
 export k_fn 
 
 function k_fn(( σ_f, l, xp, xq ))
@@ -36,6 +38,7 @@ end
 
 ## ============================================ ##
 # define square distance function 
+
 export sq_dist 
 
 # define square distance function 
@@ -59,6 +62,7 @@ end
 
 ## ============================================ ##
 # marginal log-likelihood for Gaussian Process 
+
 export log_p 
 
 function log_p(( σ_f, l, σ_n, x, y, μ ))
@@ -80,6 +84,7 @@ end
 
 ## ============================================ ##
 # posterior distribution 
+
 export post_dist
 
 function post_dist(( x_train, y_train, x_test, σ_f, l, σ_n ))
