@@ -6,6 +6,7 @@ using SparseArrays
 using Plots 
 using Optim 
 
+
 ## ============================================ ##
 # setup 
 
@@ -15,12 +16,16 @@ p = 1/n           # sparsity density
 
 x0 = sprandn(n,1,p)    
 A  = randn(m,n) 
-A  = [  0.422443072642685        -0.144978181770844         0.999835350376907
-        0.906389458442786         0.989434852231525        0.0181458572872169 ] 
+b_rand = randn(m,1) 
+
+x0 = [ 1.16495351050066 , 0 , 0 ] 
+A  = [ 0.422443072642685    -0.144978181770844      0.999835350376907
+       0.906389458442786     0.989434852231525      0.0181458572872169 ] 
+b_rand = [  0.871673288690637 ,  -1.44617153933933 ] 
 
 B  = 1 ./ sqrt.( sum(A.^2, dims=1) )
 A  = A * spdiagm(n, n, B[:])
-b  = A*x0 + sqrt(0.001) * randn(m,1) 
+b  = A*x0 + sqrt(0.001) * b_rand 
 
 λ  = 0.1 
 ρ  = 1.0            # 1-norm threshold knob 
@@ -30,6 +35,7 @@ z  = rand(n,1)
 
 p = objective(A, b, λ, x, z) 
 println("objective p = ", p)
+
 
 ## ============================================ ##
 # lasso_admm 
@@ -78,6 +84,7 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
     
     # for k = 1:max_iter 
 
+        # ----------------------- #
         # x-update 
         q = Atb + ρ * (z - u)           # temp value 
         if m >= n                       # if skinny 
@@ -90,13 +97,39 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
         x_inv = inv( A'*A + ρ*I ) * ( Atb + ρ * ( z - u ) )
 
         # optimization 
-        od        = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
+        od     = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
         # result    = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-        result    = optimize( od, x0, LBFGS() ) 
-        x_opt = result.minimizer 
+        result = optimize( od, x0, LBFGS() ) 
+        x_opt  = result.minimizer 
 
         println("norm(x - x_inv) = ", norm(x - x_inv))
-        println("norm(x - x_opt) = ", norm(x - x_opt))
+        println("norm(x - x_opt) = ", norm(x - x_opt)) 
+
+        # ----------------------- #
+        # z-update 
+
+        z_old = z 
+        x_hat = α*x + (1 .- α)*z_old 
+        z = shrinkage(x_hat + u, λ/ρ) 
+
+        # ----------------------- #
+        # u-update 
+
+        u = u + (x_hat - z) 
+
+        # ----------------------- #
+        # diagnostics + termination checks 
+
+        p = objective(A, b, λ, x, z) 
+        push!( hist.objval, p )
+        push!( hist.r_norm, norm(x - z) )
+        push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
+        push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 
+        push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+
+        # if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+        #     break 
+        # end 
 
     # end 
 

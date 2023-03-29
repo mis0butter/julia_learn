@@ -125,7 +125,7 @@ function lasso_admm(A, b, λ, ρ, α)
         # z-update 
 
         z_old = z 
-        x_hat = α*x + (1 .- α*z_old) 
+        x_hat = α*x + (1 .- α)*z_old 
         z = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
