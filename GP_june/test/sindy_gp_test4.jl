@@ -124,10 +124,10 @@ z = 0*ξ
 function aug_L(( σ_f, l, σ_n, dx, ξ, Θx, y, z, λ, ρ ))
     
     # kernel function 
-    k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+    # k_fn(σ_f, l, xp, xq) = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
 
     # training kernel function 
-    Ky = k_fn(σ_f, l, dx, dx) 
+    Ky = k_fn((σ_f, l, dx, dx)) 
     Ky += σ_n^2 * I 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 

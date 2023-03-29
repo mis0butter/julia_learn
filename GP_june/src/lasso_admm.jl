@@ -1,4 +1,12 @@
-
+# define output hist struct 
+struct Hist 
+    objval 
+    r_norm 
+    s_norm 
+    eps_pri 
+    eps_dual 
+end 
+hist = Hist([], [], [], [], [])
 
 ## ============================================ ##
 
@@ -8,8 +16,8 @@ export shrinkage
 export objective 
 
 ## ============================================ ##
-
 # objective 
+
 function objective(A, b, lambda, x, z) 
 
     p = ( 1/2 * sum( ( A*x - b ).^2 ) + lambda*norm(z,1) ) 
@@ -17,7 +25,9 @@ function objective(A, b, lambda, x, z)
     return p 
 end 
 
+## ============================================ ##
 # shrinkage 
+
 function shrinkage(x, kappa) 
 
     z = 0*x ; 
@@ -28,7 +38,9 @@ function shrinkage(x, kappa)
     return z 
 end 
 
+## ============================================ ##
 # cache factorization 
+
 function factor(A, rho)
 
     m, n =  size(A) ; 
@@ -45,7 +57,10 @@ end
 
 # end 
 
-function lasso_admm(A, b, lamda, rho, alpha) 
+## ============================================ ##
+# LASSO ADMM! 
+
+function lasso_admm(A, b, lambda, rho, alpha) 
     # ------------------------------------------------------------------------
     # lasso  Solve lasso problem via ADMM
     #
@@ -83,9 +98,9 @@ function lasso_admm(A, b, lamda, rho, alpha)
         Atb = A'*b                          # save matrix-vector multiply 
     
         # ADMM solver 
-        x = 0*b  
-        z = 0*b 
-        u = 0*b 
+        x = 0*Atb 
+        z = 0*Atb 
+        u = 0*Atb 
     
         # cache factorization 
         L, U = factor(A, rho) 
