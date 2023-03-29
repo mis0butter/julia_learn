@@ -41,7 +41,7 @@ end
 ## ============================================ ##
 # cache factorization 
 
-export factorization 
+export factor 
 
 function factor(A, ρ)
 
@@ -135,7 +135,7 @@ function lasso_admm(A, b, λ, ρ, α)
 
         # ----------------------- #
         # diagnostics + termination checks 
-        
+
         p = objective(A, b, λ, x, z) 
         push!( hist.objval, p )
         push!( hist.r_norm, norm(x - z) )
@@ -156,6 +156,7 @@ end
 ## ============================================ ##
 # LASSO ADMM! 
 
+using  Optim 
 export lasso_admm2
 
 function lasso_admm2(A, b, λ, ρ, α) 
@@ -196,9 +197,14 @@ function lasso_admm2(A, b, λ, ρ, α)
     Atb = A'*b                          # save matrix-vector multiply 
 
     # ADMM solver 
-    x = 0*Atb 
+    x = 0*Atb ; x0 = x 
     z = 0*Atb 
     u = 0*Atb 
+
+    # Optim stuff 
+    upper = Inf * ones(size(Atb)) 
+    lower = -upper 
+    f_test(x) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
 
     # cache factorization 
     L, U = factor(A, ρ) 
@@ -209,14 +215,9 @@ function lasso_admm2(A, b, λ, ρ, α)
         # ----------------------- #
         # x-update (optimization) 
 
-        # bounds 
-        upper = Inf * ones(size(Atb)) 
-        lower = -upper 
-
         # optimization 
-        f_test(x) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
         od        = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
-        result    = optimize( od, lower, upper, x, Fminbox(LBFGS()) ) 
+        result    = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
         x = result.minimizer 
         
         # ----------------------- #
