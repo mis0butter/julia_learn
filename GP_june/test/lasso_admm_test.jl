@@ -1,30 +1,29 @@
-
-
 using LinearAlgebra 
 using GP_june 
-using SparseArrays
+using SparseArrays 
 using Plots 
 using Optim 
 
 
 ## ============================================ ##
+## ============================================ ##
 # setup 
 
-m = 2            # number of examples 
-n = 3            # number of features 
-p = 1/n           # sparsity density 
-
+m  = 15            # number of examples 
+n  = 50            # number of features 
+p  = 10/n           # sparsity density 
 x0 = sprandn(n,1,p)    
 A  = randn(m,n) 
 b_rand = randn(m,1) 
 
-x0 = [ 1.16495351050066 , 0 , 0 ] 
-A  = [ 0.422443072642685    -0.144978181770844      0.999835350376907
-       0.906389458442786     0.989434852231525      0.0181458572872169 ] 
-b_rand = [  0.871673288690637 ,  -1.44617153933933 ] 
+# x0 = [ 1.16495351050066 , 0 , 0 ] 
+# A  = [ 0.422443072642685    -0.144978181770844      0.999835350376907
+#        0.906389458442786     0.989434852231525      0.0181458572872169 ] 
+# b_rand = [  0.871673288690637 ,  -1.44617153933933 ] 
+# n = length(x0) 
 
 B  = 1 ./ sqrt.( sum(A.^2, dims=1) )
-A  = A * spdiagm(n, n, B[:])
+A  = A * spdiagm(n, n, B[:])            # normalize columns 
 b  = A*x0 + sqrt(0.001) * b_rand 
 
 λ  = 0.1 
@@ -40,23 +39,30 @@ println("objective p = ", p)
 ## ============================================ ##
 # lasso_admm 
     
-x, hist = lasso_admm(A, b, λ, ρ, α) 
-
-# x2, hist2 = lasso_admm2(A, b, λ, λ, ρ) 
+# @time x, hist = lasso_admm(A, b, λ, ρ, α) 
+@time x, hist = lasso_admm_opt(A, b, λ, ρ, α) 
 
 ## ============================================ ##
 # plot! 
 
 K = length(hist.objval) 
 
-p_objval = plot(1:K, hist.objval, title = "Objective Function = f(xₖ) + g(zₖ)", legend = false) 
-p_r_norm = plot(1:K, hist.r_norm, title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂") 
-    plot!(p_r_norm, 1:K, hist.eps_pri, label = "tol")
-p_s_norm = plot(1:K, hist.s_norm, title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂")
-    plot!(p_s_norm, 1:K, hist.eps_dual, label = "tol")
-p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "test" )
+# subplot 1 
+p_objval = plot( 1:K, hist.objval, title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
+
+# subplot 2 
+p_r_norm = plot( 1:K, hist.r_norm, title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
+    plot!( p_r_norm, 1:K, hist.eps_pri, label = "tol", ls = :dot )
+
+# subplot 3 
+    p_s_norm = plot(1:K, hist.s_norm, title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
+    plot!(p_s_norm, 1:K, hist.eps_dual, label = "tol", ls = :dot )
+
+# plot all 
+p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
 
 
+## ============================================ ##
 ## ============================================ ##
 # sandbox 
 
@@ -81,16 +87,22 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
 
     # cache factorization 
     L, U = factor(A, ρ) 
+
+    k = 0 
     
+## ============================================ ##
     # for k = 1:max_iter 
 
-        # ----------------------- #
+        k += 1 
+
+        # ----------------------- # 
         # x-update 
+
         q = Atb + ρ * (z - u)           # temp value 
         if m >= n                       # if skinny 
-            x = U \ ( L \ q ) 
+            x_lu = U \ ( L \ q ) 
         else                            # if fat 
-            x = q / ρ - ( A' * ( U \ ( L \ (A*q) ) ) ) / ρ^2 
+            x_lu = q / ρ - ( A' * ( U \ ( L \ (A*q) ) ) ) / ρ^2 
         end 
 
         # inelegant way 
@@ -102,8 +114,10 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
         result = optimize( od, x0, LBFGS() ) 
         x_opt  = result.minimizer 
 
-        println("norm(x - x_inv) = ", norm(x - x_inv))
-        println("norm(x - x_opt) = ", norm(x - x_opt)) 
+        println("norm(x_lu - x_inv) = ", norm(x_lu - x_inv))
+        println("norm(x_lu - x_opt) = ", norm(x_lu - x_opt)) 
+
+        x = x_opt 
 
         # ----------------------- #
         # z-update 
@@ -121,15 +135,14 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
         # diagnostics + termination checks 
 
         p = objective(A, b, λ, x, z) 
-        push!( hist.objval, p )
-        push!( hist.r_norm, norm(x - z) )
-        push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
-        push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 
-        push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+        r_norm   = norm(x - z) 
+        s_norm   = norm( -ρ*(z - z_old) ) 
+        eps_pri  = sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) 
+        eps_dual = sqrt(n)*abstol + reltol*norm(ρ*u)  
 
-        # if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
-        #     break 
-        # end 
+        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+            "reached tol!"
+        end 
 
     # end 
 

@@ -126,6 +126,7 @@ function lasso_admm(A, b, λ, ρ, α)
 
         z_old = z 
         x_hat = α*x + (1 .- α)*z_old 
+        # x_hat = x 
         z = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
@@ -157,9 +158,9 @@ end
 # LASSO ADMM! 
 
 using  Optim 
-export lasso_admm2
+export lasso_admm_opt
 
-function lasso_admm2(A, b, λ, ρ, α) 
+function lasso_admm_opt(A, b, λ, ρ, α) 
 # ----------------------- #
 # lasso  Solve lasso problem via ADMM
 #
@@ -216,14 +217,14 @@ function lasso_admm2(A, b, λ, ρ, α)
         # x-update (optimization) 
 
         # optimization 
-        od        = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
-        result    = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-        x = result.minimizer 
+        od     = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
+        result = optimize( od, x0, LBFGS() ) 
+        x      = result.minimizer 
         
         # ----------------------- #
         # z-update 
         z_old = z 
-        x_hat = α*x + (1 .- α*z_old) 
+        x_hat = α*x + (1 .- α)*z_old 
         z = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
