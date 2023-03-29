@@ -198,17 +198,12 @@ function lasso_admm_opt(A, b, λ, ρ, α)
     Atb = A'*b                          # save matrix-vector multiply 
 
     # ADMM solver 
-    x = 0*Atb ; x0 = x 
+    x = 0*Atb 
     z = 0*Atb 
     u = 0*Atb 
 
     # Optim stuff 
-    upper = Inf * ones(size(Atb)) 
-    lower = -upper 
     f_test(x) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
-
-    # cache factorization 
-    L, U = factor(A, ρ) 
 
     # begin iterations 
     for k = 1 : max_iter 
@@ -217,22 +212,25 @@ function lasso_admm_opt(A, b, λ, ρ, α)
         # x-update (optimization) 
 
         # optimization 
-        od     = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
-        result = optimize( od, x0, LBFGS() ) 
+        od     = OnceDifferentiable( f_test, x ; autodiff = :forward ) 
+        result = optimize( od, x, LBFGS() ) 
         x      = result.minimizer 
         
         # ----------------------- #
         # z-update 
+
         z_old = z 
         x_hat = α*x + (1 .- α)*z_old 
         z = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
         # u-update 
+
         u = u + (x_hat - z) 
 
         # ----------------------- #
         # diagnostics + termination checks 
+
         p = objective(A, b, λ, x, z) 
         push!( hist.objval, p )
         push!( hist.r_norm, norm(x - z) )
@@ -247,5 +245,66 @@ function lasso_admm_opt(A, b, λ, ρ, α)
     end 
 
     return z, hist 
+end 
+    
+
+## ============================================ ##
+# LASSO ADMM! 
+
+using  Optim 
+export lasso_admm_test
+
+function lasso_admm_test( f_in, n, λ, ρ, α ) 
+
+    # define constants 
+    max_iter = 1000  
+    abstol   = 1e-4 
+    reltol   = 1e-2           # save matrix-vector multiply 
+
+    # ADMM solver 
+    x = zeros(n) 
+    z = zeros(n) 
+    u = zeros(n) 
+    
+    # begin iterations 
+    for k = 1 : max_iter 
+
+        # ----------------------- #
+        # x-update (optimization) 
+
+        # optimization 
+        od     = OnceDifferentiable( f_in, x ; autodiff = :forward ) 
+        result = optimize( od, x, LBFGS() ) 
+        x      = result.minimizer 
+        
+        # ----------------------- #
+        # z-update 
+
+        z_old = z 
+        x_hat = α*x + (1 .- α)*z_old 
+        z = shrinkage(x_hat + u, λ/ρ) 
+
+        # ----------------------- #
+        # u-update 
+
+        u = u + (x_hat - z) 
+
+        # ----------------------- #
+        # diagnostics + termination checks 
+
+        # p = objective(A, b, λ, x, z) 
+        # push!( hist.objval, p )
+        push!( hist.r_norm, norm(x - z) )
+        push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
+        push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 
+        push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+
+        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+            break 
+        end 
+
+    end 
+
+    return x, hist
 end 
     

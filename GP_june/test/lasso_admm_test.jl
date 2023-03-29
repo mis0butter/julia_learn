@@ -38,9 +38,17 @@ println("objective p = ", p)
 
 ## ============================================ ##
 # lasso_admm 
-    
+
+x = zeros(n) 
+z = zeros(n) 
+u = zeros(n) 
+
+f_test(x, z, u) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
+f_test(x, z, u) 
+
 # @time x, hist = lasso_admm(A, b, λ, ρ, α) 
-@time x, hist = lasso_admm_opt(A, b, λ, ρ, α) 
+# @time x, hist = lasso_admm_opt(A, b, λ, ρ, α) 
+@time x, hist = lasso_admm_test( f_test, n, λ, ρ, α ) 
 
 ## ============================================ ##
 # plot! 
@@ -146,7 +154,8 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
 
     # end 
 
-## ============================================ ##
+
+## ============================================ ## 
 
     f_test(x) = (x[1]-1)^2 + x[2]^2 
     x0     =  [2.0, 2.0] 
@@ -156,5 +165,18 @@ p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], p
     od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
     # result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
     result = optimize( od, x0, LBFGS() ) 
-    println("od = ", result.minimizer)
+    println("min = ", result.minimizer)
     
+
+## ============================================ ## 
+
+function f_test_wrap(f_test, x)
+
+    out = f_test(x) 
+
+    return out 
+
+end 
+
+f_test_wrap(f_test, x0) 
+
