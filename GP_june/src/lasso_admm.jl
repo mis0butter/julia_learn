@@ -48,11 +48,46 @@ end
 
 
 ## ============================================ ##
+# plot everything! 
+
+using Plots 
+export plot_admm 
+
+function plot_admm( hist ) 
+
+    K = length(hist.objval) 
+
+    # subplot 1 
+    p_objval = plot( 1:K, hist.objval, 
+        title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
+    
+    # subplot 2 
+    p_r_norm = plot( 1:K, hist.r_norm, 
+        title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
+    plot!( p_r_norm, 1:K, hist.eps_pri, 
+        label = "tol", ls = :dot )
+    
+    # subplot 3 
+    p_s_norm = plot(1:K, hist.s_norm, 
+        title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
+    plot!(p_s_norm, 1:K, hist.eps_dual, 
+        label = "tol", ls = :dot )
+    
+    # plot all 
+    p_fig = plot(p_objval, p_r_norm, 
+        p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
+
+    return p_fig 
+
+end 
+
+
+## ============================================ ##
 # LASSO ADMM! 
 
-export lasso_admm 
+export lasso_admm_boyd 
 
-function lasso_admm(A, b, λ, ρ, α) 
+function lasso_admm_boyd(A, b, λ, ρ, α, hist) 
 # ----------------------- #
 # lasso  Solve lasso problem via ADMM
 #
@@ -114,8 +149,8 @@ function lasso_admm(A, b, λ, ρ, α)
         # z-update 
 
         z_old = z 
-        x_hat = α*x + (1 .- α)*z_old 
-        # x_hat = x 
+        # x_hat = α*x + (1 .- α)*z_old 
+        x_hat = x 
         z = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
@@ -149,7 +184,7 @@ end
 using  Optim 
 export lasso_admm_opt
 
-function lasso_admm_opt(f_obj, n, λ, ρ, α, hist) 
+function lasso_admm_opt( f, g, n, λ, ρ, α, hist ) 
 
     # define constants 
     max_iter = 1000  
@@ -160,6 +195,9 @@ function lasso_admm_opt(f_obj, n, λ, ρ, α, hist)
     x = zeros(n) 
     z = zeros(n) 
     u = zeros(n) 
+
+    # augmented Lagrangian (scaled form) 
+    L(x, z, u) = f(x) + g(z) + ρ/2 .* norm( x - z + u )^2 
     
     # begin iterations 
     for k = 1 : max_iter 
@@ -168,7 +206,7 @@ function lasso_admm_opt(f_obj, n, λ, ρ, α, hist)
         # x-update (optimization) 
 
         # optimization 
-        f_opt(x) = f_obj(x, z, u) 
+        f_opt(x) = L(x, z, u) 
         od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
         result   = optimize( od, x, LBFGS() ) 
         x        = result.minimizer 
@@ -188,8 +226,8 @@ function lasso_admm_opt(f_obj, n, λ, ρ, α, hist)
         # ----------------------- #
         # diagnostics + termination checks 
 
-        # p = objective(A, b, λ, x, z) 
-        # push!( hist.objval, p )
+        p = f(x) + g(z)   
+        push!( hist.objval, p )
         push!( hist.r_norm, norm(x - z) )
         push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
         push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 
@@ -233,7 +271,6 @@ function lasso_admm_test( f, g, n, λ, ρ, α, hist )
         # ----------------------- #
         # x-update (optimization) 
 
-        # optimization 
         f_opt(x) = L(x, z, u) 
         od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
         result   = optimize( od, x, LBFGS() ) 
@@ -242,14 +279,20 @@ function lasso_admm_test( f, g, n, λ, ρ, α, hist )
         # ----------------------- #
         # z-update 
 
-        z_old = z 
-        x_hat = α*x + (1 .- α)*z_old 
-        z = shrinkage(x_hat + u, λ/ρ) 
+        # z_old = z 
+        # x_hat = α*x + (1 .- α)*z_old 
+        # z = shrinkage(x_hat + u, λ/ρ) 
+
+        z_old    = z 
+        g_opt(z) = L(x, z, u) 
+        od       = OnceDifferentiable( g_opt, z ; autodiff = :forward ) 
+        result   = optimize( od, z, LBFGS() ) 
+        z        = result.minimizer 
 
         # ----------------------- #
         # u-update 
 
-        u = u + (x_hat - z) 
+        u = u + (x - z) 
 
         # ----------------------- #
         # diagnostics + termination checks 

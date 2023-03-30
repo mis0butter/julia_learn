@@ -55,46 +55,27 @@ z = zeros(n)
 u = zeros(n) 
 
 f(x) = 1/2 * norm(A*x - b)^2 
-g(z) = sum(abs.(z)) 
+g(z) = λ * sum(abs.(z)) 
 
-f_test(x, z, u) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
-f_test(x, z, u) 
+hist      = Hist( [], [], [], [], [] ) 
+hist_opt  = Hist( [], [], [], [], [] ) 
+hist_test = Hist( [], [], [], [], [] ) 
 
-hist = Hist( [], [], [], [], [] ) 
-
-# @time x, hist = lasso_admm(A, b, λ, ρ, α) 
-# @time x, hist = lasso_admm_opt(f_test, n, λ, ρ, α, hist) 
-@time x, hist = lasso_admm_test( f, g, n, λ, ρ, α, hist ) 
+@time x_boyd, hist_boyd = lasso_admm_boyd(A, b, λ, ρ, α, hist) 
+@time x_opt,  hist_opt  = lasso_admm_opt(f, g, n, λ, ρ, α, hist_opt) 
+@time x_test, hist_test = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
 
 ## ============================================ ##
 # plot! 
 
-K = length(hist.objval) 
+p_opt = plot_admm(hist_opt) 
+    plot!(plot_title = "ADMM Lasso (Opt)")
+p_test = plot_admm(hist_test)
+    plot!(plot_title = "ADMM Lasso (Test)")
 
-# subplot 1 
-p_objval = plot( 1:K, hist.objval, 
-    title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
-
-# subplot 2 
-p_r_norm = plot( 1:K, hist.r_norm, 
-    title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
-plot!( p_r_norm, 1:K, hist.eps_pri, 
-    label = "tol", ls = :dot )
-
-# subplot 3 
-p_s_norm = plot(1:K, hist.s_norm, 
-    title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
-plot!(p_s_norm, 1:K, hist.eps_dual, 
-    label = "tol", ls = :dot )
-
-# plot all 
-p_fig = plot(p_objval, p_r_norm, 
-    p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
-
-# display 
-display(p_fig) 
-
+p_opt_test = plot(p_opt, p_test, layout = (1,2), size = [1000 1000])
+    display(p_opt_test) 
 
 # ## ============================================ ##
 # ## ============================================ ##
