@@ -59,17 +59,17 @@ function plot_admm( hist )
 
     # subplot 1 
     p_objval = plot( 1:K, hist.objval, 
-        title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
+        title = "Obj Fn = f(xₖ) + g(zₖ)", legend = false ) 
     
     # subplot 2 
     p_r_norm = plot( 1:K, hist.r_norm, 
-        title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
+        title = "|r|₂ = |x-z|₂", label = "|r|₂" ) 
     plot!( p_r_norm, 1:K, hist.eps_pri, 
         label = "tol", ls = :dot )
     
     # subplot 3 
     p_s_norm = plot(1:K, hist.s_norm, 
-        title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
+        title = "|s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
     plot!(p_s_norm, 1:K, hist.eps_dual, 
         label = "tol", ls = :dot )
     

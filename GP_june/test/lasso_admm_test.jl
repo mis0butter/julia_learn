@@ -57,24 +57,28 @@ u = zeros(n)
 f(x) = 1/2 * norm(A*x - b)^2 
 g(z) = λ * sum(abs.(z)) 
 
-hist      = Hist( [], [], [], [], [] ) 
+hist_boyd = Hist( [], [], [], [], [] ) 
 hist_opt  = Hist( [], [], [], [], [] ) 
 hist_test = Hist( [], [], [], [], [] ) 
 
-@time x_boyd, hist_boyd = lasso_admm_boyd(A, b, λ, ρ, α, hist) 
+@time x_boyd, hist_boyd = lasso_admm_boyd(A, b, λ, ρ, α, hist_boyd) 
 @time x_opt,  hist_opt  = lasso_admm_opt(f, g, n, λ, ρ, α, hist_opt) 
 @time x_test, hist_test = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
+println( "norm(x_boyd - x_opt) = ", norm(x_boyd - x_opt) )
+println( "norm(x_boyd - x_test) = ", norm(x_boyd - x_test) )
 
 ## ============================================ ##
 # plot! 
 
+p_boyd = plot_admm(hist_boyd) 
+    plot!(plot_title = "ADMM Lasso (Boyd)")
 p_opt = plot_admm(hist_opt) 
-    plot!(plot_title = "ADMM Lasso (Opt)")
+    plot!(plot_title = "ADMM Lasso (x-opt)")
 p_test = plot_admm(hist_test)
-    plot!(plot_title = "ADMM Lasso (Test)")
+    plot!(plot_title = "ADMM Lasso (x-opt, z-opt)")
 
-p_opt_test = plot(p_opt, p_test, layout = (1,2), size = [1000 1000])
+p_opt_test = plot(p_boyd, p_opt, p_test, layout = (1,3), size = [1200 1000])
     display(p_opt_test) 
 
 # ## ============================================ ##
