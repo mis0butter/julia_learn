@@ -54,6 +54,9 @@ x = zeros(n)
 z = zeros(n) 
 u = zeros(n) 
 
+f(x) = 1/2 * norm(A*x - b)^2 
+g(z) = sum(abs.(z)) 
+
 f_test(x, z, u) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
 f_test(x, z, u) 
 
@@ -61,7 +64,7 @@ hist = Hist( [], [], [], [], [] )
 
 # @time x, hist = lasso_admm(A, b, λ, ρ, α) 
 # @time x, hist = lasso_admm_opt(f_test, n, λ, ρ, α, hist) 
-@time x, hist = lasso_admm_test( f_test, n, λ, ρ, α, hist ) 
+@time x, hist = lasso_admm_test( f, g, n, λ, ρ, α, hist ) 
 
 
 ## ============================================ ##

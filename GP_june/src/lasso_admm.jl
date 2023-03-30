@@ -212,7 +212,7 @@ end
 using  Optim 
 export lasso_admm_test
 
-function lasso_admm_test( f_obj, n, λ, ρ, α, hist ) 
+function lasso_admm_test( f, g, n, λ, ρ, α, hist ) 
 
     # define constants 
     max_iter = 1000  
@@ -223,6 +223,9 @@ function lasso_admm_test( f_obj, n, λ, ρ, α, hist )
     x = zeros(n) 
     z = zeros(n) 
     u = zeros(n) 
+
+    # augmented Lagrangian 
+    L(x, z, u) = f(x) + g(z) + ρ/2 .* norm( x - z + u )^2 
     
     # begin iterations 
     for k = 1 : max_iter 
@@ -231,7 +234,7 @@ function lasso_admm_test( f_obj, n, λ, ρ, α, hist )
         # x-update (optimization) 
 
         # optimization 
-        f_opt(x) = f_obj(x, z, u) 
+        f_opt(x) = L(x, z, u) 
         od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
         result   = optimize( od, x, LBFGS() ) 
         x        = result.minimizer 
@@ -251,7 +254,7 @@ function lasso_admm_test( f_obj, n, λ, ρ, α, hist )
         # ----------------------- #
         # diagnostics + termination checks 
 
-        p = f_obj(x, z, u)  
+        p = f(x) + g(z)   
         push!( hist.objval, p )
         push!( hist.r_norm, norm(x - z) )
         push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
