@@ -1,3 +1,4 @@
+# define diagnostics struct 
 struct Hist 
     objval 
     r_norm 
@@ -6,9 +7,7 @@ struct Hist
     eps_dual 
 end 
 
-
-## ============================================ ##
-
+# packages 
 using LinearAlgebra 
 using GP_june 
 using SparseArrays 
@@ -16,7 +15,6 @@ using Plots
 using Optim 
 
 
-## ============================================ ##
 ## ============================================ ##
 # setup 
 
@@ -27,12 +25,7 @@ x0 = sprandn(n,1,p)
 A  = randn(m,n) 
 b_rand = randn(m,1) 
 
-# x0 = [ 1.16495351050066 , 0 , 0 ] 
-# A  = [ 0.422443072642685    -0.144978181770844      0.999835350376907
-#        0.906389458442786     0.989434852231525      0.0181458572872169 ] 
-# b_rand = [  0.871673288690637 ,  -1.44617153933933 ] 
-# n = length(x0) 
-
+# sparsify stuff 
 B  = 1 ./ sqrt.( sum(A.^2, dims=1) )
 A  = A * spdiagm(n, n, B[:])            # normalize columns 
 b  = A*x0 + sqrt(0.001) * b_rand 
@@ -54,17 +47,21 @@ x = zeros(n)
 z = zeros(n) 
 u = zeros(n) 
 
+# lasso admm 
 f(x) = 1/2 * norm(A*x - b)^2 
 g(z) = λ * sum(abs.(z)) 
 
+# empty hist structs 
 hist_boyd = Hist( [], [], [], [], [] ) 
 hist_opt  = Hist( [], [], [], [], [] ) 
 hist_test = Hist( [], [], [], [], [] ) 
 
+# admm!!! 
 @time x_boyd, hist_boyd = lasso_admm_boyd(A, b, λ, ρ, α, hist_boyd) 
 @time x_opt,  hist_opt  = lasso_admm_opt(f, g, n, λ, ρ, α, hist_opt) 
 @time x_test, hist_test = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
+# solution residuals 
 println( "norm(x_boyd - x_opt) = ", norm(x_boyd - x_opt) )
 println( "norm(x_boyd - x_test) = ", norm(x_boyd - x_test) )
 
@@ -80,6 +77,12 @@ p_test = plot_admm(hist_test)
 
 p_opt_test = plot(p_boyd, p_opt, p_test, layout = (1,3), size = [1200 1000])
     display(p_opt_test) 
+
+
+
+
+
+
 
 # ## ============================================ ##
 # ## ============================================ ##
