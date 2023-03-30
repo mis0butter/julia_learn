@@ -1,3 +1,14 @@
+struct Hist 
+    objval 
+    r_norm 
+    s_norm 
+    eps_pri 
+    eps_dual 
+end 
+
+
+## ============================================ ##
+
 using LinearAlgebra 
 using GP_june 
 using SparseArrays 
@@ -46,9 +57,12 @@ u = zeros(n)
 f_test(x, z, u) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
 f_test(x, z, u) 
 
+hist = Hist( [], [], [], [], [] ) 
+
 # @time x, hist = lasso_admm(A, b, λ, ρ, α) 
-# @time x, hist = lasso_admm_opt(A, b, λ, ρ, α) 
-@time x, hist = lasso_admm_test( f_test, n, λ, ρ, α ) 
+# @time x, hist = lasso_admm_opt(f_test, n, λ, ρ, α, hist) 
+@time x, hist = lasso_admm_test( f_test, n, λ, ρ, α, hist ) 
+
 
 ## ============================================ ##
 # plot! 
@@ -56,127 +70,136 @@ f_test(x, z, u)
 K = length(hist.objval) 
 
 # subplot 1 
-p_objval = plot( 1:K, hist.objval, title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
+p_objval = plot( 1:K, hist.objval, 
+    title = "Objective Function = f(xₖ) + g(zₖ)", legend = false ) 
 
 # subplot 2 
-p_r_norm = plot( 1:K, hist.r_norm, title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
-    plot!( p_r_norm, 1:K, hist.eps_pri, label = "tol", ls = :dot )
+p_r_norm = plot( 1:K, hist.r_norm, 
+    title = "Primal variables |r|₂ = |x-z|₂", label = "|r|₂" ) 
+plot!( p_r_norm, 1:K, hist.eps_pri, 
+    label = "tol", ls = :dot )
 
 # subplot 3 
-    p_s_norm = plot(1:K, hist.s_norm, title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
-    plot!(p_s_norm, 1:K, hist.eps_dual, label = "tol", ls = :dot )
+p_s_norm = plot(1:K, hist.s_norm, 
+    title = "Dual variables |s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
+plot!(p_s_norm, 1:K, hist.eps_dual, 
+    label = "tol", ls = :dot )
 
 # plot all 
-p_fig = plot(p_objval, p_r_norm, p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
+p_fig = plot(p_objval, p_r_norm, 
+    p_s_norm, layout = (3,1), size = [ 600,800 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
+
+# display 
+display(p_fig) 
 
 
-## ============================================ ##
-## ============================================ ##
-# sandbox 
+# ## ============================================ ##
+# ## ============================================ ##
+# # sandbox 
 
-    # define constants 
-    max_iter = 1000  
-    abstol   = 1e-4 
-    reltol   = 1e-2 
+#     # define constants 
+#     max_iter = 1000  
+#     abstol   = 1e-4 
+#     reltol   = 1e-2 
 
-    # data pre-processing 
-    m, n = size(A) 
-    Atb = A'*b                          # save matrix-vector multiply 
+#     # data pre-processing 
+#     m, n = size(A) 
+#     Atb = A'*b                          # save matrix-vector multiply 
 
-    # ADMM solver 
-    x = 0*Atb ; x0 = x 
-    z = 0*Atb 
-    u = 0*Atb 
+#     # ADMM solver 
+#     x = 0*Atb ; x0 = x 
+#     z = 0*Atb 
+#     u = 0*Atb 
 
-    # Optim stuff 
-    upper = Inf * ones(size(Atb)) 
-    lower = -upper 
-    f_test(x) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
+#     # Optim stuff 
+#     upper = Inf * ones(size(Atb)) 
+#     lower = -upper 
+#     f_test(x) = 1/2 * norm(A*x - b)^2 + ρ/2 .* norm(x - z + u)^2 
 
-    # cache factorization 
-    L, U = factor(A, ρ) 
+#     # cache factorization 
+#     L, U = factor(A, ρ) 
 
-    k = 0 
+#     k = 0 
     
-## ============================================ ##
-    # for k = 1:max_iter 
+# ## ============================================ ##
+#     # for k = 1:max_iter 
 
-        k += 1 
+#         k += 1 
 
-        # ----------------------- # 
-        # x-update 
+#         # ----------------------- # 
+#         # x-update 
 
-        q = Atb + ρ * (z - u)           # temp value 
-        if m >= n                       # if skinny 
-            x_lu = U \ ( L \ q ) 
-        else                            # if fat 
-            x_lu = q / ρ - ( A' * ( U \ ( L \ (A*q) ) ) ) / ρ^2 
-        end 
+#         q = Atb + ρ * (z - u)           # temp value 
+#         if m >= n                       # if skinny 
+#             x_lu = U \ ( L \ q ) 
+#         else                            # if fat 
+#             x_lu = q / ρ - ( A' * ( U \ ( L \ (A*q) ) ) ) / ρ^2 
+#         end 
 
-        # inelegant way 
-        x_inv = inv( A'*A + ρ*I ) * ( Atb + ρ * ( z - u ) )
+#         # inelegant way 
+#         x_inv = inv( A'*A + ρ*I ) * ( Atb + ρ * ( z - u ) )
 
-        # optimization 
-        od     = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
-        # result    = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-        result = optimize( od, x0, LBFGS() ) 
-        x_opt  = result.minimizer 
+#         # optimization 
+#         od     = OnceDifferentiable( f_test, x0 ; autodiff = :forward ) 
+#         # result    = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
+#         result = optimize( od, x0, LBFGS() ) 
+#         x_opt  = result.minimizer 
 
-        println("norm(x_lu - x_inv) = ", norm(x_lu - x_inv))
-        println("norm(x_lu - x_opt) = ", norm(x_lu - x_opt)) 
+#         println("norm(x_lu - x_inv) = ", norm(x_lu - x_inv))
+#         println("norm(x_lu - x_opt) = ", norm(x_lu - x_opt)) 
 
-        x = x_opt 
+#         x = x_opt 
 
-        # ----------------------- #
-        # z-update 
+#         # ----------------------- #
+#         # z-update 
 
-        z_old = z 
-        x_hat = α*x + (1 .- α)*z_old 
-        z = shrinkage(x_hat + u, λ/ρ) 
+#         z_old = z 
+#         x_hat = α*x + (1 .- α)*z_old 
+#         z = shrinkage(x_hat + u, λ/ρ) 
 
-        # ----------------------- #
-        # u-update 
+#         # ----------------------- #
+#         # u-update 
 
-        u = u + (x_hat - z) 
+#         u = u + (x_hat - z) 
 
-        # ----------------------- #
-        # diagnostics + termination checks 
+#         # ----------------------- #
+#         # diagnostics + termination checks 
 
-        p = objective(A, b, λ, x, z) 
-        r_norm   = norm(x - z) 
-        s_norm   = norm( -ρ*(z - z_old) ) 
-        eps_pri  = sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) 
-        eps_dual = sqrt(n)*abstol + reltol*norm(ρ*u)  
+#         p = objective(A, b, λ, x, z) 
+#         r_norm   = norm(x - z) 
+#         s_norm   = norm( -ρ*(z - z_old) ) 
+#         eps_pri  = sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) 
+#         eps_dual = sqrt(n)*abstol + reltol*norm(ρ*u)  
 
-        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
-            "reached tol!"
-        end 
+#         if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+#             "reached tol!"
+#         end 
 
-    # end 
+#     # end 
 
 
-## ============================================ ## 
+# ## ============================================ ## 
 
-    f_test(x) = (x[1]-1)^2 + x[2]^2 
-    x0     =  [2.0, 2.0] 
-    # lower  = [-10.0, -10.0] 
-    lower  = -[Inf, Inf]  
-    upper  =  [Inf, Inf] 
-    od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
-    # result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
-    result = optimize( od, x0, LBFGS() ) 
-    println("min = ", result.minimizer)
+#     f_test(x) = (x[1]-1)^2 + x[2]^2 
+#     x0     =  [2.0, 2.0] 
+#     # lower  = [-10.0, -10.0] 
+#     lower  = -[Inf, Inf]  
+#     upper  =  [Inf, Inf] 
+#     od     = OnceDifferentiable(f_test, x0; autodiff = :forward)
+#     # result = optimize( od, lower, upper, x0, Fminbox(LBFGS()) ) 
+#     result = optimize( od, x0, LBFGS() ) 
+#     println("min = ", result.minimizer)
     
 
-## ============================================ ## 
+# ## ============================================ ## 
 
-function f_test_wrap(f_test, x)
+# function f_test_wrap(f_test, x)
 
-    out = f_test(x) 
+#     out = f_test(x) 
 
-    return out 
+#     return out 
 
-end 
+# end 
 
-f_test_wrap(f_test, x0) 
+# f_test_wrap(f_test, x0) 
 
