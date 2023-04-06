@@ -36,7 +36,7 @@ p_ode = plot(sol, label = [ "x1 (true)" "x2 (true)"], title = "x" )
 
 
 ## ============================================ ## 
-# derivatives: finite differencing --> XMAT 
+# derivatives: finite differencing --> mapreduce x FIRST 
 
 # extract variables --> measurements 
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
@@ -60,7 +60,7 @@ dx_err  = dx_true - dx_fd
 
 
 ## ============================================ ## 
-# derivatives: finite differencing --> mapreduce at end 
+# derivatives: finite differencing --> mapreduce at END (works better??)
 
 # extract variables --> measurements 
 x = sol.u ; 
