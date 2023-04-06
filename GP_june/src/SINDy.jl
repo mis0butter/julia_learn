@@ -35,7 +35,7 @@ function sparsify_dynamics( Θx, dx, λ, n_vars )
             Ξ[small_inds, j] .= 0 
 
             # big_inds --> select columns of Θx
-            big_inds = findall( >(λ), abs.( Ξ[:,j] ) ) 
+            big_inds = findall( >=(λ), abs.( Ξ[:,j] ) ) 
 
             # regress dynamics onto remaining terms to find sparse Ξ
             Ξ[big_inds, j] = Θx[:, big_inds] \ dx[:,j]
