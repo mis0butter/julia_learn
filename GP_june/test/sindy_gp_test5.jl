@@ -98,16 +98,16 @@ poly_order = n_vars
 ## ============================================ ##
 # objective function 
 
-# deal with state i 
-i = 1  
+# deal with state j 
+j = 1  
 
 # initial loss function vars 
-ξ = 0 * Ξ[:,i] 
-dx = dx_fd[:,i] 
+ξ  = 0 * Ξ[:,j] 
+dx = dx_fd[:,j] 
+
+# ADMM stuff 
 ρ = 1.0 
 λ = 0.1 
-# y = 0 * ξ 
-# z = 0 * ξ
 α = 1.0 
 
 # initial hyperparameters 
@@ -115,10 +115,15 @@ dx = dx_fd[:,i]
 l   = 1.0 
 σ_n = 0.1 
 
-# assign 
+# assign for f_hp_opt 
 f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
 # test 
-f_hp(Ξ[:,i], σ_f, l, σ_n)
+f_hp(Ξ[:,j], σ_f, l, σ_n)
+
+# assign for f_opt 
+f(ξ) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
+# test 
+f(Ξ[:,j])
 
 # l1 norm 
 g(z) = λ * sum(abs.(z)) 
@@ -128,25 +133,30 @@ g(z) = λ * sum(abs.(z))
 # admm!!! 
 
 hist_hp_opt = Hist( [], [], [], [], [] ) 
-# hist_opt    = Hist( [], [], [], [], [] ) 
+hist_opt    = Hist( [], [], [], [], [] ) 
 # hist_test   = Hist( [], [], [], [], [] ) 
 
 n = length(ξ)
 @time x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_hp_opt( f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
-# @time x_opt,    z_opt,    hist_opt,    k  = lasso_admm_opt( f, g, n, λ, ρ, α, hist_opt ) 
+@time x_opt,    z_opt,    hist_opt,    k  = lasso_admm_opt( f, g, n, λ, ρ, α, hist_opt ) 
 # @time x_test,   z_test,   hist_test       = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
 # solution residuals 
-# println( "z_opt - ξ_true = " )
-# display( z_opt - Ξ_true[:,1] ) 
+println( "z_opt - ξ_true = " )
+display( z_opt - Ξ_true[:,j] ) 
 println( "z_hp_opt - ξ_true = " )
-display( z_hp_opt - Ξ_true[:,1] ) 
+display( z_hp_opt - Ξ_true[:,j] ) 
 
+
+## ============================================ ##
 # plot 
-# p_opt  = plot_admm(hist_opt) 
-#     plot!(plot_title = "ADMM Lasso (x-opt)")
-p_opt  = plot_admm(hist_hp_opt) 
-    plot!(plot_title = "ADMM Lasso (x-hp-opt)")
+
+p_opt  = plot_admm(hist_opt) 
+    plot!(plot_title = "ADMM Lasso (x-opt) \n state = $(j)" )
+p_hp_opt = plot_admm(hist_hp_opt) 
+    plot!(plot_title = "ADMM Lasso (x-hp-opt) \n state = $(j)")
+
+fig = plot(p_opt, p_hp_opt, layout = (1,2), size = [800 800])
 
 
 
