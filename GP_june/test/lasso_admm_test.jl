@@ -57,9 +57,9 @@ hist_opt  = Hist( [], [], [], [], [] )
 hist_test = Hist( [], [], [], [], [] ) 
 
 # admm!!! 
-@time x_boyd, hist_boyd = lasso_admm_boyd(A, b, λ, ρ, α, hist_boyd) 
-@time x_opt,  hist_opt  = lasso_admm_opt(f, g, n, λ, ρ, α, hist_opt) 
-@time x_test, hist_test = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
+@time x_boyd, z_boyd, hist_boyd = lasso_admm_boyd( A, b, λ, ρ, α, hist_boyd ) 
+@time x_opt,  z_opt,  hist_opt  = lasso_admm_opt( f, g, n, λ, ρ, α, hist_opt ) 
+@time x_test, z_test, hist_test = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
 # solution residuals 
 println( "norm(x_boyd - x_opt) = ", norm(x_boyd - x_opt) )
@@ -70,7 +70,7 @@ println( "norm(x_boyd - x_test) = ", norm(x_boyd - x_test) )
 
 p_boyd = plot_admm(hist_boyd) 
     plot!(plot_title = "ADMM Lasso (Boyd)")
-p_opt = plot_admm(hist_opt) 
+p_opt  = plot_admm(hist_opt) 
     plot!(plot_title = "ADMM Lasso (x-opt)")
 p_test = plot_admm(hist_test)
     plot!(plot_title = "ADMM Lasso (x-opt, z-opt)")

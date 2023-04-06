@@ -61,15 +61,15 @@ plot!(p_train, x_test, μ_post, rib = 3*std_post , lw = 3, fa = 0.15, c = :red, 
 println("samples = ", N) 
 
 # test reassigning function 
-test_log_p(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
-test_log_p(( σ_f, l, σ_n )) 
+log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
+log_p_hp(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0]  
 lower = [0.0, 0.0, 0.0]  
 upper = [Inf, Inf, Inf] 
 
 # @time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-od = OnceDifferentiable( test_log_p, σ_0 ; autodiff = :forward ) 
+od = OnceDifferentiable( log_p_hp, σ_0 ; autodiff = :forward ) 
 @time result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
 println("log_p min (LBFGS) = \n ", result.minimizer) 
 

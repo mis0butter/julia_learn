@@ -174,7 +174,7 @@ function lasso_admm_boyd(A, b, λ, ρ, α, hist)
 
     end 
 
-    return z, hist 
+    return x, z, hist 
 end 
     
 
@@ -198,9 +198,15 @@ function lasso_admm_opt( f, g, n, λ, ρ, α, hist )
 
     # augmented Lagrangian (scaled form) 
     L(x, z, u) = f(x) + g(z) + ρ/2 .* norm( x - z + u )^2 
+
+    # counter 
+    iter = 0 
     
     # begin iterations 
     for k = 1 : max_iter 
+
+        # increment counter 
+        iter += 1 
 
         # ----------------------- #
         # x-update (optimization) 
@@ -239,7 +245,7 @@ function lasso_admm_opt( f, g, n, λ, ρ, α, hist )
 
     end 
 
-    return x, hist
+    return x, z, hist, iter 
 
 end 
     
@@ -310,7 +316,105 @@ function lasso_admm_test( f, g, n, λ, ρ, α, hist )
 
     end 
 
-    return x, hist
+    return x, z, hist
 
 end 
+
+
+    
+
+## ============================================ ##
+# LASSO ADMM! 
+
+using  Optim 
+export lasso_admm_hp_opt
+
+function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist ) 
+
+    # define constants 
+    max_iter = 1000  
+    abstol   = 1e-4 
+    reltol   = 1e-2           # save matrix-vector multiply 
+
+    # ADMM solver 
+    x = zeros(n) 
+    z = zeros(n) 
+    u = zeros(n) 
+
+    # initial hyperparameters 
+    σ_f0 = 1.0 ; σ_f = σ_f0 ; 
+    l_0  = 1.0 ; l   = l_0  ; 
+    σ_n0 = 0.1 ; σ_n = σ_n0 ; 
+
+    # bounds 
+    lower = [0.0, 0.0, 0.0]  
+    upper = [Inf, Inf, Inf] 
+
+    # augmented Lagrangian (scaled form) 
+    aug_L(x, σ_f, l, σ_n, z, u) = f(x, σ_f, l, σ_n) + g(z) + ρ/2 .* norm( x - z + u )^2 
+
+    # counter 
+    iter = 0 
+    
+    # begin iterations 
+    for k = 1 : max_iter 
+
+        # increment counter 
+        iter += 1 
+
+        # ----------------------- #
+        # x-update (optimization) 
+
+        # optimization 
+        f_opt(x) = aug_L(x, σ_f, l, σ_n, z, u) 
+        od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
+        result   = optimize( od, x, LBFGS() ) 
+        x        = result.minimizer 
+
+        # ----------------------- #
+        # hp-update (optimization) 
+
+        σ_0   = [σ_f, l, σ_n]  
+        hp_opt(( σ_f, l, σ_n )) = aug_L(x, σ_f, l, σ_n, z, u) 
+        od = OnceDifferentiable( hp_opt, σ_0 ; autodiff = :forward ) 
+        result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+        
+        # assign optimized hyperparameters 
+        σ_f = result.minimizer[1] 
+        l   = result.minimizer[2] 
+        σ_n = result.minimizer[3] 
+        
+        # ----------------------- #
+        # z-update (soft thresholding) 
+
+        z_old = z 
+        x_hat = α*x + (1 .- α)*z_old 
+        z = shrinkage(x_hat + u, λ/ρ) 
+
+        # ----------------------- #
+        # u-update 
+
+        u = u + (x_hat - z) 
+
+        # ----------------------- #
+        # diagnostics + termination checks 
+
+        p = f(x, σ_f, l, σ_n) + g(z)   
+        push!( hist.objval, p )
+        push!( hist.r_norm, norm(x - z) )
+        push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
+        push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 
+        push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+
+        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+            break 
+        end 
+
+    end 
+
+    return x, z, hist, iter 
+
+end 
+
+
     
