@@ -18,12 +18,9 @@ using Plots
 # ODE function 
 
 function ODE_test(dx, x, p, t)
-
-    dx[1] = -1/4 * sin(x[1]) ; 
-    dx[2] = -1/2 * x[2] ; 
-
+    dx[1] = -1/4 * sin(x[1]) 
+    dx[2] = -1/2 * x[2] 
     return dx 
-
 end 
 
 # initial conditions and timespan 
@@ -63,7 +60,9 @@ dx_true = mapreduce(permutedims, vcat, dx_true)
 dx      = mapreduce(permutedims, vcat, dx) 
 dx_err  = dx_true - dx  
 
+# ----------------------- #
 # plot truth and finite diff dx 
+
 p_dx = plot(t, dx_true, 
     lw = 2, xlabel = "t", title = "dx", label = [ "dx1 (true)" "dx2 (true)" ]) 
 plot!(p_dx, t, 
@@ -77,6 +76,7 @@ p_dx_err = plot(t, dx_err,
 p_ode_dx = plot(p_ode, p_dx, p_dx_err, layout = (3,1), 
     size = [ 600, 800 ], plot_title = " x and dx " )
   
+
 ## ============================================ ##
 # SINDy 
 
@@ -93,35 +93,6 @@ poly_order = n_vars
 # first cut - SINDy 
 Ξ_true = sparsify_dynamics(Θx, dx_true, λ, n_vars)
 Ξ      = sparsify_dynamics(Θx, dx, λ, n_vars)
-
-
-## ============================================ ##
-# optimize hyperparameter 
-
-# initial hyperparameters 
-σ_f0 = 1.0 ; σ_f = σ_f0 ; 
-l_0  = 1.0 ; l   = l_0  ; 
-σ_n0 = 0.1 ; σ_n = σ_n0 ; 
-
-# try first state 
-ξ  = Ξ[:,1] 
-dx = dx[:,1]  
-
-log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, dx, dx, Θx*ξ ))
-
-σ_0   = [σ_f0, l_0, σ_n0]  
-lower = [0.0, 0.0, 0.0]  
-upper = [Inf, Inf, Inf] 
-
-# @time result = optimize( test_log_p, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-od = OnceDifferentiable( log_p_hp, σ_0 ; autodiff = :forward ) 
-@time result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-println("log_p min (LBFGS) = \n ", result.minimizer) 
-
-# assign optimized hyperparameters 
-σ_f = result.minimizer[1] 
-l   = result.minimizer[2] 
-σ_n = result.minimizer[3] 
 
 
 ## ============================================ ##
@@ -152,14 +123,17 @@ end
 # test 
 f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
 
+# assign 
 f(ξ) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
 # test 
 f(ξ) 
 
+# assign 
 f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
 # test 
 f_hp(ξ, σ_f, l, σ_n)
 
+# l1 norm 
 g(z) = λ * sum(abs.(z)) 
 
 
@@ -179,7 +153,7 @@ n = length(ξ)
 
 # solution residuals 
 println("z_opt - ξ_true = ")
-display(z_opt - Ξ_true[:,1] ) 
+display( z_opt - Ξ_true[:,1] ) 
 
 # plot 
 p_opt  = plot_admm(hist_opt) 
@@ -190,79 +164,3 @@ p_opt  = plot_admm(hist_hp_opt)
 
 
     
-
-
-
-## ============================================ ##
-# sandbox 
-
-
-    # define constants 
-    max_iter = 1000  
-    abstol   = 1e-4 
-    reltol   = 1e-2           # save matrix-vector multiply 
-
-    # ADMM solver 
-    x = zeros(n) 
-    z = zeros(n) 
-    u = zeros(n) 
-
-    # initial hyperparameters 
-    σ_f0 = 1.0 ; σ_f = σ_f0 ; 
-    l_0  = 1.0 ; l   = l_0  ; 
-    σ_n0 = 0.1 ; σ_n = σ_n0 ; 
-
-    # bounds 
-    lower = [0.0, 0.0, 0.0]  
-    upper = [Inf, Inf, Inf] 
-
-    # augmented Lagrangian (scaled form) 
-    aug_L(x, σ_f, l, σ_n, z, u) = f_hp(x, σ_f, l, σ_n) + g(z) + ρ/2 .* norm( x - z + u )^2 
-
-    # counter 
-    iter = 0 
-    
-    # begin iterations 
-    # for k = 1 : max_iter 
-
-        # increment counter 
-        iter += 1 
-
-        # ----------------------- #
-        # x-update (optimization) 
-
-        # optimization 
-        f_opt(x) = aug_L(x, σ_f, l, σ_n, z, u) 
-        od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
-        result   = optimize( od, x, LBFGS() ) 
-        x        = result.minimizer 
-        
-
-        # ----------------------- #
-        # hp-update (optimization) 
-
-        σ_0   = [σ_f, l, σ_n]  
-        hp_opt(( σ_f, l, σ_n )) = aug_L(x, σ_f, l, σ_n, z, u) 
-        od = OnceDifferentiable( hp_opt, σ_0 ; autodiff = :forward ) 
-        result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-
-        # assign optimized hyperparameters 
-        σ_f = result.minimizer[1] 
-        l   = result.minimizer[2] 
-        σ_n = result.minimizer[3] 
-
-        # ----------------------- #
-        # z-update (soft thresholding) 
-
-        z_old = z 
-        x_hat = α*x + (1 .- α)*z_old 
-        z = shrinkage(x_hat + u, λ/ρ)
-
-        # ----------------------- #
-        # u-update 
-
-        u = u + (x_hat - z) 
-
-
-
-    # end 

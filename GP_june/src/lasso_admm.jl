@@ -371,12 +371,12 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
         result   = optimize( od, x, LBFGS() ) 
         x        = result.minimizer 
 
-        # ----------------------- #
+        # ----------------------- # 
         # hp-update (optimization) 
 
-        σ_0   = [σ_f, l, σ_n]  
+        σ_0    = [σ_f, l, σ_n]  
         hp_opt(( σ_f, l, σ_n )) = aug_L(x, σ_f, l, σ_n, z, u) 
-        od = OnceDifferentiable( hp_opt, σ_0 ; autodiff = :forward ) 
+        od     = OnceDifferentiable( hp_opt, σ_0 ; autodiff = :forward ) 
         result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
         
         # assign optimized hyperparameters 
@@ -389,12 +389,12 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
 
         z_old = z 
         x_hat = α*x + (1 .- α)*z_old 
-        z = shrinkage(x_hat + u, λ/ρ) 
+        z     = shrinkage(x_hat + u, λ/ρ) 
 
         # ----------------------- #
         # u-update 
 
-        u = u + (x_hat - z) 
+        u += (x_hat - z) 
 
         # ----------------------- #
         # diagnostics + termination checks 
