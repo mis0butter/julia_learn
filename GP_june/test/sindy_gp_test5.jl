@@ -99,7 +99,7 @@ poly_order = n_vars
 # objective function 
 
 # deal with state j 
-j = 1  
+j = 1
 
 # initial loss function vars 
 ξ  = 0 * Ξ[:,j] 
@@ -146,6 +146,8 @@ println( "z_opt - ξ_true = " )
 display( z_opt - Ξ_true[:,j] ) 
 println( "z_hp_opt - ξ_true = " )
 display( z_hp_opt - Ξ_true[:,j] ) 
+println( "SINDy - ξ_true = " )
+display( Ξ[:,j] - Ξ_true[:,j] )
 
 
 ## ============================================ ##
