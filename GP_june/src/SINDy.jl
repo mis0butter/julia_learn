@@ -53,7 +53,7 @@ end
 
 export pool_data 
 
-function pool_data(x, n_vars, poly_order) 
+function pool_data(xmat, n_vars, poly_order) 
 # ----------------------- #
 # Purpose: Build data matrix based on possible functions 
 # 
@@ -67,8 +67,8 @@ function pool_data(x, n_vars, poly_order)
 # ----------------------- #
 
     # turn x into matrix and get length 
-    xmat = mapreduce(permutedims, vcat, x) 
-    m    = length(x) 
+    # xmat = mapreduce(permutedims, vcat, x) 
+    m = size(xmat, 1) 
 
     # fil out 1st column of Θ with ones (poly order = 0) 
     ind = 1 ; 
