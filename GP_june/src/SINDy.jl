@@ -5,37 +5,40 @@
 
 export sparsify_dynamics 
 
-function sparsify_dynamics( Θ, dx, λ, n_vars ) 
+function sparsify_dynamics( Θx, dx, λ, n_vars ) 
 # ----------------------- #
 # Purpose: Solve for active terms in dynamics through sparse regression 
 # 
 # Inputs: 
-#   Theta  = data matrix 
+#   Θx     = data matrix (of input states) 
 #   dx     = state derivatives 
 #   lambda = sparsification knob (threshold) 
 #   n_vars = # elements in state 
 # 
 # Outputs: 
-#   XI     = sparse coefficients of dynamics 
+#   Ξ      = sparse coefficients of dynamics 
 # ----------------------- #
 
     # first perform least squares 
-    Ξ = Θ \ dx ; 
+    Ξ = Θx \ dx 
 
     # sequentially thresholded least squares = LASSO. Do 10 iterations 
-    for i = 1 : 10 
+    for k = 1 : 10 
 
         # for each element in state 
         for j = 1 : n_vars 
 
-            # small_inds = rows of XI < threshold 
-            small_inds = findall( <(λ), abs.(Ξ[:,j]) ) ; 
+            # small_inds = rows of |Ξ| < λ
+            small_inds = findall( <(λ), abs.(Ξ[:,j]) ) 
 
-            # set elements < lambda to 0 
-            Ξ[small_inds, j] .= 0 ; 
+            # set elements < λ to 0 
+            Ξ[small_inds, j] .= 0 
 
-            # big_inds --> select columns of \Theta 
-            # big_inds = ~small_inds ; 
+            # big_inds --> select columns of Θx
+            big_inds = findall( >(λ), abs.( Ξ[:,j] ) ) 
+
+            # regress dynamics onto remaining terms to find sparse Ξ
+            Ξ[big_inds, j] = Θx[:, big_inds] \ dx[:,j]
 
         end 
 
@@ -60,21 +63,21 @@ function pool_data(x, n_vars, poly_order)
 #   poly_order  = polynomial order (goes up to order 3) 
 # 
 # Outputs: 
-#   THETA       = data matrix passed through function library 
+#   Θ       = data matrix passed through function library 
 # ----------------------- #
 
     # turn x into matrix and get length 
-    xmat = mapreduce(permutedims, vcat, x) ; 
-    m    = length(x) ; 
+    xmat = mapreduce(permutedims, vcat, x) 
+    m    = length(x) 
 
-    # fil out 1st column of THETA with ones (poly order = 0) 
+    # fil out 1st column of Θ with ones (poly order = 0) 
     ind = 1 ; 
-    THETA = ones(m, ind) ; 
+    Θ = ones(m, ind) 
 
     # poly order 1 
     for i = 1 : n_vars 
-        ind  += 1 ; 
-        THETA = [THETA xmat[:,i]]
+        ind  += 1 
+        Θ = [Θ xmat[:,i]]
     end 
 
     # poly order 2 
@@ -83,8 +86,8 @@ function pool_data(x, n_vars, poly_order)
             for j = i:n_vars 
 
                 ind  += 1 ; 
-                vec   = xmat[:,i] .* xmat[:,j] ; 
-                THETA = [THETA vec] ; 
+                vec   = xmat[:,i] .* xmat[:,j] 
+                Θ = [Θ vec] 
 
             end 
         end 
@@ -97,8 +100,8 @@ function pool_data(x, n_vars, poly_order)
                 for k = j : n_vars 
                     
                     ind  += 1 ;                     
-                    vec   = xmat[:,i] .* xmat[:,j] .* xmat[:,k] ; 
-                    THETA = [THETA vec] ; 
+                    vec   = xmat[:,i] .* xmat[:,j] .* xmat[:,k] 
+                    Θ = [Θ vec] 
 
                 end 
             end 
@@ -107,14 +110,13 @@ function pool_data(x, n_vars, poly_order)
 
     # sine functions 
     for i = 1 : n_vars 
-        ind  += 1 ; 
-        vec   = sin.(xmat[:,i]) ; 
-        THETA = [THETA vec] ; 
+        ind  += 1 
+        vec   = sin.(xmat[:,i]) 
+        Θ = [Θ vec] 
     end 
     
-    return THETA 
+    return Θ 
 
 end 
 
 
-    

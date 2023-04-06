@@ -36,37 +36,37 @@ p_ode = plot(sol, label = [ "x1 (true)" "x2 (true)"], title = "x" )
 
 
 ## ============================================ ## 
-# finite differencing 
+# derivatives: finite differencing 
 
-# extract variables 
-x = sol.u ; 
-t = sol.t ; 
+# extract variables --> measurements 
+x = sol.u 
+t = sol.t 
 
 # (forward) finite difference 
-dx = 0*x ; 
+dx_fd = 0*x 
 for i = 1 : length(x)-1
-    dx[i] = ( x[i+1] - x[i] ) / dt ; 
+    dx_fd[i] = ( x[i+1] - x[i] ) / dt 
 end 
-dx[end] = dx[end-1] ; 
+dx_fd[end] = dx_fd[end-1] 
 
 # true derivatives 
-dx_true = 0*dx ; 
+dx_true = 0*dx_fd
 for i = 1 : length(x) 
-    dx_true[i] = ODE_test([0.0, 0.0], x[i], 0.0, 0.0 ) ; 
+    dx_true[i] = ODE_test( [0.0, 0.0], x[i], 0.0, 0.0 ) 
 end 
 
 # convert vector of vectors into matrix 
 dx_true = mapreduce(permutedims, vcat, dx_true) 
-dx      = mapreduce(permutedims, vcat, dx) 
-dx_err  = dx_true - dx  
+dx_fd   = mapreduce(permutedims, vcat, dx_fd) 
+dx_err  = dx_true - dx_fd
 
 # ----------------------- #
 # plot truth and finite diff dx 
 
 p_dx = plot(t, dx_true, 
     lw = 2, xlabel = "t", title = "dx", label = [ "dx1 (true)" "dx2 (true)" ]) 
-plot!(p_dx, t, 
-    dx, ls = :dot, lw = 2, label = [ "dx1 (diff)" "dx2 (diff)" ]) 
+plot!(p_dx, t, dx_fd, 
+    ls = :dot, lw = 2, label = [ "dx1 (diff)" "dx2 (diff)" ]) 
 
 # plot dx err 
 p_dx_err = plot(t, dx_err, 
@@ -91,47 +91,33 @@ poly_order = n_vars
 λ = 0.1 ; 
 
 # first cut - SINDy 
-Ξ_true = sparsify_dynamics(Θx, dx_true, λ, n_vars)
-Ξ      = sparsify_dynamics(Θx, dx, λ, n_vars)
+Ξ_true = sparsify_dynamics(Θx, dx_true, λ, n_vars) 
+Ξ      = sparsify_dynamics(Θx, dx_fd, λ, n_vars) 
 
 
 ## ============================================ ##
 # objective function 
 
+# deal with state i 
+i = 1  
+
+# initial loss function vars 
+ξ = 0 * Ξ[:,i] 
 ρ = 1.0 
 λ = 0.1 
-y = 0*ξ 
-z = 0*ξ
+y = 0 * ξ 
+z = 0 * ξ
 α = 1.0 
 
-σ_n = 0.5 
-
-# f objective function 
-function f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
-
-    # training kernel function 
-    Ky  = k_fn((σ_f, l, dx, dx)) 
-    Ky += σ_n^2 * I 
-
-    term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
-    term += 1/2*log(det( Ky )) 
-
-    return term 
-
-end 
-
-# test 
-f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
+# initial hyperparameters 
+σ_f = 1.0 
+l   = 1.0 
+σ_n = 0.1 
 
 # assign 
-f(ξ) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
+f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx[:,i], ξ, Θx ))
 # test 
-f(ξ) 
-
-# assign 
-f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
-# test 
-f_hp(ξ, σ_f, l, σ_n)
+f_hp(Ξ[:,i], σ_f, l, σ_n)
 
 # l1 norm 
 g(z) = λ * sum(abs.(z)) 
@@ -152,7 +138,7 @@ n = length(ξ)
 # @time x_test,   z_test,   hist_test       = lasso_admm_test( f, g, n, λ, ρ, α, hist_test ) 
 
 # solution residuals 
-println("z_opt - ξ_true = ")
+println( "z_opt - ξ_true = " )
 display( z_opt - Ξ_true[:,1] ) 
 
 # plot 

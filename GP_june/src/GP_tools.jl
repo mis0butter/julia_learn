@@ -71,10 +71,10 @@ function log_p(( σ_f, l, σ_n, x, y, μ ))
     Ky = k_fn((σ_f, l, x, x)) 
     Ky += σ_n^2 * I 
 
-    term_1 = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
-    term_2 = 1/2 * log( det( Ky ) ) 
+    term  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
+    term += 1/2 * log( det( Ky ) ) 
 
-    return term_1 + term_2 
+    return term 
 
 end 
 
