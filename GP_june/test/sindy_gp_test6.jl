@@ -109,7 +109,7 @@ p_ode_dx = plot(p_ode, p_dx, p_dx_err, layout = (3,1),
 
 hist_hp_opt = Hist( [], [], [], [], [] ) 
 
-test = sindy_gp_lasso( x, dx_fd, λ, hist_hp_opt ) 
+@time test = sindy_gp_admm( x, dx_fd, λ, hist_hp_opt ) 
 
 
 
