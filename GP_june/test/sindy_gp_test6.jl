@@ -47,7 +47,7 @@ dx_fd = 0*x
 for i = 1 : length(t)-1
     dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / dt 
 end 
-dx_fd[end] = dx_fd[end-1] 
+dx_fd[end,:] = dx_fd[end-1,:] 
 
 # true derivatives 
 dx_true = 0*x
@@ -57,33 +57,6 @@ end
 
 # error 
 dx_err  = dx_true - dx_fd 
-
-
-## ============================================ ## 
-# derivatives: finite differencing --> mapreduce at END (works better??)
-
-# extract variables --> measurements 
-x = sol.u ; 
-t = sol.t 
-
-# (forward) finite difference 
-dx_vec = 0*x 
-for i = 1 : length(t)-1
-    dx_vec[i] = ( x[i+1] - x[i] ) / dt 
-end 
-dx_vec[end] = dx_vec[end-1] 
-
-# true derivatives 
-dx_true_vec = 0*x
-for i = 1 : length(t) 
-    dx_true_vec[i] = ODE_test( [0.0, 0.0], x[i], 0.0, 0.0 ) 
-end 
-
-# error 
-x       = mapreduce(permutedims, vcat, x) 
-dx_fd   = mapreduce(permutedims, vcat, dx_vec) 
-dx_true = mapreduce(permutedims, vcat, dx_true_vec) 
-dx_err  = dx_true - dx_fd
 
 
 ## ============================================ ##
@@ -109,10 +82,17 @@ p_ode_dx = plot(p_ode, p_dx, p_dx_err, layout = (3,1),
 
 hist_hp_opt = Hist( [], [], [], [], [] ) 
 
-@time test = sindy_gp_admm( x, dx_fd, λ, hist_hp_opt ) 
+@time z_soln, hist_hp_opt = sindy_gp_admm( x, dx_fd, λ, hist_hp_opt ) 
 
 
 
+
+
+
+
+
+## ============================================ ##
+# sandbox 
 ## ============================================ ##
 # SINDy-GP-LASSO, f_hp_opt 
 

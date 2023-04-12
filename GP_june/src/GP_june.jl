@@ -76,7 +76,7 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
 
     end 
 
-    return z_soln 
+    return z_soln, hist_hp_opt 
 
 end 
 
