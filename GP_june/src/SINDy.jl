@@ -1,3 +1,21 @@
+## ============================================ ##
+# putting it together 
+
+export SINDy 
+function SINDy( x, dx, λ )
+
+    n_vars = size(x, 2) 
+    poly_order = n_vars 
+
+    # construct data library 
+    Θx = pool_data(x, n_vars, poly_order) 
+
+    # first cut - SINDy 
+    Ξ = sparsify_dynamics(Θx, dx, λ, n_vars) 
+
+    return Ξ
+
+end 
 
 
 ## ============================================ ##

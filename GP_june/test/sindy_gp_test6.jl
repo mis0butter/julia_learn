@@ -39,8 +39,15 @@ sol  = solve(prob, saveat = 0.01)
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
 t = sol.t 
 
-plt_static = plot( sol, idxs = (1,2,3), legend = false, title = "Lorenz Atractor" )
-
+plt_static = plot( 
+    sol, 
+    xlim   = (-30, 30),
+    ylim   = (-30, 30),
+    zlim   = (0, 50),
+    idxs   = (1,2,3), 
+    legend = false, 
+    title  = "Lorenz Attractor" 
+    )
 
 
 ## ============================================ ##
@@ -51,11 +58,11 @@ plt_anim  = plot3d(
     1,
     xlim   = (-30, 30),
     ylim   = (-30, 30),
-    zlim   = (0, 60),
+    zlim   = (0, 50),
     title  = "Animation",
     legend = false,
     marker = 2, 
-)
+    )
 
 # init animation and IC 
 a  = Animation()	
@@ -63,7 +70,7 @@ x0 = [1.0, 0, 0]
 c  = theme_palette(:auto) 
 
 # loop 
-for i in 1:0.5:100 
+for i in 1:tf 
 
     #  time interval 
     ts = (i-1, i) 
@@ -72,17 +79,17 @@ for i in 1:0.5:100
     prob = ODEProblem(lorenz, x0, ts, p) 
     sol  = solve(prob) 
 
-    # plot 
+    # plot and save frame 
     plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
-
-    x0 = sol.u[end]
-
     plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
     frame(a, plt)
 
+    # next iter 
+    x0 = sol.u[end]
+
 end
 	
-@time plt_gif = gif(a, fps = 5)
+plt_gif = gif(a, fps = 5)
 
 
 ## ============================================ ## 
@@ -101,29 +108,41 @@ dx_fd[end,:] = dx_fd[end-1,:]
 
 # true derivatives 
 dx_true = 0*x
+z = zeros(3) 
 for i = 1 : length(t) 
-    dx_true[i,:] = lorenz( [0.0, 0.0, 0.0], x[i,:], p, 0.0 ) 
+    dx_true[i,:] = lorenz( z, x[i,:], p, 0 ) 
 end 
 
 # error 
 dx_err  = dx_true - dx_fd 
+
+plot(dx_true[:,1], dx_true[:,2], dx_true[:,3], idxs = (1,2,3), title = "dx/dt")
 
 
 ## ============================================ ##
 # plot truth and finite diff dx 
 
 p_dx = plot(t, dx_true, 
-    lw = 2, xlabel = "t", title = "dx", label = [ "dx1 (true)" "dx2 (true)" ]) 
+    lw     = 2, 
+    xlabel = "t", 
+    title  = "dx", 
+    label  = [ "dx1 (true)" "dx2 (true)" ]) 
 plot!(p_dx, t, dx_fd, 
-    ls = :dot, lw = 2, label = [ "dx1 (diff)" "dx2 (diff)" ]) 
+    ls = :dot, 
+    lw = 2, 
+    label = [ "dx1 (diff)" "dx2 (diff)" ]) 
 
 # plot dx err 
 p_dx_err = plot(t, dx_err, 
-    lw = 2, title = "dx (err) = true - diff", label = [ "dx1 (err)" "dx2 (err)" ])
+    lw    = 2, 
+    title = "dx (err) = true - diff", 
+    label = [ "dx1 (err)" "dx2 (err)" ])
 
 # plot all 
-p_ode_dx = plot(p_ode, p_dx, p_dx_err, layout = (3,1), 
-    size = [ 600, 800 ], plot_title = " x and dx " )
+p_ode_dx = plot(plt_static, p_dx, p_dx_err, 
+    layout = (3,1), 
+    size = [ 600, 800 ], 
+    plot_title = " x and dx " )
   
 
 ## ============================================ ##
