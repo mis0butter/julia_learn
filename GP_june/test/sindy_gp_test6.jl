@@ -17,22 +17,72 @@ using Plots
 ## ============================================ ##
 # ODE function 
 
-function ODE_test(dx, x, p, t)
-    dx[1] = -1/4 * sin(x[1]) 
-    dx[2] = -1/2 * x[2] 
-    return dx 
+function lorenz(du, (x,y,z), (σ,ρ,β), t)
+
+    du[1] = dx = σ * ( y - x ) 
+    du[2] = dy = x * ( ρ - z ) - y 
+    du[3] = dz = x * y - β * z  
+
+    return du 
 end 
 
 # initial conditions and timespan 
-x0 = [1; 1] ;       n_vars = size(x0, 1) 
-ts = (0.0, 10.0) ;  dt = 0.1 
+x0 = [1; 0; 0]  ;   n_vars = size(x0, 1) 
+tf = 100        ;   ts = (0.0, tf)   
+p  = [ 10.0, 28.0, 8/3 ] 
 
 # solve ODE 
-prob = ODEProblem(ODE_test, x0, ts) 
-sol  = solve(prob, saveat = dt) 
+prob = ODEProblem(lorenz, x0, ts, p) 
+sol  = solve(prob, saveat = 0.01) 
 
-using Plots 
-p_ode = plot(sol, label = [ "x1 (true)" "x2 (true)"], title = "x" ) 
+# extract variables --> measurements 
+x = sol.u ; x = mapreduce(permutedims, vcat, x) 
+t = sol.t 
+
+plt_static = plot( sol, idxs = (1,2,3), legend = false, title = "Lorenz Atractor" )
+
+
+
+## ============================================ ##
+# animated plot (interpolation)
+
+# plot 
+plt_anim  = plot3d(
+    1,
+    xlim   = (-30, 30),
+    ylim   = (-30, 30),
+    zlim   = (0, 60),
+    title  = "Animation",
+    legend = false,
+    marker = 2, 
+)
+
+# init animation and IC 
+a  = Animation()	
+x0 = [1.0, 0, 0]
+c  = theme_palette(:auto) 
+
+# loop 
+for i in 1:0.5:100 
+
+    #  time interval 
+    ts = (i-1, i) 
+
+    # solve ODE 
+    prob = ODEProblem(lorenz, x0, ts, p) 
+    sol  = solve(prob) 
+
+    # plot 
+    plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
+
+    x0 = sol.u[end]
+
+    plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
+    frame(a, plt)
+
+end
+	
+@time plt_gif = gif(a, fps = 5)
 
 
 ## ============================================ ## 
@@ -45,14 +95,14 @@ t = sol.t
 # (forward) finite difference 
 dx_fd = 0*x 
 for i = 1 : length(t)-1
-    dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / dt 
+    dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
 end 
 dx_fd[end,:] = dx_fd[end-1,:] 
 
 # true derivatives 
 dx_true = 0*x
 for i = 1 : length(t) 
-    dx_true[i,:] = ODE_test( [0.0, 0.0], x[i,:], 0.0, 0.0 ) 
+    dx_true[i,:] = lorenz( [0.0, 0.0, 0.0], x[i,:], p, 0.0 ) 
 end 
 
 # error 
