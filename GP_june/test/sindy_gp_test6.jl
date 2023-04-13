@@ -77,7 +77,7 @@ for i in 1:tf
 
     # solve ODE 
     prob = ODEProblem(lorenz, x0, ts, p) 
-    sol  = solve(prob) 
+    sol  = solve(prob, saveat = .01) 
 
     # plot and save frame 
     plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
@@ -116,43 +116,36 @@ end
 # error 
 dx_err  = dx_true - dx_fd 
 
-plot(dx_true[:,1], dx_true[:,2], dx_true[:,3], idxs = (1,2,3), title = "dx/dt")
+# plot 
+plt_1 = plot(t, dx_true[:,1], 
+    title = "Axis 1", label = "true" ) 
+    plot!(t, dx_fd[:,1], ls = :dash, label = "finite diff" )
+plt_2 = plot(t, dx_true[:,2], 
+    title = "Axis 2") 
+    plot!(t, dx_fd[:,2], ls = :dash, legend = false)
+plt_3 = plot(t, dx_true[:,3], 
+    title = "Axis 3", xlabel = "Time (s)") 
+    plot!(t, dx_fd[:,3], ls = :dash, legend = false)
 
+plt_dx = plot(plt_1, plt_2, plt_3, layout = (3,1), size = [600 1000], plot_title = "Derivatives")
 
-## ============================================ ##
-# plot truth and finite diff dx 
-
-p_dx = plot(t, dx_true, 
-    lw     = 2, 
-    xlabel = "t", 
-    title  = "dx", 
-    label  = [ "dx1 (true)" "dx2 (true)" ]) 
-plot!(p_dx, t, dx_fd, 
-    ls = :dot, 
-    lw = 2, 
-    label = [ "dx1 (diff)" "dx2 (diff)" ]) 
-
-# plot dx err 
-p_dx_err = plot(t, dx_err, 
-    lw    = 2, 
-    title = "dx (err) = true - diff", 
-    label = [ "dx1 (err)" "dx2 (err)" ])
-
-# plot all 
-p_ode_dx = plot(plt_static, p_dx, p_dx_err, 
-    layout = (3,1), 
-    size = [ 600, 800 ], 
-    plot_title = " x and dx " )
-  
 
 ## ============================================ ##
 
 λ = 0.1 
 
-hist_hp_opt = Hist( [], [], [], [], [] ) 
+# sindy 
+Ξ_sindy_true = SINDy( x, dx_true, λ ) 
+Ξ_sindy_fd   = SINDy( x, dx_fd, λ ) 
+## ============================================ ##
 
-@time z_soln, hist_hp_opt = sindy_gp_admm( x, dx_fd, λ, hist_hp_opt ) 
+# truth 
+hist_true = Hist( [], [], [], [], [] ) 
+@time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
 
+# finite difference 
+hist_fd = Hist( [], [], [], [], [] ) 
+@time z_fd, hist_fd = sindy_gp_admm( x, dx_fd, λ, hist_fd ) 
 
 
 

@@ -30,7 +30,14 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
     # ----------------------- #
     # SINDy 
 
-    Ξ = SINDy( x, dx_fd, λ ) 
+    n_vars = size(x, 2) 
+    poly_order = n_vars 
+
+    # construct data library 
+    Θx = pool_data(x, n_vars, poly_order) 
+
+    # first cut - SINDy 
+    Ξ = sparsify_dynamics(Θx, dx_fd, λ, n_vars) 
 
     # ----------------------- #
     # objective function 
