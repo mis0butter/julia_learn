@@ -5,8 +5,6 @@ using LinearAlgebra
 # sample from given mean and covariance 
 
 export gauss_sample 
-
-# sample from given mean and covariance 
 function gauss_sample(μ::Vector, K::Matrix) 
     
     # cholesky decomposition, get lower triangular decomp 
@@ -28,7 +26,6 @@ end
 # sample from given mean and covariance 
 
 export k_fn 
-
 function k_fn(( σ_f, l, xp, xq ))
 
     return σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
@@ -40,8 +37,6 @@ end
 # define square distance function 
 
 export sq_dist 
-
-# define square distance function 
 function sq_dist(a::Vector, b::Vector) 
 
     r = length(a) 
@@ -64,7 +59,6 @@ end
 # marginal log-likelihood for Gaussian Process 
 
 export log_p 
-
 function log_p(( σ_f, l, σ_n, x, y, μ ))
     
     # training kernel function 
@@ -83,7 +77,6 @@ end
 # posterior distribution 
 
 export post_dist
-
 function post_dist(( x_train, y_train, x_test, σ_f, l, σ_n ))
 
     # x  = training data  

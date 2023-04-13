@@ -15,7 +15,7 @@ using Plots
 
 
 ## ============================================ ##
-# ODE function 
+# select ODE function 
 
 function lorenz(du, (x,y,z), (σ,ρ,β), t)
 
@@ -26,14 +26,34 @@ function lorenz(du, (x,y,z), (σ,ρ,β), t)
     return du 
 end 
 
-# initial conditions and timespan 
-x0 = [1; 0; 0]  ;   n_vars = size(x0, 1) 
-tf = 100        ;   ts = (0.0, tf)   
-p  = [ 10.0, 28.0, 8/3 ] 
+function ode_2states(du, (x,y), (σ,ρ,β), t)
+
+    du[1] = dx = σ * ( y - x ) 
+    du[2] = dy = x * ρ - x * y - β * y 
+
+    return du 
+end 
+
+function ode_sine(dx, x, p, t)
+    dx[1] = -1/4 * sin(x[1]) 
+    dx[2] = -1/2 * x[2] 
+    return dx 
+end 
+
+# ----------------------- #
+# get measurements 
+
+# initial conditions and parameters 
+fn     = ode_sine 
+x0     = [ 1.0; 1.0 ]  
+p      = [ 10.0, 28.0, 8/3 ] 
+n_vars = size(x0, 1) 
+tf     = 10        
+ts     = (0.0, tf)   
 
 # solve ODE 
-prob = ODEProblem(lorenz, x0, ts, p) 
-sol  = solve(prob, saveat = 0.01) 
+prob = ODEProblem(fn, x0, ts, p) 
+sol  = solve(prob, saveat = 0.1) 
 
 # extract variables --> measurements 
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
@@ -41,12 +61,9 @@ t = sol.t
 
 plt_static = plot( 
     sol, 
-    xlim   = (-30, 30),
-    ylim   = (-30, 30),
-    zlim   = (0, 50),
-    idxs   = (1,2,3), 
     legend = false, 
-    title  = "Lorenz Attractor" 
+    # idxs   = (1,2,3), 
+    # title  = "Lorenz Attractor" 
     )
 
 
@@ -108,48 +125,97 @@ dx_fd[end,:] = dx_fd[end-1,:]
 
 # true derivatives 
 dx_true = 0*x
-z = zeros(3) 
+z = zeros(n_vars) 
 for i = 1 : length(t) 
-    dx_true[i,:] = lorenz( z, x[i,:], p, 0 ) 
+    dx_true[i,:] = fn( z, x[i,:], p, 0 ) 
 end 
 
 # error 
 dx_err  = dx_true - dx_fd 
 
-# plot 
-plt_1 = plot(t, dx_true[:,1], 
-    title = "Axis 1", label = "true" ) 
-    plot!(t, dx_fd[:,1], ls = :dash, label = "finite diff" )
-plt_2 = plot(t, dx_true[:,2], 
-    title = "Axis 2") 
-    plot!(t, dx_fd[:,2], ls = :dash, legend = false)
-plt_3 = plot(t, dx_true[:,3], 
-    title = "Axis 3", xlabel = "Time (s)") 
-    plot!(t, dx_fd[:,3], ls = :dash, legend = false)
+## ============================================ ##
+# plot derivatives 
 
-plt_dx = plot(plt_1, plt_2, plt_3, layout = (3,1), size = [600 1000], plot_title = "Derivatives")
+plot_array = Any[] 
+for j in 1 : n_vars
+    plt = plot(t, dx_true[:,j], 
+        title = "Axis $j", label = "true" ) 
+        plot!(t, dx_fd[:,j], ls = :dash, label = "finite diff" )
+  push!( plot_array, plt ) 
+end
+
+plot(plot_array ... , 
+    layout = (n_vars, 1), 
+    size = [600 n_vars*300], 
+    plot_title = "Derivatives" )
 
 
 ## ============================================ ##
+# SINDy alone 
 
 λ = 0.1 
 
 # sindy 
 Ξ_sindy_true = SINDy( x, dx_true, λ ) 
 Ξ_sindy_fd   = SINDy( x, dx_fd, λ ) 
+
+
 ## ============================================ ##
+# smooth derivatives GP --> SINDy 
+
+# ----------------------- #
+# optimization - doesn't work?? 
+
+# x_train = t 
+# y_train = dx_fd[:,1] 
+
+# # something that works 
+# N = 100
+# x_train = sort( 2π*rand(N) ) 
+# y_train = sin.(x_train) .+ 0.1*randn(N) 
+
+# # FIRST STATE 
+σ_0    = [1.0, 1.0, 0.1]  
+# log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
+# log_p_hp(( σ_f, l, σ_n )) 
+
+# # bounds 
+# lower = [0.0, 0.0, 0.0]  
+# upper = [Inf, Inf, Inf] 
+# od     = OnceDifferentiable( log_p_hp, σ_0 ; autodiff = :forward ) 
+# result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
+
+# # assign optimized hyperparameters 
+# σ_f = result.minimizer[1] 
+# l   = result.minimizer[2] 
+# σ_n = result.minimizer[3] 
+
+# ----------------------- #
+# posterior dist 
+
+σ_f, l, σ_n = σ_0 
+
+dx_GP = 0 * dx_true 
+
+for j = 1:n_vars 
+    dx_GP[:,j], Σ = post_dist(( t, dx_fd[:,j], t, σ_f, l, σ_n ))
+end 
+
+Ξ_sindy_GP   = SINDy( x, dx_GP, λ ) 
+
+
+## ============================================ ##
+# SINDy + GP + ADMM 
 
 # truth 
 hist_true = Hist( [], [], [], [], [] ) 
 @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
+display(z_true) 
 
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
 @time z_fd, hist_fd = sindy_gp_admm( x, dx_fd, λ, hist_fd ) 
-
-
-
-
+display(z_fd) 
 
 
 

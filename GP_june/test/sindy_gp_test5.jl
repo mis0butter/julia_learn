@@ -56,6 +56,7 @@ for i = 1 : length(x)
 end 
 
 # convert vector of vectors into matrix 
+x       = mapreduce(permutedims, vcat, x) 
 dx_true = mapreduce(permutedims, vcat, dx_true) 
 dx_fd   = mapreduce(permutedims, vcat, dx_fd) 
 dx_err  = dx_true - dx_fd
