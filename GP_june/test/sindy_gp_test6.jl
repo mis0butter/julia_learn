@@ -35,12 +35,12 @@ function ode_2states(du, (x,y), (σ,ρ,β), t)
 end 
 
 function ode_sine(dx, x, p, t)
-    dx[1] = -1/4 * sin(x[1]) 
+    dx[1] = -1/4 * sin(x[1])  
     dx[2] = -1/2 * x[2] 
     return dx 
 end 
 
-# ----------------------- #
+## ============================================ ##
 # get measurements 
 
 # initial conditions and parameters 
@@ -50,10 +50,12 @@ p      = [ 10.0, 28.0, 8/3 ]
 n_vars = size(x0, 1) 
 tf     = 10        
 ts     = (0.0, tf)   
+dt     = 0.1 
 
 # solve ODE 
 prob = ODEProblem(fn, x0, ts, p) 
-sol  = solve(prob, saveat = 0.1) 
+sol  = solve(prob, saveat = dt) 
+# sol  = solve(prob) 
 
 # extract variables --> measurements 
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
@@ -63,50 +65,51 @@ plt_static = plot(
     sol, 
     legend = false, 
     # idxs   = (1,2,3), 
-    # title  = "Lorenz Attractor" 
+    title  = "Dynamics" 
     )
 
 
 ## ============================================ ##
 # animated plot (interpolation)
 
-# plot 
-plt_anim  = plot3d(
-    1,
-    xlim   = (-30, 30),
-    ylim   = (-30, 30),
-    zlim   = (0, 50),
-    title  = "Animation",
-    legend = false,
-    marker = 2, 
-    )
+# # plot 
+# plt_anim  = plot3d(
+#     1,
+#     xlim   = (-30, 30),
+#     ylim   = (-30, 30),
+#     zlim   = (0, 50),
+#     title  = "Animation",
+#     legend = false,
+#     marker = 2, 
+#     )
 
-# init animation and IC 
-a  = Animation()	
-x0 = [1.0, 0, 0]
-c  = theme_palette(:auto) 
+# # init animation and IC 
+# a  = Animation()	
+# x0 = [1.0, 0, 0]
+# c  = theme_palette(:auto) 
 
-# loop 
-for i in 1:tf 
+# # loop 
+# for i in 1:tf 
 
-    #  time interval 
-    ts = (i-1, i) 
+#     #  time interval 
+#     ts = (i-1, i) 
 
-    # solve ODE 
-    prob = ODEProblem(lorenz, x0, ts, p) 
-    sol  = solve(prob, saveat = .01) 
+#     # solve ODE 
+#     prob = ODEProblem(lorenz, x0, ts, p) 
+#     sol  = solve(prob, saveat = dt) 
+#     # sol  = solve(prob) 
 
-    # plot and save frame 
-    plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
-    plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
-    frame(a, plt)
+#     # plot and save frame 
+#     plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
+#     plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
+#     frame(a, plt)
 
-    # next iter 
-    x0 = sol.u[end]
+#     # next iter 
+#     x0 = sol.u[end]
 
-end
+# end
 	
-plt_gif = gif(a, fps = 5)
+# plt_gif = gif(a, fps = 5)
 
 
 ## ============================================ ## 
@@ -163,54 +166,42 @@ plot(plot_array ... ,
 ## ============================================ ##
 # smooth derivatives GP --> SINDy 
 
-# ----------------------- #
-# optimization - doesn't work?? 
-
-# x_train = t 
-# y_train = dx_fd[:,1] 
-
-# # something that works 
-# N = 100
-# x_train = sort( 2π*rand(N) ) 
-# y_train = sin.(x_train) .+ 0.1*randn(N) 
-
-# # FIRST STATE 
+# ICs  
 σ_0    = [1.0, 1.0, 0.1]  
-# log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
-# log_p_hp(( σ_f, l, σ_n )) 
-
-# # bounds 
-# lower = [0.0, 0.0, 0.0]  
-# upper = [Inf, Inf, Inf] 
-# od     = OnceDifferentiable( log_p_hp, σ_0 ; autodiff = :forward ) 
-# result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
-
-# # assign optimized hyperparameters 
-# σ_f = result.minimizer[1] 
-# l   = result.minimizer[2] 
-# σ_n = result.minimizer[3] 
-
-# ----------------------- #
-# posterior dist 
-
 σ_f, l, σ_n = σ_0 
 
-dx_GP = 0 * dx_true 
-
+# GP derivatives 
+dx_GP    = 0 * dx_true 
+std_post = 0 * dx_true 
 for j = 1:n_vars 
     dx_GP[:,j], Σ = post_dist(( t, dx_fd[:,j], t, σ_f, l, σ_n ))
+    cov_post = diag(Σ)
+    std_post[:,j] = sqrt.(cov_post) 
 end 
-
 Ξ_sindy_GP   = SINDy( x, dx_GP, λ ) 
+display(Ξ_sindy_GP) 
+
+plot_array = Any[] 
+for j in 1 : n_vars
+    plt = plot(t, dx_GP[:,j] - dx_true[:,j], 
+        title = "Axis $j error", label = "true" ) 
+    push!( plot_array, plt ) 
+end
+
+plot(plot_array ... , 
+    layout = (n_vars, 1), 
+    size = [600 n_vars*300], 
+    plot_title = "GP - Truth Derivatives" )
+
 
 
 ## ============================================ ##
 # SINDy + GP + ADMM 
 
-# truth 
-hist_true = Hist( [], [], [], [], [] ) 
-@time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
-display(z_true) 
+# # truth 
+# hist_true = Hist( [], [], [], [], [] ) 
+# @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
+# display(z_true) 
 
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
@@ -238,6 +229,7 @@ poly_order = n_vars
 Ξ_true = sparsify_dynamics(Θx, dx_true, λ, n_vars) 
 Ξ      = sparsify_dynamics(Θx, dx_fd, λ, n_vars) 
 
+## ============================================ ##
 # ----------------------- #
 # objective function 
 
@@ -249,7 +241,8 @@ z_soln = 0 * Ξ
 α = 1.0 
 
 # deal with state j 
-for j = 1 : n_vars 
+# for j = 1 : n_vars 
+j = 1 
 
     # initial loss function vars 
     ξ  = 0 * Ξ[:,j] 
@@ -277,7 +270,7 @@ for j = 1 : n_vars
 
     z_soln[:,j] = z_hp_opt 
 
-end 
+# end 
 
 
 ## ============================================ ##

@@ -107,23 +107,17 @@ j = 1
 dx = dx_fd[:,j] 
 
 # ADMM stuff 
-ρ = 1.0 
-λ = 0.1 
-α = 1.0 
+ρ = 1.0 ; λ = 0.1 ; α = 1.0 
 
 # initial hyperparameters 
-σ_f = 1.0 
-l   = 1.0 
-σ_n = 0.1 
+σ_f = 1.0 ; l = 1.0 ; σ_n = 0.1 
 
-# assign for f_hp_opt 
+# assign for f_hp_opt and test 
 f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
-# test 
 f_hp(Ξ[:,j], σ_f, l, σ_n)
 
-# assign for f_opt 
+# assign for f_opt and test 
 f(ξ) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
-# test 
 f(Ξ[:,j])
 
 # l1 norm 
