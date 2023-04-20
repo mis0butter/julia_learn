@@ -28,7 +28,14 @@ end
 export k_fn 
 function k_fn(( σ_f, l, xp, xq ))
 
-    return σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) ) 
+    K = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )     
+
+    # deal with det(Ky) = 0 
+    # if det(K) == 0 
+    #     K *= length(xp)
+    # end  
+
+    return K 
 
 end 
 

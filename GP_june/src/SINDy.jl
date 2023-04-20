@@ -41,7 +41,6 @@ end
 # solve sparse regression 
 
 export sparsify_dynamics 
-
 function sparsify_dynamics( Θx, dx, λ, n_vars ) 
 # ----------------------- #
 # Purpose: Solve for active terms in dynamics through sparse regression 

@@ -15,7 +15,7 @@ using GP_june
 ## ============================================ ##
 # create GP !!!  
 
-Random.seed!(0) 
+# Random.seed!(0) 
 
 # true hyperparameters 
 σ_f0 = 1.0 ;    σ_f = σ_f0 
@@ -23,7 +23,7 @@ l_0  = 1.0 ;    l   = l_0
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 
 # generate training data 
-N = 100
+N = 10 
 x_train = sort( 2π*rand(N) ) 
 y_train = sin.(x_train) .+ 0.1*randn(N) 
 
@@ -37,6 +37,7 @@ p_train = scatter(x_train, y_train,
 
 # test data points 
 x_test = collect( 0 : 0.1 : 2π )
+
 
 ## ============================================ ##
 # posterior distribution ROUND 1 (NO hyperparameters tuned yet)
@@ -64,7 +65,7 @@ println("samples = ", N)
 log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
 log_p_hp(( σ_f, l, σ_n )) 
 
-σ_0   = [σ_f0, l_0, σ_n0]  
+σ_0   = [σ_f0, l_0, σ_n0] * 1.1 
 lower = [0.0, 0.0, 0.0]  
 upper = [Inf, Inf, Inf] 
 
@@ -150,6 +151,49 @@ display(fig_gp_compare)
 
 fig_gp_fit = plot( p_train, p_gp_train, layout = (2,1), size = [ 600, 800 ] )
 display(fig_gp_fit) 
+
+
+## ============================================ ##
+# sandbox 
+## ============================================ ##
+# marginal log likelihood function - study data penalty 
+
+# Random.seed!(0) 
+
+# true hyperparameters 
+σ_f0 = 1.0 ;    σ_f = σ_f0 
+l_0  = 1.0 ;    l   = l_0 
+σ_n0 = 0.1 ;    σ_n = σ_n0 
+
+# generate training data 
+N = 1000 
+x_train = sort( 2π*rand(N) ) 
+y_train = sin.(x_train) .+ 0.1*randn(N) 
+
+y = y_train 
+
+logp_Ky = [ ]
+logp_sq = [ ] 
+
+# training data covariance 
+Ky = k_fn(( σ_f0, l_0, x_train, x_train )) + σ_n^2 * I 
+
+i_hist = 0 : 0.01 : 2 
+for i = i_hist 
+
+    μ = i*y 
+    
+    term1  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
+    term2  = 1/2 * ( y - μ )' * ( y - μ ) 
+
+    append!(logp_Ky, term1) 
+    append!(logp_sq, term2) 
+
+end 
+
+p1 = plot(i_hist, logp_Ky, label = "Ky", title = "Data penalty = \n 1/2 * ( y - μ )' Ky^{-1} ( y - μ )", xlabel = "μ / y", ylabel = "") 
+    plot!(i_hist, logp_sq, label = "sq" )
+
 
 
 ## ============================================ ##

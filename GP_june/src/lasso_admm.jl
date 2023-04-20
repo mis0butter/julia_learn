@@ -337,14 +337,12 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
     reltol   = 1e-2           # save matrix-vector multiply 
 
     # ADMM solver 
-    x = zeros(n) 
-    z = zeros(n) 
-    u = zeros(n) 
+    x = z = u = zeros(n) 
 
     # initial hyperparameters 
-    σ_f0 = 1.0 ; σ_f = σ_f0 ; 
-    l_0  = 1.0 ; l   = l_0  ; 
-    σ_n0 = 0.1 ; σ_n = σ_n0 ; 
+    σ_f0 = 1.0 ; σ_f = σ_f0  
+    l_0  = 1.0 ; l   = l_0   
+    σ_n0 = 0.1 ; σ_n = σ_n0 
 
     # bounds 
     lower = [0.0, 0.0, 0.0]  
