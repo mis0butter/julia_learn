@@ -26,12 +26,15 @@ function lorenz(du, (x,y,z), (σ,ρ,β), t)
     return du 
 end 
 
-function ode_2states(du, (x,y), (σ,ρ,β), t)
+function predator_prey(dx, (x1,x2), (a,b,c,d), t)
 
-    du[1] = dx = σ * ( y - x ) 
-    du[2] = dy = x * ρ - x * y - β * y 
+    # control input 
+    u = 2*sin(t) + 2*sin(t/10) 
 
-    return du 
+    dx[1] = a*x1 - b*x1*x2 + u^2  
+    dx[2] = -c*x2 + d*x1*x2  
+
+    return dx 
 end 
 
 function ode_sine(dx, x, p, t)
@@ -44,13 +47,14 @@ end
 # get measurements 
 
 # initial conditions and parameters 
-fn     = ode_sine 
-x0     = [ 1.0; 1.0 ]  
-p      = [ 10.0, 28.0, 8/3 ] 
+fn     = predator_prey 
+x0     = [ 1.0; 0.5 ]  
+p      = [ 10.0, 28.0, 8/3, 2.0 ] 
 n_vars = size(x0, 1) 
-tf     = 10        
+tf     = 100      
 ts     = (0.0, tf)   
 dt     = 0.1 
+# u_fn(t) = 2*sin(t) + 2*sin(t/10) 
 
 # solve ODE 
 prob = ODEProblem(fn, x0, ts, p) 
@@ -60,6 +64,7 @@ sol  = solve(prob, saveat = dt)
 # extract variables --> measurements 
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
 t = sol.t 
+u = 2*sin.(t) + 2*sin.(t/10) 
 
 plt_static = plot( 
     sol, 
@@ -158,9 +163,23 @@ plot(plot_array ... ,
 
 λ = 0.1 
 
+dx = dx_true 
+
 # sindy 
-Ξ_sindy_true = SINDy( x, dx_true, λ ) 
-Ξ_sindy_fd   = SINDy( x, dx_fd, λ ) 
+
+Ξ = SINDy_c( x, u, dx, λ )
+
+## ============================================ ##
+
+n_vars = size([x u], 2) 
+poly_order = n_vars 
+
+Θx = pool_data([x u], n_vars, poly_order)
+
+Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-1 )
+
+# Ξ_sindy_true = SINDy( x, dx_true, λ ) 
+# Ξ_sindy_fd   = SINDy( x, dx_fd, λ ) 
 
 
 ## ============================================ ##
@@ -194,7 +213,6 @@ plot(plot_array ... ,
     plot_title = "GP - Truth Derivatives" )
 
 
-
 ## ============================================ ##
 # SINDy + GP + ADMM 
 
@@ -207,6 +225,8 @@ plot(plot_array ... ,
 hist_fd = Hist( [], [], [], [], [] ) 
 @time z_fd, hist_fd = sindy_gp_admm( x, dx_fd, λ, hist_fd ) 
 display(z_fd) 
+
+
 
 
 
