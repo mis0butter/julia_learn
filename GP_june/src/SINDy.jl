@@ -219,8 +219,9 @@ function recursion_fn3(x, Θ, v, poly_order)
     # end condition 
     if sum(v) > length(v).^2 
 
-        return Θ
+        return Θ, v 
 
+    # recursion 
     else 
 
         # IF we have reached the last index for n_vars 
@@ -240,27 +241,34 @@ function recursion_fn3(x, Θ, v, poly_order)
             v[end-k] += 1 
             v[end-k:end] .= v[end-k] 
 
-            v = recursion_fn3(x, Θ, v, poly_order) 
+            # back into the rabbit hole 
+            Θ, v = recursion_fn3(x, Θ, v, poly_order) 
 
-            return v, Θ
+            return Θ, v
 
         # loop through polynomials!!! 
         else 
 
             # couple state variables!!! 
-            vec = ones(size(x,1),1)
+            vec = ones(size(x,1),1) 
             for i = 1:length(v) 
+
+                println("x[i] = ", x[:, v[i]], ". typeof = ", typeof(x[:, v[i]]))
                 vec = vec .* x[:, v[i] ] 
+
+
             end 
-            println("vec = ", vec) 
-            Θ = [ Θ vec ]
+
+            display(Θ)
+            Θ = [ Θ vec[:,:] ]
             
             # increment last index 
             v[end] += 1 
 
-            v = recursion_fn3(x, Θ, v, poly_order) 
+            # continue recursion 
+            Θ, v = recursion_fn3(x, Θ, v, poly_order) 
             
-            return v, Θ
+            return Θ, v
         end 
 
     end 
