@@ -228,7 +228,9 @@ function recursion_fn3(x, Θ, v, poly_order)
 
             # println("reset v[end] = ", v[end])
 
+            # initialize 
             k = 1 
+
             # move back p IF index is at max n_vars 
             while v[end-k] == poly_order 
                 k += 1 
@@ -245,13 +247,15 @@ function recursion_fn3(x, Θ, v, poly_order)
         # loop through polynomials!!! 
         else 
 
-            vec = 1 
+            # couple state variables!!! 
+            vec = ones(size(x,1),1)
             for i = 1:length(v) 
-                vec = vec * x[(v[i])] 
+                vec = vec .* x[:, v[i] ] 
             end 
             println("vec = ", vec) 
             Θ = [ Θ vec ]
             
+            # increment last index 
             v[end] += 1 
 
             v = recursion_fn3(x, Θ, v, poly_order) 
