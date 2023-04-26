@@ -212,12 +212,17 @@ end
 ## ============================================ ##
 
 export recursion_fn3 
-function recursion_fn3(x, Θ, v, poly_order) 
+function recursion_fn3( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0), v = Int.(ones(poly_order)) ) 
 
-    # println("BEGIN. \nv = ", v, "\n")
-
+    # set-up for end condition checking 
+    n_vars = size(x,2) 
+    terms  = factorial( poly_order + n_vars - 1 ) / 
+        ( factorial(poly_order) * factorial(n_vars - 1) )
+    Θ_n    = size(Θ, 2)
+    println("terms = ", terms)
+    
     # end condition 
-    if sum(v) > length(v).^2 
+    if Θ_n == terms 
 
         return Θ, v 
 
@@ -225,24 +230,28 @@ function recursion_fn3(x, Θ, v, poly_order)
     else 
 
         # IF we have reached the last index for n_vars 
-        if v[end] > poly_order 
+        if v[end] > n_vars 
 
-            # println("reset v[end] = ", v[end])
+            println("reset v[end] = ", v[end])
 
             # initialize 
-            k = 1 
+            k = 0 
 
             # move back p IF index is at max n_vars 
-            while v[end-k] == poly_order 
+            while v[end-k] > n_vars  
+                println("k = ", k)
                 k += 1 
+                println("k = ", k)
             end 
 
+            println("v = ", v)
             # increment higher level index, reset indices 
             v[end-k] += 1 
             v[end-k:end] .= v[end-k] 
+            println("v = ", v)
 
             # back into the rabbit hole 
-            Θ, v = recursion_fn3(x, Θ, v, poly_order) 
+            Θ, v = recursion_fn3(x, poly_order, Θ, v) 
 
             return Θ, v
 
@@ -251,22 +260,26 @@ function recursion_fn3(x, Θ, v, poly_order)
 
             # couple state variables!!! 
             vec = ones(size(x,1),1) 
-            for i = 1:length(v) 
+            for i = 1 : length(v) 
 
-                println("x[i] = ", x[:, v[i]], ". typeof = ", typeof(x[:, v[i]]))
+                # display("v = ", v[i])
+                # display("x[:,v[i]] = ", x[:,v[i]])
                 vec = vec .* x[:, v[i] ] 
-
+                # println("vec = ", vec)
 
             end 
 
             display(Θ)
             Θ = [ Θ vec[:,:] ]
+            display(Θ)
             
             # increment last index 
+            println("v = ", v)
             v[end] += 1 
+            println("v = ", v, "\n")
 
             # continue recursion 
-            Θ, v = recursion_fn3(x, Θ, v, poly_order) 
+            Θ, v = recursion_fn3(x, poly_order, Θ, v) 
             
             return Θ, v
         end 
