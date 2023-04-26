@@ -12,6 +12,8 @@ using LinearAlgebra
 using ForwardDiff 
 using Optim 
 using Plots 
+using CSV 
+using DataFrames 
 
 
 ## ============================================ ##
@@ -26,10 +28,7 @@ function lorenz(du, (x,y,z), (σ,ρ,β), t)
     return du 
 end 
 
-function predator_prey(dx, (x1,x2), (a,b,c,d), t)
-
-    # control input 
-    u = 2*sin(t) + 2*sin(t/10) 
+function predator_prey(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
 
     dx[1] = a*x1 - b*x1*x2 + u^2 * 0 
     dx[2] = -c*x2 + d*x1*x2  
@@ -42,6 +41,7 @@ function ode_sine(dx, x, p, t)
     dx[2] = -1/2 * x[2] 
     return dx 
 end 
+
 
 ## ============================================ ##
 # get measurements 
@@ -316,16 +316,39 @@ display(z_fd)
 ## ============================================ ##
 # sandbox 
 ## ============================================ ##
+
+csv_file = "test/jake_robot_data.csv" ; 
+
+# jake robot data 
+# time_s,x_pos_m,y_pos_m,forward_vel_ms,"heading angle (rad), from x-axis, positive is CCW",throttle (unitless; -1 to 1),steering angle (unitless; -1 to 1)
+csv_reader = CSV.File(csv_file) ; 
+
+# loop through CSV.File object 
+for row in csv_reader 
+    println("values: $(row.time_s)")
+end 
+
+# wrap in data frame 
+df = DataFrame(CSV.File(csv_file)) ; 
+
+# shortcut 
+df = CSV.read(csv_file, DataFrame) ; 
+
+# turn into matrix 
+test = matrix(df) ; 
+
+
+## ============================================ ##
 # SINDy-GP-LASSO, f_hp_opt 
 
 x = sol_total.u ; x = mapreduce(permutedims, vcat, x) 
 u = 2*sin.(t) + 2*sin.(t/10) 
 
-n_vars = size( [x u], 2 )
+n_vars = size( x, 2 )
 poly_order = n_vars 
 
 # construct data library 
-Θx = pool_data( [x u], n_vars, poly_order) 
+Θx = pool_data( x, n_vars, poly_order) 
 
 # first cut - SINDy 
 Ξ_true = sparsify_dynamics( Θx, dx_true, λ, n_vars-1 ) 
