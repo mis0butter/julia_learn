@@ -37,6 +37,32 @@ function SINDy_c( x, u, dx, λ )
 
 end 
 
+
+## ============================================ ##
+
+export pool_data_rwrap
+function pool_data_rwrap( x_in, n_vars, poly_order )
+
+    l      = size(x_in, 1) 
+    # n_vars = size(x_in, 2) 
+
+    # construct data library 
+    Θx = ones(l, 1)
+    for p = 1 : poly_order 
+        Θx_p, = pool_data_recursion( x_in, p) 
+        Θx    = [ Θx Θx_p ]
+    end 
+
+    # append sine functions 
+    for i = 1 : n_vars 
+        vec = sin.(x_in[:,i]) 
+        Θx  = [Θx vec] 
+    end 
+
+    return Θx 
+end 
+
+
 ## ============================================ ##
 # putting it together (with control) 
 
@@ -53,19 +79,9 @@ function SINDy_c_recursion(x, dx, u, λ, poly_order )
         x_in   = [ x u ]
     end 
     x_vars = n_vars - u_vars 
-
+    
     # construct data library 
-    Θx = ones(size(x,1),1)
-    for p = 1 : poly_order 
-        Θx_p, v = pool_data_recursion( x_in, p) 
-        Θx = [ Θx Θx_p ]
-    end 
-
-    # append sine functions 
-    for i = 1 : n_vars 
-        vec = sin.(x_in[:,i]) 
-        Θx = [Θx vec] 
-    end 
+    Θx = pool_data_rwrap( x_in, n_vars, poly_order )
 
     # SINDy 
     Ξ = sparsify_dynamics( Θx, dx, λ, x_vars ) 
@@ -142,11 +158,11 @@ function pool_data(xmat, n_vars, poly_order)
 
     # turn x into matrix and get length 
     # xmat = mapreduce(permutedims, vcat, x) 
-    m = size(xmat, 1) 
+    l = size(xmat, 1) 
 
     # fil out 1st column of Θ with ones (poly order = 0) 
     ind = 1 ; 
-    Θ = ones(m, ind) 
+    Θ = ones(l, ind) 
 
     # poly order 1 
     for i = 1 : n_vars 
@@ -221,11 +237,6 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
     # end condition 
     if Θ_n == terms 
 
-        # # add sine terms to data matrix 
-        # for i = 1 : n_vars 
-        #     Θ   = [ Θ sin.(x[:,i])[:,:] ]
-        # end 
-
         return Θ, v_ind 
 
     # recursion 
@@ -260,7 +271,7 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
 
             # add to data matrix 
             Θ = [ Θ vec[:,:] ] 
-            # println("Θ = ") ; display(Θ)
+            println("Θ = ") ; display(Θ)
             
             # increment last index 
             v_ind[end] += 1 
@@ -289,6 +300,23 @@ function fdiff(t, x)
     dx_fd[end,:] = dx_fd[end-1,:] 
 
     return dx_fd 
+
+end 
+
+## ============================================ ##
+
+export fibonacci 
+function fibonacci(n)
+
+    # base condition 
+    if n <= 1 
+        return 0 
+    elseif n == 2 
+        return 1 
+    else 
+        out = fibonacci(n-1) + fibonacci(n-2) 
+        return out 
+    end 
 
 end 
 

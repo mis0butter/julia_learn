@@ -320,7 +320,7 @@ t = data[:,1]
 x = data[:,2:end-2]
 
 poly_order = 2 
-λ = 0.1 
+λ = 0.2 
 
 # ----------------------- #
 
@@ -333,12 +333,14 @@ poly_order = 2
 # test pool_data_recursion 
 
 using Symbolics 
-@variables x1 x2 x3 
+@variables x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 
 
-x = [x1 x3 x3] 
+x = [x1 x2 x3] 
 x = [x; x; x] 
 
-test, v = pool_data_recursion(x, 3) 
+test  = pool_data_rwrap(x, size(x,2), 3)
+
+test2 = pool_data(x, size(x,2), 3)
 
 
 ## ============================================ ##
