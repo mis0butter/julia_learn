@@ -43,17 +43,35 @@ end
 export SINDy_c_recursion
 function SINDy_c_recursion( t, x, u, λ, poly_order )
 
-    n_vars = size( [x u], 2 )
-    u_vars = size(u, 2) 
+    if u == 0 
+        n_vars = size(x, 2) 
+        u_vars = 0 
+        x_in   = x 
+    else 
+        n_vars = size( [x u], 2 )
+        u_vars = size(u, 2) 
+        x_in   = [ x u ]
+    end 
+    x_vars = n_vars - u_vars 
 
     # construct data library 
-    Θx, v = pool_data_recursion( [x u], poly_order) 
+    Θx = ones(length(t),1)
+    for p = 1 : poly_order 
+        Θx_p, v = pool_data_recursion( x_in, p) 
+        Θx = [ Θx Θx_p ]
+    end 
+
+    # append sine functions 
+    for i = 1 : n_vars 
+        vec = sin.(x_in[:,i]) 
+        Θx = [Θx vec] 
+    end 
 
     # get derivatives 
     dx = fdiff(t, x) 
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
+    Ξ = sparsify_dynamics( Θx, dx, λ, x_vars ) 
 
     return Ξ
 
@@ -206,10 +224,10 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
     # end condition 
     if Θ_n == terms 
 
-        # add sine terms to data matrix 
-        for i = 1 : n_vars 
-            Θ   = [ Θ sin.(x[:,i])[:,:] ]
-        end 
+        # # add sine terms to data matrix 
+        # for i = 1 : n_vars 
+        #     Θ   = [ Θ sin.(x[:,i])[:,:] ]
+        # end 
 
         return Θ, v_ind 
 

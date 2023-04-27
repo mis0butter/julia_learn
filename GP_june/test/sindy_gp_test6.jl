@@ -18,33 +18,6 @@ using Symbolics
 
 
 ## ============================================ ##
-# select ODE function 
-
-function lorenz(du, (x,y,z), (σ,ρ,β), t)
-
-    du[1] = dx = σ * ( y - x ) 
-    du[2] = dy = x * ( ρ - z ) - y 
-    du[3] = dz = x * y - β * z  
-
-    return du 
-end 
-
-function predator_prey(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
-
-    dx[1] = a*x1 - b*x1*x2 + u^2 * 0 
-    dx[2] = -c*x2 + d*x1*x2  
-
-    return dx 
-end 
-
-function ode_sine(dx, x, p, t)
-    dx[1] = -1/4 * sin(x[1])  
-    dx[2] = -1/2 * x[2] 
-    return dx 
-end 
-
-
-## ============================================ ##
 # get measurements 
 
 # initial conditions and parameters 
@@ -52,76 +25,24 @@ fn     = ode_sine
 x0     = [ 1.0; 0.5 ]  
 p      = [ 10.0, 28.0, 8/3, 2.0 ] 
 n_vars = size(x0, 1) 
-tf     = 100      
+tf     = 10  
 ts     = (0.0, tf)   
 dt     = 0.1 
-# u_fn(t) = 2*sin(t) + 2*sin(t/10) 
 
 # solve ODE 
 prob = ODEProblem(fn, x0, ts, p) 
 sol  = solve(prob, saveat = dt) 
-# sol  = solve(prob) 
 
 # extract variables --> measurements 
 sol_total = sol 
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
 t = sol.t 
-u = 2*sin.(t) + 2*sin.(t/10) 
 
 plt_static = plot( 
     sol, 
     # idxs   = (1,2,3), 
     title  = "Dynamics" 
     )
-
-
-## ============================================ ##
-# animated plot (interpolation)
-
-# plot 
-plt_anim  = plot(
-    1,
-    xlim = (0, tf), 
-    # xlim   = (-30, 30),
-    # ylim   = (-30, 30),
-    # zlim   = (0, 50),
-    title  = "Animation",
-    legend = false,
-    marker = 2, 
-    )
-
-# init animation and IC 
-a  = Animation()	
-c  = theme_palette(:auto) 
-colors = [] 
-for i = 1:n_vars 
-    push!(colors, c[i])
-end 
-colors = colors[:,:]' 
-
-# loop 
-for i in 1:tf 
-
-    #  time interval 
-    ts = (i-1, i) 
-
-    # solve ODE 
-    prob = ODEProblem(fn, x0, ts, p) 
-    sol  = solve(prob, saveat = dt) 
-    # sol  = solve(prob) 
-
-    # plot and save frame 
-    # plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
-    plot!( plt_anim, sol, c = colors, xlim = (0, tf) )
-    plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
-    frame(a, plt)
-
-    # next iter 
-    x0 = sol.u[end]
-
-end
-	
-plt_gif = gif(a, fps = 10)
 
 
 ## ============================================ ## 
@@ -133,12 +54,6 @@ x = sol.u ; x = mapreduce(permutedims, vcat, x)
 t = sol.t 
 
 # (forward) finite difference 
-dx_fd = 0*x 
-for i = 1 : length(t)-1
-    dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
-end 
-dx_fd[end,:] = dx_fd[end-1,:] 
-
 dx_fd = fdiff(t, x) 
 
 # true derivatives 
@@ -151,7 +66,7 @@ end
 # error 
 dx_err  = dx_true - dx_fd 
 
-## ============================================ ##
+# ----------------------- #
 # plot derivatives 
 
 plot_array = Any[] 
@@ -176,11 +91,67 @@ plot(plot_array ... ,
 dx = dx_true 
 
 # sindy 
-Ξ_true = SINDy_c( x, u, dx_true, λ )
-Ξ_fd   = SINDy_c( x, u, dx_fd, λ ) 
+# Ξ_true = SINDy_c( x, u, dx_true, λ )
+# Ξ_fd   = SINDy_c( x, u, dx_fd, λ ) 
 
 Ξ_true = SINDy( x, dx_true, λ )
 Ξ_fd   = SINDy( x, dx_fd, λ ) 
+
+Ξ_test = SINDy_c_recursion( t, x, 0, λ, poly_order )
+
+
+## ============================================ ##
+
+n_vars = size(x, 2) 
+poly_order = n_vars 
+λ = 0.1 
+u_vars = 0 
+x_in   = x 
+
+# construct data library 
+Θx = ones(length(t),1)
+for p = 1 : poly_order 
+    Θx_p, v = pool_data_recursion( x_in, p) 
+    display(Θx_p)
+    Θx = [ Θx Θx_p ]
+end 
+
+# get derivatives 
+dx = fdiff(t, x) 
+
+# first cut - SINDy 
+Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
+
+
+
+## ============================================ ##
+# SINDy + GP + ADMM 
+
+# # truth 
+# hist_true = Hist( [], [], [], [], [] ) 
+# @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
+# display(z_true) 
+
+# λ = 0.00001 * 0  
+
+# finite difference 
+hist_fd = Hist( [], [], [], [], [] ) 
+@time z_fd, hist_fd = sindy_gp_admm( x, dx_fd, λ, hist_fd ) 
+display(z_fd) 
+
+
+
+
+
+
+
+
+
+
+
+## ============================================ ##
+# sandbox 
+## ============================================ ##
 
 
 ## ============================================ ##
@@ -292,33 +263,56 @@ plot(plot_array ... ,
 
 
 ## ============================================ ##
-# SINDy + GP + ADMM 
+# animated plot (interpolation)
 
-# # truth 
-# hist_true = Hist( [], [], [], [], [] ) 
-# @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
-# display(z_true) 
+# plot 
+plt_anim  = plot(
+    1,
+    xlim = (0, tf), 
+    # xlim   = (-30, 30),
+    # ylim   = (-30, 30),
+    # zlim   = (0, 50),
+    title  = "Animation",
+    legend = false,
+    marker = 2, 
+    )
 
-# λ = 0.00001 * 0  
+# init animation and IC 
+a  = Animation()	
+c  = theme_palette(:auto) 
+colors = [] 
+for i = 1:n_vars 
+    push!(colors, c[i])
+end 
+colors = colors[:,:]' 
 
-# finite difference 
-hist_fd = Hist( [], [], [], [], [] ) 
-@time z_fd, hist_fd = sindy_gp_admm( x, dx_fd, λ, hist_fd ) 
-display(z_fd) 
+# loop 
+for i in 1:tf 
 
+    #  time interval 
+    ts = (i-1, i) 
 
+    # solve ODE 
+    prob = ODEProblem(fn, x0, ts, p) 
+    sol  = solve(prob, saveat = dt) 
+    # sol  = solve(prob) 
 
+    # plot and save frame 
+    # plot!(plt_anim, sol, idxs = (1,2,3), c = c, xlim = (-30, 30))
+    plot!( plt_anim, sol, c = colors, xlim = (0, tf) )
+    plt = plot( plt_static, plt_anim, layout = (2,1), size = [600 1000] )
+    frame(a, plt)
 
+    # next iter 
+    x0 = sol.u[end]
 
-
-
-
-
+end
+	
+plt_gif = gif(a, fps = 10)
 
 
 ## ============================================ ##
-# sandbox 
-## ============================================ ##
+# parse jake's data 
 
 using CSV 
 using DataFrames
@@ -357,6 +351,7 @@ poly_order = 2
 
 
 ## ============================================ ##
+# test pool_data_recursion 
 
 using Symbolics 
 @variables x1 x2 x3 
