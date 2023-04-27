@@ -139,6 +139,8 @@ for i = 1 : length(t)-1
 end 
 dx_fd[end,:] = dx_fd[end-1,:] 
 
+dx_fd = fdiff(t, x) 
+
 # true derivatives 
 dx_true = 0*x
 z = zeros(n_vars) 
@@ -330,25 +332,51 @@ df = DataFrame(CSV.File(csv_file)) ;
 df = CSV.read(csv_file, DataFrame) ; 
 
 # turn into matrix 
-x = Matrix(df) ; 
+data = Matrix(df) ; 
 
 # ----------------------- #
 # use SINDy 
 
-u1 = x[:,end-1] 
-u2 = x[:,end] 
+# get control input 
+u = data[:,end-1:end] 
 
-data = x[:,1:end-2]
-u = [u1 u2] 
+# get time 
+t = data[:,1] 
 
-n_vars = size( [data u], 2 )
-poly_order = 2  
+# get states 
+x = data[:,2:end-2]
+
+poly_order = 2 
+λ = 0.1 
+
+# ----------------------- #
+
+n_vars = size( [x u], 2 )
+u_vars = size(u, 2) 
 
 # construct data library 
 Θx, v = pool_data_recursion( [x u], poly_order) 
 
+# get derivatives 
+dx = fdiff(t, x) 
+
 # first cut - SINDy 
-# Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-1 ) 
+Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
+
+# Ξ_test = SINDy_c_recursion( x, u, dx, λ, poly_order )
+Ξ_test = SINDy_c_recursion( t, x, u, λ, poly_order )
+
+# ----------------------- #
+
+
+# n_vars = size( [x u], 2 )
+# u_vars = size(u, 2) 
+
+# # construct data library 
+# Θx = pool_data_recursion( [x u], poly_order) 
+
+# # first cut - SINDy 
+# Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
 
 
 

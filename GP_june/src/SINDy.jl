@@ -24,13 +24,36 @@ export SINDy_c
 function SINDy_c( x, u, dx, λ )
 
     n_vars = size( [x u], 2 )
+    u_vars = size(u, 2) 
     poly_order = n_vars 
 
     # construct data library 
     Θx = pool_data( [x u], n_vars, poly_order) 
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-1 ) 
+    Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
+
+    return Ξ
+
+end 
+
+## ============================================ ##
+# putting it together (with control) 
+
+export SINDy_c_recursion
+function SINDy_c_recursion( t, x, u, λ, poly_order )
+
+    n_vars = size( [x u], 2 )
+    u_vars = size(u, 2) 
+
+    # construct data library 
+    Θx, v = pool_data_recursion( [x u], poly_order) 
+
+    # get derivatives 
+    dx = fdiff(t, x) 
+
+    # first cut - SINDy 
+    Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
 
     return Ξ
 
@@ -222,8 +245,7 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
 
             # add to data matrix 
             Θ = [ Θ vec[:,:] ] 
-            println("Θ = ") 
-            display(Θ)
+            # println("Θ = ") ; display(Θ)
             
             # increment last index 
             v_ind[end] += 1 
@@ -235,6 +257,23 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
         end 
 
     end 
+
+end 
+
+## ============================================ ##
+# finite difference function 
+
+export fdiff 
+function fdiff(t, x) 
+
+    # (forward) finite difference 
+    dx_fd = 0*x 
+    for i = 1 : length(t)-1
+        dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
+    end 
+    dx_fd[end,:] = dx_fd[end-1,:] 
+
+    return dx_fd 
 
 end 
 
