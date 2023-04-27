@@ -211,6 +211,89 @@ end
 
 ## ============================================ ##
 
+export pool_data_recursion  
+function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0), v_ind = Int.(ones(poly_order)) ) 
+# ----------------------- #
+# Purpose: Build data matrix based on possible functions 
+# 
+# Inputs: 
+#   x          = data input 
+#   poly_order = polynomial order 
+#   Θ          = data matrix passed through function library (optional) 
+#   v_ind      = vector of indices (optional)  
+# 
+# Outputs: 
+#   Θ          = data matrix passed through function library 
+#   v_ind      = vector of indices (optional)  
+# ----------------------- #
+
+    # set-up for end condition checking 
+    n_vars = size(x,2) 
+    terms  = factorial( poly_order + n_vars - 1 ) / 
+             ( factorial(poly_order) * factorial(n_vars - 1) )
+    Θ_n    = size(Θ, 2)
+    
+    # end condition 
+    if Θ_n == terms 
+
+        # add sine terms to data matrix 
+        for i = 1 : n_vars 
+            Θ   = [ Θ sin.(x[:,i])[:,:] ]
+        end 
+
+        return Θ, v_ind 
+
+    # recursion 
+    else 
+
+        # IF we have reached the last index for n_vars 
+        if v_ind[end] > n_vars 
+
+            # move back k IF index is at max n_vars 
+            k = 1 
+            while v_ind[end-k] == n_vars  
+                k += 1 
+            end 
+
+            # increment higher level index, reset indices 
+            v_ind[end-k]     += 1 
+            v_ind[end-k:end] .= v_ind[end-k] 
+
+            # back into the rabbit hole 
+            Θ, v_ind = pool_data_recursion(x, poly_order, Θ, v_ind) 
+
+            return Θ, v_ind
+
+        # loop through polynomials!!! 
+        else 
+
+            # couple state variables!!! 
+            vec = ones(size(x,1),1) 
+            for i = 1 : poly_order 
+                vec = vec .* x[:, v_ind[i] ] 
+            end 
+
+            # add to data matrix 
+            Θ = [ Θ vec[:,:] ] 
+            println("Θ = ") 
+            display(Θ)
+            
+            # increment last index 
+            v_ind[end] += 1 
+
+            # continue recursion 
+            Θ, v_ind = pool_data_recursion(x, poly_order, Θ, v_ind) 
+            
+            return Θ, v_ind
+        end 
+
+    end 
+
+end 
+
+
+## ============================================ ##
+
 export recursion_fn3 
 function recursion_fn3( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0), v = Int.(ones(poly_order)) ) 
 
@@ -235,10 +318,10 @@ function recursion_fn3( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0),
             println("reset v[end] = ", v[end])
 
             # initialize 
-            k = 0 
+            k = 1 
 
-            # move back p IF index is at max n_vars 
-            while v[end-k] > n_vars  
+            # move back k IF index is at max n_vars 
+            while v[end-k] == n_vars  
                 println("k = ", k)
                 k += 1 
                 println("k = ", k)
@@ -246,7 +329,7 @@ function recursion_fn3( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0),
 
             println("v = ", v)
             # increment higher level index, reset indices 
-            v[end-k] += 1 
+            v[end-k]     += 1 
             v[end-k:end] .= v[end-k] 
             println("v = ", v)
 

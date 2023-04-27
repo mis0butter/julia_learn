@@ -14,6 +14,7 @@ using Optim
 using Plots 
 using CSV 
 using DataFrames 
+using Symbolics 
 
 
 ## ============================================ ##
@@ -317,16 +318,10 @@ display(z_fd)
 # sandbox 
 ## ============================================ ##
 
+using CSV 
+using DataFrames
+
 csv_file = "test/jake_robot_data.csv" ; 
-
-# jake robot data 
-# time_s,x_pos_m,y_pos_m,forward_vel_ms,"heading angle (rad), from x-axis, positive is CCW",throttle (unitless; -1 to 1),steering angle (unitless; -1 to 1)
-csv_reader = CSV.File(csv_file) ; 
-
-# loop through CSV.File object 
-for row in csv_reader 
-    println("values: $(row.time_s)")
-end 
 
 # wrap in data frame 
 df = DataFrame(CSV.File(csv_file)) ; 
@@ -335,7 +330,37 @@ df = DataFrame(CSV.File(csv_file)) ;
 df = CSV.read(csv_file, DataFrame) ; 
 
 # turn into matrix 
-test = matrix(df) ; 
+x = Matrix(df) ; 
+
+# ----------------------- #
+# use SINDy 
+
+u1 = x[:,end-1] 
+u2 = x[:,end] 
+
+data = x[:,1:end-2]
+u = [u1 u2] 
+
+n_vars = size( [data u], 2 )
+poly_order = 2  
+
+# construct data library 
+Θx, v = pool_data_recursion( [x u], poly_order) 
+
+# first cut - SINDy 
+# Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-1 ) 
+
+
+
+## ============================================ ##
+
+using Symbolics 
+@variables x1 x2 x3 
+
+x = [x1 x3 x3] 
+x = [x; x; x] 
+
+test, v = pool_data_recursion(x, 3) 
 
 
 ## ============================================ ##
