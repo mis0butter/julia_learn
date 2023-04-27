@@ -48,7 +48,7 @@ end
 # get measurements 
 
 # initial conditions and parameters 
-fn     = predator_prey 
+fn     = ode_sine 
 x0     = [ 1.0; 0.5 ]  
 p      = [ 10.0, 28.0, 8/3, 2.0 ] 
 n_vars = size(x0, 1) 
@@ -351,32 +351,8 @@ poly_order = 2
 
 # ----------------------- #
 
-n_vars = size( [x u], 2 )
-u_vars = size(u, 2) 
-
-# construct data library 
-Θx, v = pool_data_recursion( [x u], poly_order) 
-
-# get derivatives 
-dx = fdiff(t, x) 
-
-# first cut - SINDy 
-Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
-
 # Ξ_test = SINDy_c_recursion( x, u, dx, λ, poly_order )
 Ξ_test = SINDy_c_recursion( t, x, u, λ, poly_order )
-
-# ----------------------- #
-
-
-# n_vars = size( [x u], 2 )
-# u_vars = size(u, 2) 
-
-# # construct data library 
-# Θx = pool_data_recursion( [x u], poly_order) 
-
-# # first cut - SINDy 
-# Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
 
 
 
