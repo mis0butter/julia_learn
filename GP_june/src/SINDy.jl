@@ -41,7 +41,7 @@ end
 # putting it together (with control) 
 
 export SINDy_c_recursion
-function SINDy_c_recursion( t, x, u, λ, poly_order )
+function SINDy_c_recursion(x, dx, u, λ, poly_order )
 
     if u == 0 
         n_vars = size(x, 2) 
@@ -55,7 +55,7 @@ function SINDy_c_recursion( t, x, u, λ, poly_order )
     x_vars = n_vars - u_vars 
 
     # construct data library 
-    Θx = ones(length(t),1)
+    Θx = ones(size(x,1),1)
     for p = 1 : poly_order 
         Θx_p, v = pool_data_recursion( x_in, p) 
         Θx = [ Θx Θx_p ]
@@ -67,10 +67,7 @@ function SINDy_c_recursion( t, x, u, λ, poly_order )
         Θx = [Θx vec] 
     end 
 
-    # get derivatives 
-    dx = fdiff(t, x) 
-
-    # first cut - SINDy 
+    # SINDy 
     Ξ = sparsify_dynamics( Θx, dx, λ, x_vars ) 
 
     return Ξ

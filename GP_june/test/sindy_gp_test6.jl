@@ -87,8 +87,7 @@ plot(plot_array ... ,
 # SINDy alone 
 
 λ = 0.1 
-
-dx = dx_true 
+poly_order = n_vars 
 
 # sindy 
 # Ξ_true = SINDy_c( x, u, dx_true, λ )
@@ -97,31 +96,11 @@ dx = dx_true
 Ξ_true = SINDy( x, dx_true, λ )
 Ξ_fd   = SINDy( x, dx_fd, λ ) 
 
-Ξ_test = SINDy_c_recursion( t, x, 0, λ, poly_order )
-
-
-## ============================================ ##
-
-n_vars = size(x, 2) 
-poly_order = n_vars 
-λ = 0.1 
-u_vars = 0 
-x_in   = x 
-
-# construct data library 
-Θx = ones(length(t),1)
-for p = 1 : poly_order 
-    Θx_p, v = pool_data_recursion( x_in, p) 
-    display(Θx_p)
-    Θx = [ Θx Θx_p ]
-end 
-
-# get derivatives 
 dx = fdiff(t, x) 
+Ξ_fd_test = SINDy_c_recursion(x, dx, 0, λ, poly_order )
 
-# first cut - SINDy 
-Ξ = sparsify_dynamics( Θx, dx, λ, n_vars-u_vars ) 
-
+dx = dx_true 
+Ξ_true_test = SINDy_c_recursion(x, dx, 0, λ, poly_order )
 
 
 ## ============================================ ##
