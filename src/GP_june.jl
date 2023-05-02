@@ -3,22 +3,45 @@ module GP_june
 include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
-include("ode_fns.jl")
+include("ode_fns.jl")  
 
 
 ## ============================================ ##
+# AD-friendly eigenvals function 
+
+import ForwardDiff: Dual
+import LinearAlgebra: eigvals
+
+export eigvals_june
+function eigvals_june(A::Symmetric{<:Dual{Tg,T,N}}) where {Tg,T<:Real,N}
+    λ,Q = eigen( Symmetric( getproperty.(parent(A), :value) ) )
+    partials = ntuple(j -> diag(Q' * getindex.(getproperty.(A, :partials), j) * Q), N)
+    Dual{Tg}.(λ, tuple.(partials...))
+end
+
+
+## ============================================ ## 
 # SINDy + GP objective function 
 
+using LinearAlgebra
+
 export f_obj 
-function f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
+function f_obj(( σ_f, l, σ_n, dx, ξ, Θx )) 
 
     # training kernel function 
     Ky  = k_fn((σ_f, l, dx, dx)) + σ_n^2 * I 
-    # if det(Ky) == 0 
-    #     Ky = I 
-    # end 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+    
+    # # if Ky really small 
+    # if det(Ky) == 0 
+    #     # e     = eigvals_june(Ky) 
+    #     e     = eigen(Ky).values 
+    #     log_e = log.(e) 
+    #     Ky    = sum(log_e) 
+
+    # end 
+
     term += 1/2*log(det( Ky )) 
 
     return term 
@@ -27,6 +50,8 @@ end
 
 
 ## ============================================ ##
+
+using ProgressMeter
 
 export sindy_gp_admm 
 function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
@@ -55,7 +80,9 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
     # ----------------------- #
     # loop with state j
 
-    for j = 1 : n_vars 
+    @showprogress "Computing ..." for j = 1 : n_vars 
+
+        sleep(1e-8)
 
         # initial loss function vars 
         ξ  = 0 * Ξ[:,j] 

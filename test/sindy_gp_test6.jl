@@ -20,13 +20,24 @@ using Symbolics
 ## ============================================ ##
 # get measurements 
 
-# initial conditions and parameters 
+# choose ODE 
 fn     = ode_sine 
-x0     = [ 1.0; 0.5 ]  
+
+# initial conditions and parameters 
+if fn == lorenz 
+    x0  = [ 1.0; 0.5; 0 ]
+    str = "lorenz" 
+elseif fn == ode_sine 
+    x0  = [ 1.0; 0.5 ]  
+    str = "ode_sine" 
+elseif fn == predator_prey
+    x0  = [ 1.0; 0.5 ] 
+    str = "predator_prey" 
+end 
 p      = [ 10.0, 28.0, 8/3, 2.0 ] 
 n_vars = size(x0, 1) 
-tf     = 10  
-ts     = (0.0, tf)   
+tf     = 10 
+ts     = (0.0, tf) 
 dt     = 0.1 
 
 # solve ODE 
@@ -38,11 +49,17 @@ sol_total = sol
 x = sol.u ; x = mapreduce(permutedims, vcat, x) 
 t = sol.t 
 
-plt_static = plot( 
-    sol, 
-    # idxs   = (1,2,3), 
-    title  = "Dynamics" 
-    )
+# construct empty vector for plots 
+plt_vec = [] 
+for i = 1:n_vars 
+    plt = plot(t, x[:,i], title = "State $(i)")
+    push!(plt_vec, plt)
+end 
+plot(plt_vec ..., 
+    layout = (n_vars,1), 
+    size = [600 n_vars*300], 
+    xlabel = "Time (s)", 
+    plot_title = "Dynamics. ODE fn = $( str )" ) 
 
 
 ## ============================================ ## 
@@ -69,18 +86,18 @@ dx_err  = dx_true - dx_fd
 # ----------------------- #
 # plot derivatives 
 
-plot_array = Any[] 
+plot_vec = [] 
 for j in 1 : n_vars
     plt = plot(t, dx_true[:,j], 
-        title = "Axis $j", label = "true" ) 
+        title = "State $(j)", label = "true" ) 
         plot!(t, dx_fd[:,j], ls = :dash, label = "finite diff" )
-  push!( plot_array, plt ) 
+  push!( plot_vec, plt ) 
 end
 
-plot(plot_array ... , 
+plot(plot_vec ... , 
     layout = (n_vars, 1), 
     size = [600 n_vars*300], 
-    plot_title = "Derivatives" )
+    plot_title = "Derivatives. ODE fn = $( str )" )
 
 
 ## ============================================ ##
@@ -131,6 +148,39 @@ display(z_fd)
 ## ============================================ ##
 # sandbox 
 ## ============================================ ##
+
+
+## ============================================ ##
+# AD eigvals_june 
+
+# find eigenvalues by optimization 
+n = 2 
+a = rand(n) 
+A = a*a' + I 
+
+soln = eigvals(A) 
+
+f(λ) = abs.(det(A - diagm(λ))) 
+
+# optimization 
+od       = OnceDifferentiable( f, a ; autodiff = :forward ) 
+result   = optimize( od, x ) 
+x        = result.minimizer 
+
+λ1 = range(-5,5, length=100)
+λ2 = λ1 
+
+f_grid = zeros(length(λ1), length(λ2))
+for i = 1:length(λ1) 
+    for j = 1:length(λ2)
+        λ_ij = [λ1[i], λ2[j]]
+        f_grid[i,j] = f(λ_ij)
+    end 
+end 
+
+surface(λ1, λ2, f_grid) 
+    
+
 
 
 ## ============================================ ##

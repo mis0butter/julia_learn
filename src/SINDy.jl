@@ -271,7 +271,7 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
 
             # add to data matrix 
             Θ = [ Θ vec[:,:] ] 
-            println("Θ = ") ; display(Θ)
+            # println("Θ = ") ; display(Θ)
             
             # increment last index 
             v_ind[end] += 1 

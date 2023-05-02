@@ -5,7 +5,8 @@ using LinearAlgebra
 # sample from given mean and covariance 
 
 export gauss_sample 
-function gauss_sample(μ::Vector, K::Matrix) 
+function gauss_sample(μ, K) 
+# function gauss_sample(μ::Vector, K::Matrix) 
     
     # cholesky decomposition, get lower triangular decomp 
     C = cholesky(K) ; 
@@ -44,7 +45,8 @@ end
 # define square distance function 
 
 export sq_dist 
-function sq_dist(a::Vector, b::Vector) 
+function sq_dist(a, b) 
+# function sq_dist(a::Vector, b::Vector) 
 
     r = length(a) 
     p = length(b) 
