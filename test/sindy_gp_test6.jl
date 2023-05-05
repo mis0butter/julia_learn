@@ -51,17 +51,17 @@ x = sol.u ; x = mapreduce(permutedims, vcat, x)
 t = sol.t 
 
 # construct empty vector for plots 
-plt_vec = [] 
+plot_vec_x = [] 
 for i = 1:n_vars 
     plt = plot(t, x[:,i], title = "State $(i)")
-    push!(plt_vec, plt)
+    push!(plot_vec_x, plt)
 end 
-plot(plt_vec ..., 
+plot_x = plot(plot_vec_x ..., 
     layout = (n_vars,1), 
     size = [600 n_vars*300], 
     xlabel = "Time (s)", 
     plot_title = "Dynamics. ODE fn = $( str )" ) 
-
+display(plot_x)     
 
 # ----------------------- #
 # derivatives: finite differencing --> mapreduce x FIRST 
@@ -87,15 +87,15 @@ dx_err  = dx_true - dx_fd
 # ----------------------- #
 # plot derivatives 
 
-plot_vec = [] 
+plot_vec_dx = [] 
 for j in 1 : n_vars
     plt = plot(t, dx_true[:,j], 
         title = "State $(j)", label = "true" ) 
         plot!(t, dx_fd[:,j], ls = :dash, label = "finite diff" )
-  push!( plot_vec, plt ) 
+  push!( plot_vec_dx, plt ) 
 end
 
-plot(plot_vec ... , 
+plot_dx = plot(plot_vec_dx ... , 
     layout = (n_vars, 1), 
     size = [600 n_vars*300], 
     plot_title = "Derivatives. ODE fn = $( str )" )
@@ -141,28 +141,9 @@ display(z_fd)
 ## ============================================ ##
 # validation 
 
+# display training data 
 
-t = collect(0 : 0.1 : 10) 
-x = sin.(t) 
-
-plt = plot(t, x, c = :red, ls = :dash, legend = false) 
-
-# init animation and IC 
-a  = Animation()	
-
-# loop 
-for i in 1 : length(t)-1 
-
-    # plot and save frame 
-    plot!( [ t[1:i+1] ], [ x[1:i+1] ], lw = 5, c = :red, xlim = (0, t[end]) )
-    frame(a, plt)
-
-end
-	
-plt_gif = gif(a, fps = 10)
-
-
-
+display(plt_vec) 
 
 
 
@@ -182,6 +163,28 @@ function gradeigen(A)
 end
 
 
+## ============================================ ##
+# animation 
+
+
+t = collect(0 : 0.1 : 10) 
+x = sin.(t) 
+
+plt = plot(t, x, c = :red, ls = :dash, legend = false) 
+
+# init animation and IC 
+a  = Animation()	
+
+# loop 
+for i in 1 : length(t)-1 
+
+    # plot and save frame 
+    plot!( [ t[1:i+1] ], [ x[1:i+1] ], lw = 5, c = :red, xlim = (0, t[end]) )
+    frame(a, plt)
+
+end
+	
+plt_gif = gif(a, fps = 10)
 
 
 ## ============================================ ##
@@ -282,7 +285,6 @@ prob = ODEProblem(ΘΞ_fn, x0[:,:]', ts, Ξ_fd)
 sol  = solve(prob, saveat = dt) 
 sol_validate_sindy_fd = sol 
 
-
 # validation plot 
 plt_train_validate = plot( 
     sol_train, 
@@ -293,6 +295,7 @@ plt_train_validate = plot(
     plot!(sol_validate_sindy_true, label = "sindy (true)", linestyle = :dash, xlim = (0, tf)    )
     plot!(sol_validate_sindy_fd, label = "sindy (fd)", linestyle = :dot, xlim = (0, tf), title = "Training and Validation" 
     )
+
 
 ## ============================================ ##
 # smooth derivatives GP --> SINDy 
