@@ -15,6 +15,7 @@ using Plots
 using CSV 
 using DataFrames 
 using Symbolics 
+using PrettyTables 
 
 
 ## ============================================ ##
@@ -62,7 +63,7 @@ plot(plt_vec ...,
     plot_title = "Dynamics. ODE fn = $( str )" ) 
 
 
-## ============================================ ## 
+# ----------------------- #
 # derivatives: finite differencing --> mapreduce x FIRST 
 
 # extract variables --> measurements 
@@ -137,8 +138,28 @@ display(z_fd)
 
 
 
+## ============================================ ##
+# validation 
 
 
+t = collect(0 : 0.1 : 10) 
+x = sin.(t) 
+
+plt = plot(t, x, c = :red, ls = :dash, legend = false) 
+
+# init animation and IC 
+a  = Animation()	
+
+# loop 
+for i in 1 : length(t)-1 
+
+    # plot and save frame 
+    plot!( [ t[1:i+1] ], [ x[1:i+1] ], lw = 5, c = :red, xlim = (0, t[end]) )
+    frame(a, plt)
+
+end
+	
+plt_gif = gif(a, fps = 10)
 
 
 
@@ -148,6 +169,19 @@ display(z_fd)
 ## ============================================ ##
 # sandbox 
 ## ============================================ ##
+
+
+function gradeigen(A)
+    e,V = eigen(A)
+    n = size(A,1)
+    (e,V), function (Δ)
+        Δe, ΔV = Δ
+        F = [i==j ? 0 : inv(e[j] - e[i]) for i=1:n, j=1:n]
+        inv(V)'*(Diagonal(Δe) + F .* (V'ΔV))*V'
+    end
+end
+
+
 
 
 ## ============================================ ##

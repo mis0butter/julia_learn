@@ -29,20 +29,24 @@ export f_obj
 function f_obj(( σ_f, l, σ_n, dx, ξ, Θx )) 
 
     # training kernel function 
-    Ky  = k_fn((σ_f, l, dx, dx)) + σ_n^2 * I 
+    # Ky  = k_fn((σ_f, l, dx, dx)) + σ_n^2 * I 
+    Ky  = k_fn((σ_f, l, dx, dx)) + (0.1 + σ_n^2) * I 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     
-    # # if Ky really small 
-    # if det(Ky) == 0 
-    #     # e     = eigvals_june(Ky) 
-    #     e     = eigen(Ky).values 
-    #     log_e = log.(e) 
-    #     Ky    = sum(log_e) 
+    # if Ky really small 
+    if det(Ky) == 0 
+        # e     = eigvals_june(Ky) 
+        # e     = eigen(Ky).values 
+        # log_e = log.(e) 
+        # Ky    = sum(log_e) 
+        # term += 1/2*log( tr(Ky) ) 
+        println("det(Ky) = 0")
+        term += 1/2*log( det(Ky) ) 
+    else
+        term += 1/2*log( det(Ky) ) 
+    end 
 
-    # end 
-
-    term += 1/2*log(det( Ky )) 
 
     return term 
 

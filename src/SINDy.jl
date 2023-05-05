@@ -79,6 +79,10 @@ function SINDy_c_recursion(x, dx, u, λ, poly_order )
         x_in   = [ x u ]
     end 
     x_vars = n_vars - u_vars 
+    h = [] 
+    for i = 1:x_vars 
+        push!(h, "dx$(i)")
+    end 
     
     # construct data library 
     Θx = pool_data_rwrap( x_in, n_vars, poly_order )
