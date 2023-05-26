@@ -1,4 +1,4 @@
-module GP_june 
+module GaussianSINDy
 
 include("SINDy.jl")
 include("GP_tools.jl")

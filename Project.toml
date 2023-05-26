@@ -1,5 +1,5 @@
-name = "GP_june"
-uuid = "8015bf6e-67f0-47bf-9b6e-1401ce4a6ee0"
+name = "GaussianSINDy"
+uuid = "048f916e-80ce-4b0c-84ed-c0ec4229b229"
 authors = ["mis0butter <junetter@gmail.com> and contributors"]
 version = "0.1.0"
 

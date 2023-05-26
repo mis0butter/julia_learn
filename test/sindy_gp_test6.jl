@@ -7,7 +7,7 @@ struct Hist
 end 
 
 using DifferentialEquations 
-using GP_june 
+using GaussianSINDy
 using LinearAlgebra 
 using ForwardDiff 
 using Optim 
