@@ -21,7 +21,7 @@ using Symbolics
 # get measurements 
 
 # initial conditions and parameters 
-fn     = ode_sine 
+fn     = ode_sine    
 x0     = [ 1.0; 0.5 ]  
 p      = [ 10.0, 28.0, 8/3, 2.0 ] 
 n_vars = size(x0, 1) 
