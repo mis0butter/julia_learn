@@ -27,3 +27,4 @@ function ode_sine(dx, x, p, t)
     dx[2] = -1/2 * x[2] 
     return dx 
 end 
+
