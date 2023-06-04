@@ -64,8 +64,6 @@ dx_fd_test  = dx_fd[ind+1:end]
 # @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
 # display(z_true) 
 
-# λ = 0.00001 * 0  
-
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
 @time z_fd, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 

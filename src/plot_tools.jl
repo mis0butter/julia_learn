@@ -48,6 +48,7 @@ function plot_deriv(t, dx_true, dx_fd, str)
         layout = (n_vars, 1), 
         size = [600 n_vars*300], 
         plot_title = "Derivatives. ODE fn = $( str )" )
+    display(plot_dx) 
 
     return plot_dx 
 
