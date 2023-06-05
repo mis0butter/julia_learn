@@ -44,8 +44,6 @@ end
 
 ## ============================================ ##
 
-using ProgressMeter
-
 export sindy_gp_admm 
 function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
 

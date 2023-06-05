@@ -25,7 +25,7 @@ using Random, Distributions
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = ode_sine 
+fn          = predator_prey 
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
