@@ -17,43 +17,40 @@ using DataFrames
 using Symbolics 
 using PrettyTables 
 using Test 
+using NoiseRobustDifferentiation
+using Random, Distributions 
 
 
 ## ============================================ ##
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = lorenz 
+fn          = predator_prey 
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
+
+dx = x[2,1] - x[1,1] 
+dx_tv = tvdiff(x, 100, 0.2, dx=dx)
 
 
 ## ============================================ ##
 # SINDy alone 
 
 λ = 0.1 
+n_vars     = size(x, 2) 
 poly_order = n_vars 
 
-dx = fdiff(t, x) 
-Ξ_fd = SINDy_c_recursion(x, dx, 0, λ, poly_order )
-
-dx = dx_true 
-Ξ_true = SINDy_c_recursion(x, dx, 0, λ, poly_order )
+Ξ_fd   = SINDy_c_recursion(x, dx_fd, 0, λ, poly_order ) 
+Ξ_true = SINDy_c_recursion(x, dx_true, 0, λ, poly_order ) 
 
 
 ## ============================================ ##
 # split into training and validation data 
 
-ind = Int(round( size(x, 1) * 0.7 ))  
-
-x_train = x[1:ind,:]
-x_test  = x[ind+1:end,:] 
-
-dx_true_train = dx_true[1:ind,:] 
-dx_true_test  = dx_true[ind+1:end,:] 
-
-dx_fd_train = dx_fd[1:ind,:] 
-dx_fd_test  = dx_fd[ind+1:end] 
+train_fraction = 0.7 
+x_train, x_test             = split_train_test(x, train_fraction) 
+dx_true_train, dx_true_test = split_train_test(dx_true, train_fraction) 
+dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction) 
 
 
 ## ============================================ ##
@@ -66,7 +63,7 @@ dx_fd_test  = dx_fd[ind+1:end]
 
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
-@time z_fd, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
+@time z_fd, hist_fd = sindy_gp_admm( x_train, dx_true_train, λ, hist_fd ) 
 display(z_fd) 
 
 

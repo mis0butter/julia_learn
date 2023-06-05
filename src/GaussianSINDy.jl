@@ -4,7 +4,7 @@ include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
 include("ode_fns.jl")  
-include("plot_tools.jl")
+include("utils.jl")
 include("init_params.jl")
 
 
@@ -14,11 +14,11 @@ include("init_params.jl")
 using LinearAlgebra
 
 export f_obj 
-function f_obj(( σ_f, l, σ_n, dx, ξ, Θx )) 
+function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
     # training kernel function 
     # Ky  = k_fn((σ_f, l, dx, dx)) + σ_n^2 * I 
-    Ky  = k_fn((σ_f, l, dx, dx)) + (0.1 + σ_n^2) * I 
+    Ky  = k_fn(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     
@@ -80,7 +80,7 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
         dx = dx_fd[:,j] 
 
         # assign for f_hp_opt 
-        f_hp(ξ, σ_f, l, σ_n) = f_obj(( σ_f, l, σ_n, dx, ξ, Θx ))
+        f_hp(ξ, σ_f, l, σ_n) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
         # l1 norm 
         g(z) = λ * sum(abs.(z)) 
@@ -101,59 +101,6 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
     return z_soln, hist_hp_opt 
 
 end 
-
-end 
-
-
-# ## ============================================ ##
-# solve ODE problem, compute derivatives and plot states 
-
-using DifferentialEquations
-
-export ode_states 
-function ode_states(fn, plot_option)
-
-    x0, str, p, ts, dt = init_params(fn) 
-    n_vars = length(x0) 
-
-    # ----------------------- #
-    # solve ODE, plot states 
-
-    # solve ODE 
-    prob = ODEProblem(fn, x0, ts, p) 
-    sol  = solve(prob, saveat = dt) 
-
-    # extract variables --> measurements 
-    sol_total = sol 
-    x = sol.u ; x = mapreduce(permutedims, vcat, x) 
-    t = sol.t 
-
-    if plot_option == 1 
-        plot_dyn(t, x, str)
-    end 
-
-    # ----------------------- #
-    # derivatives: finite differencing --> mapreduce x FIRST 
-
-    # (forward) finite difference 
-    dx_fd = fdiff(t, x) 
-
-    # true derivatives 
-    dx_true = 0*x
-    z = zeros(n_vars) 
-    for i = 1 : length(t) 
-        dx_true[i,:] = fn( z, x[i,:], p, t[i] ) 
-    end 
-
-    # error 
-    dx_err  = dx_true - dx_fd 
-
-    # plot derivatives 
-    if plot_option == 1 
-        plot_deriv(t, dx_true, dx_fd, str) 
-    end 
-
-    return t, x, dx_true, dx_fd 
 
 end 
 
