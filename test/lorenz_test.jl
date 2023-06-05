@@ -25,12 +25,9 @@ using Random, Distributions
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = predator_prey 
+fn          = ode_sine 
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
-
-dx = x[2,1] - x[1,1] 
-dx_tv = tvdiff(x, 100, 0.2, dx=dx)
 
 
 ## ============================================ ##
