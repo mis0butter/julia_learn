@@ -291,23 +291,6 @@ function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1
 end 
 
 ## ============================================ ##
-# finite difference function 
-
-export fdiff 
-function fdiff(t, x) 
-
-    # (forward) finite difference 
-    dx_fd = 0*x 
-    for i = 1 : length(t)-1
-        dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
-    end 
-    dx_fd[end,:] = dx_fd[end-1,:] 
-
-    return dx_fd 
-
-end 
-
-## ============================================ ##
 
 export fibonacci 
 function fibonacci(n)
@@ -323,4 +306,77 @@ function fibonacci(n)
     end 
 
 end 
+
+
+## ============================================ ##
+# build data matrix 
+
+# export pool_data_vecfn
+
+function pool_data_vecfn(n_vars, poly_order) 
+    # ----------------------- #
+    # Purpose: Build data vector of functions  
+    # 
+    # Inputs: 
+    #   n_vars      = # elements in state 
+    #   poly_order  = polynomial order (goes up to order 3) 
+    # 
+    # Outputs: 
+    #   Θ       = data matrix passed through function library 
+    # ----------------------- #
+    
+    # initialize empty vector of functions 
+    Θ = Vector{Function}(undef,0) 
+
+    # fil out 1st column of Θ with ones (poly order = 0) 
+    ind  = 1 
+    push!(Θ, x -> 1) 
+
+    # poly order 1 
+    for i = 1 : n_vars 
+
+        ind  += 1 
+        push!(Θ, x -> x[:,i]) 
+
+    end 
+
+    # poly order 2 
+    if poly_order >= 2 
+        for i = 1 : n_vars 
+            for j = i:n_vars 
+
+                ind += 1 ; 
+                push!(Θ, x -> x[:,i] .* x[:,j] )
+
+            end 
+        end 
+    end 
+
+    # poly order 3 
+    if poly_order >= 3 
+        for i = 1 : n_vars 
+            for j = i : n_vars 
+                for k = j : n_vars 
+                    
+                    ind += 1 ;                     
+                    push!(Θ, x -> x[:,i] .* x[:,j] .* x[:,k] )
+
+                end 
+            end 
+        end 
+    end 
+
+    # sine functions 
+    for i = 1 : n_vars 
+
+        ind  += 1
+        push!(Θ, x -> sin.( x[:,i] ) )
+
+    end 
+    
+    return Θ 
+
+end 
+    
+    
 

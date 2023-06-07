@@ -10,7 +10,7 @@ function init_params(fn)
     elseif fn == ode_sine 
         x0  = [ 1.0; 0.5 ]  
         str = "ode_sine" 
-    elseif fn == predator_prey
+    elseif fn == predator_prey 
         x0  = [ 1.0; 0.5 ] 
         str = "predator_prey" 
     end 

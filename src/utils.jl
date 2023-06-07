@@ -1,4 +1,5 @@
 
+
 ## ============================================ ##
 # split into training and validation data 
 
@@ -13,6 +14,7 @@ function split_train_test(x, train_fraction)
     return x_train, x_test 
 
 end 
+
 
 ## ============================================ ##
 # plot state 
@@ -40,6 +42,7 @@ function plot_dyn(t, x, str)
     return plot_x 
 
 end 
+
 
 ## ============================================ ##
 # plot derivatives 
