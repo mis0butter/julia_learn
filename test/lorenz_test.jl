@@ -69,44 +69,22 @@ display(z_fd)
 
 ## ============================================ ##
 
-function build_dx_fn(poly_order, z_fd)
 
-    # get # states 
-    n_vars = size( z_fd, 2 ) 
+dx_fn = build_dx_fn(poly_order, z_fd) 
 
-    # define pool_data functions 
-    fn_vector = pool_data_vecfn(n_vars, poly_order) 
 
-    # numerically evaluate each function at x and return a vector of numbers
-    𝚽( x, fn_vector ) = [ f(x) for f in fn_vector ]
+## ============================================ ##
 
-    # create vector of functions, each element --> each state 
-    dx_fn_vec = Vector{Function}(undef,0) 
-    for i = 1:n_vars 
-        # define the differential equation 
-        push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), z_fd[:,i] ) ) 
-    end 
+x0, str, p, ts, dt = init_params(fn) 
 
-    # set up dx_fn = function of vector of functions 
-    dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
+tspan = (t_test[1], t_test[end])
+prob = ODEProblem(dx_fn, x0, tspan)
 
-    # setup the problem
-    if isequal( n_vars , 1 ) 
-        x0 = x_test[1]  
-    else
-        x0 = x_test[1,:]
-    end 
+# solve the ODE
+sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
+x = sol.u ; x = mapreduce(permutedims, vcat, x) 
+t = sol.t 
 
-    x0 = [1.0, 1.0] 
-    tspan = (t_test[1], t_test[end])
-    prob = ODEProblem(dx_fn, x0, tspan)
-
-    # solve the ODE
-    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
-    x = sol.u ; x = mapreduce(permutedims, vcat, x) 
-    t = sol.t 
-
-end 
 
 
 

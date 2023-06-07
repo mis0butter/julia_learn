@@ -174,6 +174,7 @@ end
 
 
 ## ============================================ ##
+# 
 
 export build_dx_fn 
 function build_dx_fn(poly_order, z_fd)
@@ -191,7 +192,7 @@ function build_dx_fn(poly_order, z_fd)
     dx_fn_vec = Vector{Function}(undef,0) 
     for i = 1:n_vars 
         # define the differential equation 
-        push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), z_fd[:,i] ) ) 
+        push!( dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), z_fd[:,i] ) ) 
     end 
 
     dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
@@ -199,7 +200,6 @@ function build_dx_fn(poly_order, z_fd)
     return dx_fn 
 
 end 
-
 
 
 
