@@ -25,7 +25,7 @@ using Random, Distributions
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = predator_prey
+fn          = ode_sine 
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
@@ -68,31 +68,41 @@ display(z_fd)
 
 
 ## ============================================ ##
-
+# generate + validate data 
 
 dx_fn = build_dx_fn(poly_order, z_fd) 
+t_val, x_val = validate_data(t_test, x_test, dx_fn)
 
 
 ## ============================================ ##
 
-x0, str, p, ts, dt = init_params(fn) 
 
 tspan = (t_test[1], t_test[end])
 prob = ODEProblem(dx_fn, x0, tspan)
 
 # solve the ODE
 sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
-x = sol.u ; x = mapreduce(permutedims, vcat, x) 
-t = sol.t 
-
-
-
+x_validate = sol.u ; 
+x_validate = mapreduce(permutedims, vcat, x_validate) 
+t_validate = sol.t 
 
 ## ============================================ ##
-# validation 
+
 
 # display training data 
+plot(t_train, x_train, 
+    lw = 2, 
+    label = "train", 
+    grid = false ) 
+plot!(t_test, x_test, 
+    ls = :dash, 
+    c = :red, 
+    label = "test" )
+plot!(t_val, x_val, 
+    ls = :dot, 
+    c = :green, 
+    label = "validate" )
 
-display(plt_vec) 
+
 
 

@@ -9,7 +9,7 @@ function split_train_test(x, train_fraction)
     ind = Int(round( size(x,1) * train_fraction ))  
 
     x_train = x[1:ind,:]
-    x_test  = x[ind+1:end,:] 
+    x_test  = x[ind:end,:] 
 
     return x_train, x_test 
 

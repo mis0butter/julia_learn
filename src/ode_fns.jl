@@ -29,17 +29,12 @@ function ode_sine(dx, x, p, t)
 end 
 
 
-# ## ============================================ ##
-# solve ODE problem, compute derivatives and plot states 
+## ============================================ ##
+# solve ODE problem 
 
-using DifferentialEquations
-
-export ode_states 
-function ode_states(fn, plot_option)
+function solve_ode(fn, plot_option)
 
     x0, str, p, ts, dt = init_params(fn) 
-    n_vars = length(x0) 
-
 
     # ----------------------- #
     # solve ODE, plot states 
@@ -57,6 +52,22 @@ function ode_states(fn, plot_option)
         plot_dyn(t, x, str)
     end 
 
+    return t, x 
+
+end 
+
+
+## ============================================ ##
+# solve ODE problem, compute derivatives and plot states 
+
+using DifferentialEquations
+
+export ode_states 
+function ode_states(fn, plot_option)
+
+    x0, str, p, ts, dt = init_params(fn) 
+    t, x = solve_ode(fn, plot_option) 
+
     # ----------------------- #
     # derivatives 
     dx_fd   = fdiff(t, x)               # (forward) finite difference 
@@ -73,6 +84,35 @@ function ode_states(fn, plot_option)
     end 
 
     return t, x, dx_true, dx_fd, dx_tv 
+
+end 
+
+
+## ============================================ ##
+# generate predicts / validation data 
+
+export validate_data 
+function validate_data(t_test, x_test, dx_fn)
+
+    # x0, str, p, ts, dt = init_params(fn) 
+
+    n_vars = size(x_test,2) 
+    if n_vars == 1
+        x0 = [ x_test[1] ] 
+    else
+        x0 = x_test[1,:] 
+    end 
+
+    tspan = (t_test[1], t_test[end])
+    prob = ODEProblem(dx_fn, x0, tspan)
+
+    # solve the ODE
+    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
+    x_validate = sol.u ; 
+    x_validate = mapreduce(permutedims, vcat, x_validate) 
+    t_validate = sol.t 
+
+    return t_validate, x_validate 
 
 end 
 

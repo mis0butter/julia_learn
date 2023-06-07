@@ -702,19 +702,3 @@ p_hp_opt = plot_admm(hist_hp_opt)
     plot!(plot_title = "ADMM Lasso (x-hp-opt) \n state = $(j)")
 
 fig = plot(p_opt, p_hp_opt, layout = (1,2), size = [800 800])
-
-## ============================================ ##
-
-using Random, Distributions
-
-n = 50
-x = range(-5, 5, length=n)
-dx = x[2] - x[1]
-
-f_noisy = abs.(x) + rand(Uniform(-0.05, 0.05), n)
-
-using NoiseRobustDifferentiation
-
-û = tvdiff(f_noisy, 100, 0.2, dx=dx)
-
-    
