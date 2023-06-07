@@ -311,8 +311,7 @@ end
 ## ============================================ ##
 # build data matrix 
 
-# export pool_data_vecfn
-
+export pool_data_vecfn
 function pool_data_vecfn(n_vars, poly_order) 
     # ----------------------- #
     # Purpose: Build data vector of functions  
@@ -336,7 +335,7 @@ function pool_data_vecfn(n_vars, poly_order)
     for i = 1 : n_vars 
 
         ind  += 1 
-        push!(Θ, x -> x[:,i]) 
+        push!( Θ, x -> x[i] ) 
 
     end 
 
@@ -346,7 +345,7 @@ function pool_data_vecfn(n_vars, poly_order)
             for j = i:n_vars 
 
                 ind += 1 ; 
-                push!(Θ, x -> x[:,i] .* x[:,j] )
+                push!( Θ, x -> x[i] .* x[j] ) 
 
             end 
         end 
@@ -359,7 +358,7 @@ function pool_data_vecfn(n_vars, poly_order)
                 for k = j : n_vars 
                     
                     ind += 1 ;                     
-                    push!(Θ, x -> x[:,i] .* x[:,j] .* x[:,k] )
+                    push!( Θ, x -> x[i] .* x[j] .* x[k] )
 
                 end 
             end 
@@ -370,7 +369,7 @@ function pool_data_vecfn(n_vars, poly_order)
     for i = 1 : n_vars 
 
         ind  += 1
-        push!(Θ, x -> sin.( x[:,i] ) )
+        push!(Θ, x -> sin.( x[i] ) )
 
     end 
     

@@ -25,7 +25,7 @@ using Random, Distributions
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = predator_prey 
+fn          = ode_sine 
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
@@ -45,6 +45,7 @@ poly_order = n_vars
 # split into training and validation data 
 
 train_fraction = 0.7 
+t_train, t_test             = split_train_test(t, train_fraction) 
 x_train, x_test             = split_train_test(x, train_fraction) 
 dx_true_train, dx_true_test = split_train_test(dx_true, train_fraction) 
 dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction) 
@@ -68,29 +69,57 @@ display(z_fd)
 
 ## ============================================ ##
 
+n_vars = size( x, 2 ) 
+
 # test 
 ξ() = z_fd[:,1] 
 
 # numerically evaluate each function at x and return a vector of numbers
-𝚽(x, func_vector) = [f(x) for f in func_vector]
+𝚽(x, fn_vector ) = [ f(x) for f in fn_vector ]
 
 # define functions 
-func_vector = pool_data_fn(n_vars, poly_order) 
+fn_vector = pool_data_vecfn(n_vars, poly_order) 
 
-# define the differential equation
-f(x,p,t) = dot( 𝚽(x, func_vector), ξ() ) 
+## ============================================ ##
+
+# define the differential equation 
+dx1(x,p,t) = dot( 𝚽( x, fn_vector ), ξ() ) 
+dx2(x,p,t) = dot( 𝚽( x, fn_vector ), ξ() ) 
+
+test_fn(x, p, t) = [ dx1(x, p, t); dx2(x, p, t) ]
+
+## ============================================ ## 
+
+dx_fn_vec = Vector{Function}(undef,0) 
+
+for i = 1:n_vars 
+    # define the differential equation 
+    push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), ξ() ) ) 
+    push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), ξ() ) ) 
+end 
+
+dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
+
+# test_fn(x, p, t) = [f(x, p, t); g(x, p, t)]
+
+## ============================================ ##
 
 # setup the problem
-x0 = 1.0
-tspan = (0.0, 1.0)
-prob = ODEProblem(f, x0, tspan)
+if isequal( n_vars , 1 ) 
+    x0 = x_test[1]  
+else
+    x0 = x_test[1,:]
+end 
+
+x0 = [1.0, 1.0] 
+tspan = (t_test[1], t_test[end])
+prob = ODEProblem(test_fn, x0, tspan)
 
 # solve the ODE
 sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
 
 # print the solution
 println("Solution at t = 1.0 is: ", sol(1.0))
-
 
 
 ## ============================================ ##

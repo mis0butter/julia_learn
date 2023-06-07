@@ -8,7 +8,7 @@ function init_params(fn)
         x0  = [ 1.0; 0.5; 0 ]
         str = "lorenz" 
     elseif fn == ode_sine 
-        x0  = [ 1.0; 0.5 ]  
+        x0  = [ 1.0 ]  
         str = "ode_sine" 
     elseif fn == predator_prey 
         x0  = [ 1.0; 0.5 ] 
