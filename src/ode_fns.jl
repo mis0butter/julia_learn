@@ -94,17 +94,15 @@ end
 export validate_data 
 function validate_data(t_test, x_test, dx_fn)
 
-    # x0, str, p, ts, dt = init_params(fn) 
 
     n_vars = size(x_test,2) 
-    if n_vars == 1
-        x0 = [ x_test[1] ] 
-    else
+    x0     = [ x_test[1] ] 
+    if n_vars > 1 
         x0 = x_test[1,:] 
     end 
 
     tspan = (t_test[1], t_test[end])
-    prob = ODEProblem(dx_fn, x0, tspan)
+    prob = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
     sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
