@@ -173,6 +173,32 @@ function dx_gp_fn(t, dx)
 end 
 
 
+## ============================================ ##
+
+export build_dx_fn 
+function build_dx_fn(poly_order, z_fd)
+
+    # get # states 
+    n_vars = size( z_fd, 2 ) 
+
+    # define pool_data functions 
+    fn_vector = pool_data_vecfn(n_vars, poly_order) 
+
+    # numerically evaluate each function at x and return a vector of numbers
+    𝚽( x, fn_vector ) = [ f(x) for f in fn_vector ]
+
+    # create vector of functions, each element --> each state 
+    dx_fn_vec = Vector{Function}(undef,0) 
+    for i = 1:n_vars 
+        # define the differential equation 
+        push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), z_fd[:,i] ) ) 
+    end 
+
+    dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
+
+    return dx_fn 
+
+end 
 
 
 

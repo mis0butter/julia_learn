@@ -25,7 +25,7 @@ using Random, Distributions
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = ode_sine 
+fn          = predator_prey
 plot_option = 1 
 t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
@@ -69,57 +69,45 @@ display(z_fd)
 
 ## ============================================ ##
 
-n_vars = size( x, 2 ) 
+function build_dx_fn(poly_order, z_fd)
 
-# test 
-ξ() = z_fd[:,1] 
+    # get # states 
+    n_vars = size( z_fd, 2 ) 
 
-# numerically evaluate each function at x and return a vector of numbers
-𝚽(x, fn_vector ) = [ f(x) for f in fn_vector ]
+    # define pool_data functions 
+    fn_vector = pool_data_vecfn(n_vars, poly_order) 
 
-# define functions 
-fn_vector = pool_data_vecfn(n_vars, poly_order) 
+    # numerically evaluate each function at x and return a vector of numbers
+    𝚽( x, fn_vector ) = [ f(x) for f in fn_vector ]
 
-## ============================================ ##
+    # create vector of functions, each element --> each state 
+    dx_fn_vec = Vector{Function}(undef,0) 
+    for i = 1:n_vars 
+        # define the differential equation 
+        push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), z_fd[:,i] ) ) 
+    end 
 
-# define the differential equation 
-dx1(x,p,t) = dot( 𝚽( x, fn_vector ), ξ() ) 
-dx2(x,p,t) = dot( 𝚽( x, fn_vector ), ξ() ) 
+    # set up dx_fn = function of vector of functions 
+    dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
 
-test_fn(x, p, t) = [ dx1(x, p, t); dx2(x, p, t) ]
+    # setup the problem
+    if isequal( n_vars , 1 ) 
+        x0 = x_test[1]  
+    else
+        x0 = x_test[1,:]
+    end 
 
-## ============================================ ## 
+    x0 = [1.0, 1.0] 
+    tspan = (t_test[1], t_test[end])
+    prob = ODEProblem(dx_fn, x0, tspan)
 
-dx_fn_vec = Vector{Function}(undef,0) 
+    # solve the ODE
+    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
+    x = sol.u ; x = mapreduce(permutedims, vcat, x) 
+    t = sol.t 
 
-for i = 1:n_vars 
-    # define the differential equation 
-    push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), ξ() ) ) 
-    push!(dx_fn_vec, (x,p,t) -> dot( 𝚽( x, fn_vector ), ξ() ) ) 
 end 
 
-dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
-
-# test_fn(x, p, t) = [f(x, p, t); g(x, p, t)]
-
-## ============================================ ##
-
-# setup the problem
-if isequal( n_vars , 1 ) 
-    x0 = x_test[1]  
-else
-    x0 = x_test[1,:]
-end 
-
-x0 = [1.0, 1.0] 
-tspan = (t_test[1], t_test[end])
-prob = ODEProblem(test_fn, x0, tspan)
-
-# solve the ODE
-sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
-
-# print the solution
-println("Solution at t = 1.0 is: ", sol(1.0))
 
 
 ## ============================================ ##
