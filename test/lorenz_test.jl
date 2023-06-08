@@ -66,40 +66,78 @@ display(z_fd)
 ## ============================================ ##
 # generate + validate data 
 
+using LaTeXStrings
+using Latexify
+
 dx_gpsindy_fn = build_dx_fn(poly_order, z_fd) 
 dx_sindy_fn  = build_dx_fn(poly_order, Ξ_fd)
 
 t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn)
 t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn)
 
-# display training data 
-plot(t_train, x_train, 
-    lw = 3, 
-    c = :black, 
-    label = "train", 
+
+plot_font = "Computer Modern" 
+default(
+    fontfamily = plot_font,
+    linewidth = 2, 
+    # framestyle = :box, 
+    label = nothing, 
     grid = false, 
-    xlim = (t_train[end]*3/4, t_test[end]), 
-    legend = :outerbottom 
-    # ylim = ( min(x_test[1], x_test[end]), max( x_test[1], x_test[end] ) )
-    ) 
-plot!(t_test, x_test, 
-    ls = :dash, 
-    c = :blue,
-    lw = 3,  
-    label = "test" 
     )
-plot!(t_gpsindy_val, x_gpsindy_val, 
-    ls = :dashdot, 
-    lw = 1.5, 
-    c = :red, 
-    label = "GP SINDy" 
+# scalefontsizes(1.1)
+ptitles = ["Prey", "Predator"]
+
+plot_vec = [] 
+for i = 1:n_vars 
+
+    # display training data 
+    p = plot(t_train, x_train[:,i], 
+        lw = 3, 
+        c = :gray, 
+        label = "train (70%)", 
+        grid = false, 
+        xlim = (t_train[end]*3/4, t_test[end]), 
+        # legend = :outerbottom , 
+        legend = false , 
+        xlabel = "Time (s)", 
+        # title  = string(ptitles[i],  latexify(", x_$(i)")  ), 
+        # title  = string( ptitles[i], latexify( string(" x ", ", x_$(i)") ) ), 
+        title  = string( ptitles[i], " ,", latexify( "x_$(i)" ) ), 
+        xticks = 0:2:10, 
+        yticks = 0:0.5:4,     
+        ) 
+    plot!(t_test, x_test[:,i], 
+        ls = :dash, 
+        c = :blue,
+        lw = 3,  
+        label = "test (30%)" 
+        )
+    plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
+        ls = :dash, 
+        lw = 1.5, 
+        c = :red, 
+        label = "GP SINDy" 
+        )
+    # plot!(t_sindy_val, x_sindy_val[:,i], 
+    #     ls = :dashdot, 
+    #     lw = 1.5, 
+    #     c = :green, 
+    #     label = "SINDy" 
+    #     )
+
+    push!( plot_vec, p ) 
+
+end 
+# plot!(legend = false)
+
+p_train_val = plot(plot_vec ... , 
+    layout = (1, n_vars), 
+    size = [ n_vars*600 400 ], 
+    plot_title = "Training vs. Validation Data", 
+    # titlefont = font(16), 
     )
-plot!(t_sindy_val, x_sindy_val, 
-    ls = :dot, 
-    lw = 1.5, 
-    c = :green, 
-    label = "SINDy" 
-    )
+display(p_train_val) 
+
 
 ## ============================================ ##
 
