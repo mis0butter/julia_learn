@@ -20,6 +20,9 @@ using Test
 using NoiseRobustDifferentiation
 using Random, Distributions 
 
+using LaTeXStrings
+using Latexify
+
 
 ## ============================================ ##
 # choose ODE, plot states --> measurements 
@@ -36,6 +39,7 @@ x_train, x_test             = split_train_test(x, train_fraction)
 dx_true_train, dx_true_test = split_train_test(dx_true, train_fraction) 
 dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction) 
 
+
 ## ============================================ ##
 # SINDy alone 
 
@@ -43,8 +47,8 @@ dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction)
 n_vars     = size(x, 2) 
 poly_order = n_vars 
 
-Ξ_fd   = SINDy_c_recursion(x, dx_fd, 0, λ, poly_order ) 
-Ξ_true = SINDy_c_recursion(x, dx_true, 0, λ, poly_order ) 
+Ξ_true = SINDy( x_train, dx_true_train, λ )
+Ξ_fd   = SINDy( x_train, dx_fd_train, λ )
 
 
 ## ============================================ ##
@@ -55,19 +59,17 @@ poly_order = n_vars
 # @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
 # display(z_true) 
 
-λ = 0.01 
+λ = 0 
+println("λ = ", λ) 
 
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
-@time z_fd, hist_fd = sindy_gp_admm( x_train, dx_true_train, λ, hist_fd ) 
+@time z_fd, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
 display(z_fd) 
 
 
 ## ============================================ ##
 # generate + validate data 
-
-using LaTeXStrings
-using Latexify
 
 dx_gpsindy_fn = build_dx_fn(poly_order, z_fd) 
 dx_sindy_fn  = build_dx_fn(poly_order, Ξ_fd)

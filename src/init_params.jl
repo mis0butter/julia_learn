@@ -18,7 +18,7 @@ function init_params(fn)
     n_vars = size(x0, 1) 
     tf     = 10 
     ts     = (0.0, tf) 
-    dt     = 0.1 
+    dt     = 0.1/2 
 
     return x0, str, p, ts, dt
 
