@@ -79,7 +79,7 @@ plot(t_train, x_train,
     label = "train", 
     grid = false, 
     xlim = (t_train[end]*3/4, t_test[end]), 
-    legend 
+    legend = :outerbottom 
     # ylim = ( min(x_test[1], x_test[end]), max( x_test[1], x_test[end] ) )
     ) 
 plot!(t_test, x_test, 
