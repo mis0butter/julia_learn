@@ -43,12 +43,12 @@ dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction)
 ## ============================================ ##
 # SINDy alone 
 
-λ = 0.1 
+λ = 0.1  
 n_vars     = size(x, 2) 
 poly_order = n_vars 
 
 Ξ_true = SINDy( x_train, dx_true_train, λ )
-Ξ_fd   = SINDy( x_train, dx_fd_train, λ )
+Ξ_sindy_fd   = SINDy( x_train, dx_fd_train, λ )
 
 
 ## ============================================ ##
@@ -59,24 +59,34 @@ poly_order = n_vars
 # @time z_true, hist_true = sindy_gp_admm( x, dx_true, λ, hist_true ) 
 # display(z_true) 
 
-λ = 0 
+λ = 2e-2 
 println("λ = ", λ) 
 
 # finite difference 
 hist_fd = Hist( [], [], [], [], [] ) 
-@time z_fd, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
-display(z_fd) 
+@time Ξ_gpsindy_fd, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
+display(Ξ_gpsindy_fd) 
 
 
-## ============================================ ##
+## ============================================ ## 
 # generate + validate data 
 
-dx_gpsindy_fn = build_dx_fn(poly_order, z_fd) 
-dx_sindy_fn  = build_dx_fn(poly_order, Ξ_fd)
+dx_gpsindy_fn = build_dx_fn(poly_order, Ξ_sindy_fd) 
+dx_sindy_fn   = build_dx_fn(poly_order, Ξ_gpsindy_fd)
 
 t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn)
 t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn)
 
+# compute metrics 
+norm_sindy_val = zeros(size(x_test,2))
+norm_gpsindy_val = zeros(size(x_test,2))
+for i = 1:size(x_test,2) 
+    norm_sindy_val[i]   = norm( x_test[:,i] - x_sindy_val[:,i] )
+    norm_gpsindy_val[i] = norm( x_test[:,i] - x_gpsindy_val[:,i] )
+end 
+
+## ============================================ ##
+# plots 
 
 plot_font = "Computer Modern" 
 default(
