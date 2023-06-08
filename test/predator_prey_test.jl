@@ -86,29 +86,32 @@ default(
     )
 # scalefontsizes(1.1)
 ptitles = ["Prey", "Predator"]
+fsize = 18 
 
 plot_vec = [] 
 for i = 1:n_vars 
 
     # display training data 
     p = plot(t_train, x_train[:,i], 
-        margin = 8Plots.mm, 
+        margin = 10Plots.mm, 
         lw = 3, 
         c = :gray, 
         label = "train (70%)", 
         grid = false, 
         xlim = (t_train[end]*3/4, t_test[end]), 
-        # legend = :outerbottom , 
-        legend = false , 
+        legend = :bottomleft , 
+        # legend = true , 
         xlabel = "Time (s)", 
         # title  = string(ptitles[i],  latexify(", x_$(i)")  ), 
         # title  = string( ptitles[i], latexify( string(" x ", ", x_$(i)") ) ), 
         title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
         xticks = 0:2:10, 
         yticks = 0:0.5:4,   
-        tickfontsize = 14, 
-        xguidefontsize = 14, 
-        yguidefontsize = 14   
+        tickfontsize = fsize, 
+        legendfontsize = fsize-2, 
+        xguidefontsize = fsize, 
+        yguidefontsize = fsize, 
+        titlefontsize = fsize, 
         ) 
     plot!(t_test, x_test[:,i], 
         ls = :dash, 
@@ -116,23 +119,24 @@ for i = 1:n_vars
         lw = 3,  
         label = "test (30%)" 
         )
+        plot!(t_sindy_val, x_sindy_val[:,i], 
+            ls = :dashdot, 
+            lw = 1.5, 
+            c = :green, 
+            label = "SINDy" 
+            )
     plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
         ls = :dash, 
         lw = 1.5, 
         c = :red, 
         label = "GP SINDy" 
         )
-    # plot!(t_sindy_val, x_sindy_val[:,i], 
-    #     ls = :dashdot, 
-    #     lw = 1.5, 
-    #     c = :green, 
-    #     label = "SINDy" 
-    #     )
 
     push!( plot_vec, p ) 
 
 end 
-# plot!(legend = false)
+
+plot!(legend = false)
 
 p_train_val = plot(plot_vec ... , 
     layout = (1, n_vars), 
@@ -146,6 +150,6 @@ display(p_train_val)
 ## ============================================ ##
 
 
-savefig("./plot.png")
+savefig("./predator_prey.pdf")
 
 
