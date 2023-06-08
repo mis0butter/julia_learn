@@ -92,6 +92,7 @@ for i = 1:n_vars
 
     # display training data 
     p = plot(t_train, x_train[:,i], 
+        margin = 8Plots.mm, 
         lw = 3, 
         c = :gray, 
         label = "train (70%)", 
@@ -102,9 +103,12 @@ for i = 1:n_vars
         xlabel = "Time (s)", 
         # title  = string(ptitles[i],  latexify(", x_$(i)")  ), 
         # title  = string( ptitles[i], latexify( string(" x ", ", x_$(i)") ) ), 
-        title  = string( ptitles[i], " ,", latexify( "x_$(i)" ) ), 
+        title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
         xticks = 0:2:10, 
-        yticks = 0:0.5:4,     
+        yticks = 0:0.5:4,   
+        tickfontsize = 14, 
+        xguidefontsize = 14, 
+        yguidefontsize = 14   
         ) 
     plot!(t_test, x_test[:,i], 
         ls = :dash, 
@@ -133,7 +137,7 @@ end
 p_train_val = plot(plot_vec ... , 
     layout = (1, n_vars), 
     size = [ n_vars*600 400 ], 
-    plot_title = "Training vs. Validation Data", 
+    # plot_title = "Training vs. Validation Data", 
     # titlefont = font(16), 
     )
 display(p_train_val) 
@@ -141,5 +145,7 @@ display(p_train_val)
 
 ## ============================================ ##
 
+
+savefig("./plot.png")
 
 
