@@ -23,6 +23,9 @@ using LinearAlgebra
 # using LaTeXStrings
 # using Latexify
 
+using LaTeXStrings
+using Latexify
+
 
 ## ============================================ ##
 # choose ODE, plot states --> measurements 
@@ -39,10 +42,11 @@ x_train, x_test             = split_train_test(x, train_fraction)
 dx_true_train, dx_true_test = split_train_test(dx_true, train_fraction) 
 dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction) 
 
+
 ## ============================================ ##
 # SINDy alone 
 
-λ = 0.1 
+λ = 0.1  
 n_vars     = size(x, 2) 
 poly_order = n_vars 
 
@@ -63,7 +67,7 @@ hist_fd = Hist( [], [], [], [], [] )
 display(z_gpsindy) 
 
 
-## ============================================ ##
+## ============================================ ## 
 # generate + validate data 
 
 dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 

@@ -101,8 +101,9 @@ function validate_data(t_test, x_test, dx_fn, dt)
         x0 = x_test[1,:] 
     end 
 
+    dt    = t_test[2] - t_test[1] 
     tspan = (t_test[1], t_test[end])
-    prob = ODEProblem(dx_fn, x0, tspan) 
+    prob  = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
     sol = solve(prob,  reltol = 1e-8, abstol = 1e-8, saveat = dt)
