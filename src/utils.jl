@@ -59,13 +59,13 @@ function plot_deriv(t, dx_true, dx_fd, dx_tv, str)
         plt = plot(t, dx_true[:,j], 
             title = "State $(j)", label = "true" ) 
             plot!(t, dx_fd[:,j], ls = :dash, label = "finite diff" )
-            plot!(t, dx_tv[:,j], ls = :dash, label = "var diff" )
+            # plot!(t, dx_tv[:,j], ls = :dash, label = "var diff" )
     push!( plot_vec_dx, plt ) 
     end
 
     plot_dx = plot(plot_vec_dx ... , 
-        layout = (n_vars, 1), 
-        size = [600 n_vars*300], 
+        layout = (1, n_vars), 
+        size = [n_vars*600 400], 
         plot_title = "Derivatives. ODE fn = $( str )" )
     display(plot_dx) 
 
@@ -83,18 +83,25 @@ using Latexify
 export plot_prey_predator 
 function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val )
 
-
     plot_font = "Computer Modern" 
+    fsize = 18 
     default(
         fontfamily = plot_font,
         linewidth = 2, 
         # framestyle = :box, 
         label = nothing, 
-        grid = false, 
+        grid  = false, 
+        legend = false, 
+        tickfontsize   = fsize, 
+        legendfontsize = fsize-3, 
+        xguidefontsize = fsize, 
+        yguidefontsize = fsize, 
+        titlefontsize  = fsize, 
+        margin = 10Plots.mm, 
+        lw     = 3, 
         )
     # scalefontsizes(1.1)
     ptitles = ["Prey", "Predator"]
-    fsize = 18 
     
     n_vars = size(x_train, 2)
     plot_vec = [] 
@@ -102,38 +109,26 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
         # display training data 
         p = plot(t_train, x_train[:,i], 
-            margin = 10Plots.mm, 
-            lw = 3, 
-            c = :gray, 
-            label = "train (70%)", 
-            grid = false, 
-            xlim = (t_train[end]*3/4, t_test[end]), 
-            legend = :bottomleft , 
-            # legend = true , 
+            c      = :gray, 
+            label  = "train (70%)", 
+            # xlim   = (t_train[end]*3/4, t_test[end]), 
+            ylim   = ( minimum( [x_train[:,i]; x_test[:,i]] ), maximum( [x_train[:,i]; x_test[:,i]] ) ), 
+            # legend = :outsideright ,
             xlabel = "Time (s)", 
-            # title  = string(ptitles[i],  latexify(", x_$(i)")  ), 
-            # title  = string( ptitles[i], latexify( string(" x ", ", x_$(i)") ) ), 
             title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
-            xticks = 0:2:10, 
-            yticks = 0:0.5:4,   
-            tickfontsize = fsize, 
-            legendfontsize = fsize-2, 
-            xguidefontsize = fsize, 
-            yguidefontsize = fsize, 
-            titlefontsize = fsize, 
             ) 
         plot!(t_test, x_test[:,i], 
             ls = :dash, 
-            c = :blue,
+            c  = :blue,
             lw = 3,  
             label = "test (30%)" 
             )
-            plot!(t_sindy_val, x_sindy_val[:,i], 
-                ls = :dashdot, 
-                lw = 1.5, 
-                c = :green, 
-                label = "SINDy" 
-                )
+        plot!(t_sindy_val, x_sindy_val[:,i], 
+            ls = :dashdot, 
+            lw = 1.5, 
+            c = :green, 
+            label = "SINDy" 
+            )
         plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
             ls = :dash, 
             lw = 1.5, 
@@ -145,7 +140,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     end 
     
-    plot!(legend = false)
+    plot!(legend = true)
     
     p_train_val = plot(plot_vec ... , 
         layout = (1, n_vars), 

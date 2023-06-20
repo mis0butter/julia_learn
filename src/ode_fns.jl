@@ -105,8 +105,8 @@ function validate_data(t_test, x_test, dx_fn, dt)
     prob = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
-    # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8, saveat = dt)
-    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
+    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8, saveat = dt)
+    # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
     x_validate = sol.u ; 
     x_validate = mapreduce(permutedims, vcat, x_validate) 
     t_validate = sol.t 

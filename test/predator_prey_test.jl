@@ -75,9 +75,13 @@ t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, 0.1)
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
-# print some stats 
+# print some coeff stats 
 println("opnorm( Ξ_true - Ξ_sindy ) = \n    ", opnorm( Ξ_true - Ξ_sindy ) )
-println("opnorm( Ξ_true - z_fd ) = \n    ", opnorm( Ξ_true - z_gpsindy ) )
+println("opnorm( Ξ_true - z_gpsindy ) = \n    ", opnorm( Ξ_true - z_gpsindy ) )
+
+# print some predicted stats 
+# println("opnorm( x_true - x_sindy ) = \n    ", opnorm( x_test - x_sindy_val ) )
+# println("opnorm( x_true - x_gpsindy ) = \n    ", opnorm( x_test - x_gpsindy_val ) )
 
 # savefig("./sindy_gpsindy.pdf")
 
