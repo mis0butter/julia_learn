@@ -72,3 +72,88 @@ function plot_deriv(t, dx_true, dx_fd, dx_tv, str)
     return plot_dx 
 
 end 
+
+
+## ============================================ ##
+# plot prey vs. predator 
+
+using Plots 
+using Latexify 
+
+export plot_prey_predator 
+function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val )
+
+
+    plot_font = "Computer Modern" 
+    default(
+        fontfamily = plot_font,
+        linewidth = 2, 
+        # framestyle = :box, 
+        label = nothing, 
+        grid = false, 
+        )
+    # scalefontsizes(1.1)
+    ptitles = ["Prey", "Predator"]
+    fsize = 18 
+    
+    n_vars = size(x_train, 2)
+    plot_vec = [] 
+    for i = 1:n_vars 
+    
+        # display training data 
+        p = plot(t_train, x_train[:,i], 
+            margin = 10Plots.mm, 
+            lw = 3, 
+            c = :gray, 
+            label = "train (70%)", 
+            grid = false, 
+            xlim = (t_train[end]*3/4, t_test[end]), 
+            legend = :bottomleft , 
+            # legend = true , 
+            xlabel = "Time (s)", 
+            # title  = string(ptitles[i],  latexify(", x_$(i)")  ), 
+            # title  = string( ptitles[i], latexify( string(" x ", ", x_$(i)") ) ), 
+            title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
+            xticks = 0:2:10, 
+            yticks = 0:0.5:4,   
+            tickfontsize = fsize, 
+            legendfontsize = fsize-2, 
+            xguidefontsize = fsize, 
+            yguidefontsize = fsize, 
+            titlefontsize = fsize, 
+            ) 
+        plot!(t_test, x_test[:,i], 
+            ls = :dash, 
+            c = :blue,
+            lw = 3,  
+            label = "test (30%)" 
+            )
+            plot!(t_sindy_val, x_sindy_val[:,i], 
+                ls = :dashdot, 
+                lw = 1.5, 
+                c = :green, 
+                label = "SINDy" 
+                )
+        plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
+            ls = :dash, 
+            lw = 1.5, 
+            c = :red, 
+            label = "GP SINDy" 
+            )
+    
+        push!( plot_vec, p ) 
+    
+    end 
+    
+    plot!(legend = false)
+    
+    p_train_val = plot(plot_vec ... , 
+        layout = (1, n_vars), 
+        size = [ n_vars*600 400 ], 
+        # plot_title = "Training vs. Validation Data", 
+        # titlefont = font(16), 
+        )
+    display(p_train_val) 
+
+end 
+
