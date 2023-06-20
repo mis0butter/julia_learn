@@ -11,7 +11,9 @@ function init_params(fn)
         x0  = [ 1.0 ]  
         str = "ode_sine" 
     elseif fn == predator_prey 
-        x0  = [ 1.0; 0.5 ] 
+        # x0  = [ 1.0; 0.5 ] 
+        # x0  = [ 0.5; 1.0 ] 
+        x0  = [ 0.75; 0.75 ] 
         str = "predator_prey" 
     end 
     p      = [ 10.0, 28.0, 8/3, 2.0 ] 

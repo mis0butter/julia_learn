@@ -92,7 +92,7 @@ end
 # generate predicts / validation data 
 
 export validate_data 
-function validate_data(t_test, x_test, dx_fn)
+function validate_data(t_test, x_test, dx_fn, dt)
 
 
     n_vars = size(x_test,2) 
@@ -105,6 +105,7 @@ function validate_data(t_test, x_test, dx_fn)
     prob = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
+    # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8, saveat = dt)
     sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
     x_validate = sol.u ; 
     x_validate = mapreduce(permutedims, vcat, x_validate) 
