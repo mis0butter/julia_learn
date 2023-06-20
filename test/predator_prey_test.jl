@@ -6,22 +6,22 @@ struct Hist
     eps_dual 
 end 
 
-using DifferentialEquations 
+# using DifferentialEquations 
 using GaussianSINDy
 using LinearAlgebra 
-using ForwardDiff 
-using Optim 
-using Plots 
-using CSV 
-using DataFrames 
-using Symbolics 
-using PrettyTables 
-using Test 
-using NoiseRobustDifferentiation
-using Random, Distributions 
+# using ForwardDiff 
+# using Optim 
+# using Plots 
+# using CSV 
+# using DataFrames 
+# using Symbolics 
+# using PrettyTables 
+# using Test 
+# using NoiseRobustDifferentiation
+# using Random, Distributions 
 
-using LaTeXStrings
-using Latexify
+# using LaTeXStrings
+# using Latexify
 
 
 ## ============================================ ##
@@ -67,10 +67,10 @@ display(z_fd)
 # generate + validate data 
 
 dx_gpsindy_fn = build_dx_fn(poly_order, z_fd) 
-dx_sindy_fn  = build_dx_fn(poly_order, Ξ_fd)
+dx_sindy_fn   = build_dx_fn(poly_order, Ξ_fd)
 
-t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn) 
-t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn) 
+t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, 0.1) 
+t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, 0.1) 
 
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
@@ -78,6 +78,11 @@ plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, 
 
 ## ============================================ ##
 
-savefig("./sindy_gpsindy.pdf")
+# print some stats 
+println("opnorm( Ξ_true - Ξ_sindy ) = \n    ", opnorm( Ξ_true - Ξ_fd ) )
+
+println("opnorm( Ξ_true - z_fd ) = \n    ", opnorm( Ξ_true - z_fd ) )
+
+# savefig("./sindy_gpsindy.pdf")
 
 
