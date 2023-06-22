@@ -107,17 +107,27 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     # scalefontsizes(1.1)
     ptitles = ["Prey", "Predator"]
     
+    # determine xtick range 
+    t_i = Int(round(3/4*length(t_train))) 
+    t = [t_train[t_i : end] ; t_test]
+    x = [x_train ; x_test]
+    xmin, dx, xmax = min_d_max( t )
+    
     n_vars = size(x_train, 2)
     plot_vec = [] 
     for i = 1:n_vars 
-    
+        
+        ymin, dy, ymax = min_d_max( x[:,i] ) 
+
         # display training data 
         p = plot(t_train, x_train[:,i], 
             c      = :gray, 
             label  = "train (70%)", 
-            # xlim   = (t_train[end]*3/4, t_test[end]), 
+            xlim   = (t_train[end]*3/4, t_test[end]), 
             ylim   = ( minimum( [x_train[:,i]; x_test[:,i]] ), maximum( [x_train[:,i]; x_test[:,i]] ) ), 
-            legend = :left ,
+            xticks = xmin : dx : xmax , 
+            yticks = ymin : dy : ymax , 
+            # legend = :left ,
             xlabel = "Time (s)", 
             title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
             ) 
@@ -144,12 +154,18 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     end 
     
-    plot!(legend = false)
+    plot!(
+        # legend = true, 
+        # legend = :outertopright,  
+    )
     
     
     p_train_val = plot(plot_vec ... , 
-        layout = (1, n_vars), 
-        size = [ n_vars*400 250 ], 
+        # layout = (1, n_vars+1), 
+        layout = grid( 1, n_vars+1, widths=[0.4, 0.4, 0.2] ) , 
+        size   = [ n_vars*400 250 ], 
+        margin = 5Plots.mm,
+        bottom_margin = 7Plots.mm,  
         # plot_title = "Training vs. Validation Data", 
         # titlefont = font(16), 
         )

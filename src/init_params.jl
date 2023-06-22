@@ -38,7 +38,8 @@ function init_params(fn)
         xguidefontsize = fsize, 
         yguidefontsize = fsize, 
         titlefontsize  = fsize, 
-        margin = 10Plots.mm, 
+        margin = 5Plots.mm,
+        bottom_margin = 7Plots.mm,  
         lw     = 3, 
         )
 
