@@ -9,22 +9,6 @@ end
 # using DifferentialEquations 
 using GaussianSINDy
 using LinearAlgebra 
-# using ForwardDiff 
-# using Optim 
-# using Plots 
-# using CSV 
-# using DataFrames 
-# using Symbolics 
-# using PrettyTables 
-# using Test 
-# using NoiseRobustDifferentiation
-# using Random, Distributions 
-
-# using LaTeXStrings
-# using Latexify
-
-using LaTeXStrings
-using Latexify
 
 
 ## ============================================ ##
