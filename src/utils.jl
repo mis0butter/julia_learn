@@ -109,13 +109,13 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     # determine xtick range 
     t_i = Int(round(3/4*length(t_train))) 
-    t = [t_train[t_i : end] ; t_test]
-    x = [x_train ; x_test]
+    t   = [t_train[t_i : end] ; t_test]
+    x   = [x_train ; x_test]
     xmin, dx, xmax = min_d_max( t )
     
-    n_vars = size(x_train, 2)
+    n_vars   = size(x_train, 2)
     plot_vec = [] 
-    for i = 1:n_vars 
+    for i = 1 : n_vars 
         
         ymin, dy, ymax = min_d_max( x[:,i] ) 
 
@@ -123,31 +123,32 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         p = plot(t_train, x_train[:,i], 
             c      = :gray, 
             label  = "train (70%)", 
-            xlim   = (t_train[end]*3/4, t_test[end]), 
-            ylim   = ( minimum( [x_train[:,i]; x_test[:,i]] ), maximum( [x_train[:,i]; x_test[:,i]] ) ), 
+            xlim   = ( xmin, xmax ) , 
+            ylim   = ( ymin - dy/3, ymax + dy/3 ) , 
             xticks = xmin : dx : xmax , 
             yticks = ymin : dy : ymax , 
-            # legend = :left ,
             xlabel = "Time (s)", 
             title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
             ) 
         plot!(t_test, x_test[:,i], 
             # ls = :dash, 
-            c  = :blue,
-            lw = 3,  
-            label = "test (30%)" 
+            # c     = :blue,
+            c     = RGB( 0, 0.25, 1 ) , 
+            lw    = 3 ,  
+            label = "test (30%)" , 
             )
         plot!(t_sindy_val, x_sindy_val[:,i], 
-            ls = :dash, 
-            lw = 3, 
-            c = :green, 
-            label = "SINDy" 
+            ls    = :dash , 
+            # c     = :red , 
+            c     = RGB( 1, 0.25, 0 ) , 
+            lw    = 3 , 
+            label = "SINDy" ,  
             )
         plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
-            ls = :dashdot, 
-            lw = 2, 
-            c = :red, 
-            label = "GP SINDy" 
+            ls    = :dashdot , 
+            c     = RGB(0, 0.75, 0) , 
+            lw    = 2.5 , 
+            label = "GP SINDy" ,  
             )
     
         push!( plot_vec, p ) 
