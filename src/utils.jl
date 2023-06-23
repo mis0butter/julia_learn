@@ -33,7 +33,7 @@ function plot_dyn(t, x, str)
         push!(plot_vec_x, plt)
     end 
     plot_x = plot(plot_vec_x ..., 
-        layout = (n_vars,1), 
+        layout = (1, n_vars), 
         size = [n_vars*400 250 ], 
         xlabel = "Time (s)", 
         plot_title = "Dynamics. ODE fn = $( str )" ) 
@@ -133,7 +133,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         plot!(t_test, x_test[:,i], 
             # ls = :dash, 
             # c     = :blue,
-            c     = RGB( 0, 0.25, 1 ) , 
+            c     = RGB( 0, 0.35, 1 ) , 
             lw    = 3 ,  
             label = "test (30%)" , 
             )
@@ -147,7 +147,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
             ls    = :dashdot , 
             c     = RGB(0, 0.75, 0) , 
-            lw    = 2.5 , 
+            lw    = 2 , 
             label = "GP SINDy" ,  
             )
     

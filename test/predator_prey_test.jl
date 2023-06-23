@@ -1,3 +1,4 @@
+
 struct Hist 
     objval 
     r_norm 
@@ -6,18 +7,19 @@ struct Hist
     eps_dual 
 end 
 
-# using DifferentialEquations 
 using GaussianSINDy
 using LinearAlgebra 
-
 
 ## ============================================ ##
 # choose ODE, plot states --> measurements 
 
 #  
-fn          = predator_prey 
-plot_option = 1 
-t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
+fn             = predator_prey 
+plot_option    = 1 
+savefig_option = 0 
+
+# choose ODE, plot states --> measurements 
+x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
 # split into training and validation data 
 train_fraction = 0.7 
@@ -41,7 +43,6 @@ poly_order = n_vars
 ## ============================================ ##
 # SINDy + GP + ADMM 
 
-
 λ = 0.02  
 println("λ = ", λ)
 
@@ -57,20 +58,57 @@ display(z_gpsindy)
 dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
 dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy)
 
-t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, 0.1) 
-t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, 0.1) 
+t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
+t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, dt) 
 
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
+## ============================================ ##
+# print stats 
+
 # print some coeff stats 
-println("opnorm( Ξ_true - Ξ_sindy ) = \n    ", opnorm( Ξ_true - Ξ_sindy ) )
-println("opnorm( Ξ_true - z_gpsindy ) = \n    ", opnorm( Ξ_true - z_gpsindy ) )
+coeff_norm = [ opnorm( Ξ_true - Ξ_sindy ) , opnorm( Ξ_true - z_gpsindy ) ] 
+println("COEFFICIENTS")
+println("  opnorm( Ξ_true - Ξ_sindy ) = \n    ", coeff_norm[1] )
+println("  opnorm( Ξ_true - z_gpsindy ) = \n    ", coeff_norm[2] )
 
 # print some predicted stats 
-# println("opnorm( x_true - x_sindy ) = \n    ", opnorm( x_test - x_sindy_val ) )
-# println("opnorm( x_true - x_gpsindy ) = \n    ", opnorm( x_test - x_gpsindy_val ) )
+valid_norm = zeros(1, 4) 
+println("VALIDATION DATA")
 
-# savefig("./sindy_gpsindy.pdf")
+    println("  i = ", i) 
+    i = 1 
+    # true - SINDy 
+    valid_norm[1,1] = norm( x_test[:,i] - x_sindy_val[:,i] ) 
+    println("    opnorm( x_true - x_sindy ) = \n    ", valid_norm[1,1] )
+
+    # true - GP SINDy
+    valid_norm[1,2] = norm( x_test[:,i] - x_gpsindy_val[:,i] )
+    println("    opnorm( x_true - x_gpsindy ) = \n    ", valid_norm[1,2] )     
+
+    println("  i = ", 2) 
+    i = 2 
+    # true - SINDy 
+    valid_norm[1,3] = norm( x_test[:,i] - x_sindy_val[:,i] ) 
+    println("    opnorm( x_true - x_sindy ) = \n    ", valid_norm[1,3] )
+
+    # true - GP SINDy
+    valid_norm[1,4] = norm( x_test[:,i] - x_gpsindy_val[:,i] )
+    println("    opnorm( x_true - x_gpsindy ) = \n    ", valid_norm[1,4] )     
+
+    println("x0 = ", round.(x0, digits = 2))
+
+    # for displaying in table 
+    table_norm = round.([ coeff_norm[1] valid_norm[1] valid_norm[2] coeff_norm[2] valid_norm[3]  valid_norm[4] ], digits = 2)
+
+
+## ============================================ ##
+# save fig 
+
+if savefig_option == 1
+    savefig("./sindy_gpsindy.pdf")
+end 
+
 
 

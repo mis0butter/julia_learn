@@ -32,9 +32,9 @@ end
 ## ============================================ ##
 # solve ODE problem 
 
-function solve_ode(fn, plot_option)
+function solve_ode(fn, x0, str, p, ts, dt, plot_option)
 
-    x0, str, p, ts, dt = init_params(fn) 
+    # x0, str, p, ts, dt = init_params(fn) 
 
     # ----------------------- #
     # solve ODE, plot states 
@@ -66,7 +66,7 @@ export ode_states
 function ode_states(fn, plot_option)
 
     x0, str, p, ts, dt = init_params(fn) 
-    t, x = solve_ode(fn, plot_option) 
+    t, x = solve_ode(fn, x0, str, p, ts, dt, plot_option) 
 
     # ----------------------- #
     # derivatives 
@@ -83,7 +83,7 @@ function ode_states(fn, plot_option)
         plot_deriv(t, dx_true, dx_fd, dx_tv, str) 
     end 
 
-    return t, x, dx_true, dx_fd, dx_tv 
+    return x0, dt, t, x, dx_true, dx_fd, dx_tv 
 
 end 
 
@@ -101,12 +101,12 @@ function validate_data(t_test, x_test, dx_fn, dt)
         x0 = x_test[1,:] 
     end 
 
-    dt    = t_test[2] - t_test[1] 
+    # dt    = t_test[2] - t_test[1] 
     tspan = (t_test[1], t_test[end])
     prob  = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
-    sol = solve(prob,  reltol = 1e-8, abstol = 1e-8, saveat = dt)
+    sol = solve(prob, saveat = dt)
     # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
     x_validate = sol.u ; 
     x_validate = mapreduce(permutedims, vcat, x_validate) 
