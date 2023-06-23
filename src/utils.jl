@@ -132,20 +132,20 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
             title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
             ) 
         plot!(t_test, x_test[:,i], 
-            ls = :dash, 
+            # ls = :dash, 
             c  = :blue,
             lw = 3,  
             label = "test (30%)" 
             )
         plot!(t_sindy_val, x_sindy_val[:,i], 
-            ls = :dashdot, 
-            lw = 1.5, 
+            ls = :dash, 
+            lw = 3, 
             c = :green, 
             label = "SINDy" 
             )
         plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
-            ls = :dash, 
-            lw = 1.5, 
+            ls = :dashdot, 
+            lw = 2, 
             c = :red, 
             label = "GP SINDy" 
             )
@@ -154,15 +154,18 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     end 
     
-    plot!(
-        # legend = true, 
-        # legend = :outertopright,  
-    )
-    
+    p = deepcopy(plot_vec[end])  
+        plot!(p, 
+        legend     = (-0.1,0.6) , 
+        # foreground_color_legend = nothing , 
+        framestyle = :none , 
+        title      = "", 
+        )
+    push!( plot_vec, p ) 
     
     p_train_val = plot(plot_vec ... , 
         # layout = (1, n_vars+1), 
-        layout = grid( 1, n_vars+1, widths=[0.4, 0.4, 0.2] ) , 
+        layout = grid( 1, n_vars+1, widths=[0.45, 0.45, 0.45] ) , 
         size   = [ n_vars*400 250 ], 
         margin = 5Plots.mm,
         bottom_margin = 7Plots.mm,  
