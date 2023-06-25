@@ -29,12 +29,12 @@ x_train  = sort( 2π*rand(N) )
 y_train  = sin.(x_train) .+ 0.1*randn(N) 
 
 # training data covariance 
-Σ_train  = k_fn( σ_f0, l_0, x_train, x_train )
+Σ_train  = k_SE( σ_f0, l_0, x_train, x_train )
 Σ_train += σ_n0^2 * I 
 
 # test data points (PRIOR) 
 x_test  = collect( 0 : 0.01 : 2π )
-Σ_test  = k_fn( σ_f0, l_0, x_test, x_test )
+Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
 Σ_test += σ_n0^2 * I 
 
 
@@ -42,7 +42,7 @@ x_test  = collect( 0 : 0.01 : 2π )
 # posterior distribution ROUND 1 (NO hyperparameters tuned yet)
 # (based on training data) 
 
-Kss = k_fn( σ_f0, l_0, x_test, x_test )
+Kss = k_SE( σ_f0, l_0, x_test, x_test )
 
 # fit data 
 μ_post, Σ_post = post_dist( x_train, y_train, x_test, σ_f0, l_0, σ_n0 )
@@ -222,7 +222,7 @@ logp_Ky = [ ]
 logp_sq = [ ] 
 
 # training data covariance 
-Ky = k_fn( σ_f0, l_0, x_train, x_train ) + σ_n^2 * I 
+Ky = k_SE( σ_f0, l_0, x_train, x_train ) + σ_n^2 * I 
 
 i_hist = 0 : 0.01 : 2 
 for i = i_hist 

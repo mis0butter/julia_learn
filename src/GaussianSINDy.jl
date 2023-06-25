@@ -17,8 +17,8 @@ export f_obj
 function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
     # training kernel function 
-    # Ky  = k_fn((σ_f, l, dx, dx)) + σ_n^2 * I 
-    Ky  = k_fn(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
+    # Ky  = k_SE((σ_f, l, dx, dx)) + σ_n^2 * I 
+    Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     

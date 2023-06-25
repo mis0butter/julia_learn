@@ -26,8 +26,8 @@ end
 ## ============================================ ##
 # sample from given mean and covariance 
 
-export k_fn 
-function k_fn( σ_f, l, xp, xq )
+export k_SE 
+function k_SE( σ_f, l, xp, xq )
 
     K = σ_f^2 * exp.( -1/( 2*l^2 ) * sq_dist(xp, xq) )     
 
@@ -71,7 +71,7 @@ export log_p
 function log_p( σ_f, l, σ_n, x, y, μ )
     
     # training kernel function 
-    Ky = k_fn(σ_f, l, x, x) 
+    Ky = k_SE(σ_f, l, x, x) 
     Ky += σ_n^2 * I 
 
     term  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
@@ -95,10 +95,10 @@ function post_dist( x_train, y_train, x_test, σ_f, l, σ_n )
     #   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
 
     # covariance from training data 
-    K    = k_fn(σ_f, l, x_train, x_train)  
+    K    = k_SE(σ_f, l, x_train, x_train)  
     K   += σ_n^2 * I       # add noise for positive definite 
-    Ks   = k_fn(σ_f, l, x_train, x_test)  
-    Kss  = k_fn(σ_f, l, x_test, x_test) 
+    Ks   = k_SE(σ_f, l, x_train, x_test)  
+    Kss  = k_SE(σ_f, l, x_test, x_test) 
 
     # conditional distribution 
     # mu_cond    = K(Xs,X)*inv(K(X,X))*y

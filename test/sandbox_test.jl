@@ -111,10 +111,10 @@ for i = 1:n_vars
     # μ_post, Σ_post = post_dist( x_train, y_train, x_test, 1.0, 1.0, 0.1 )
 
     # covariance from training data 
-    K    = k_fn(σ_f, l, x_train, x_train)  
+    K    = k_SE(σ_f, l, x_train, x_train)  
     K   += σ_n^2 * I       # add noise for positive definite 
-    Ks   = k_fn(σ_f, l, x_train, x_test)  
-    Kss  = k_fn(σ_f, l, x_test, x_test) 
+    Ks   = k_SE(σ_f, l, x_train, x_test)  
+    Kss  = k_SE(σ_f, l, x_test, x_test) 
     
     μ_post = Ks' * K^-1 * y_train 
     Σ_post = Kss - (Ks' * K^-1 * Ks)  
@@ -142,19 +142,19 @@ f_hp(1.0, 1.0, 0.1)
 
 # test data points (PRIOR) 
 x_test  = collect( 0 : 0.01 : 2π )
-Σ_test  = k_fn( σ_f0, l_0, x_test, x_test )
+Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
 Σ_test += σ_n0^2 * I 
 
-Kss = k_fn( σ_f0, l_0, x_test, x_test )
+Kss = k_SE( σ_f0, l_0, x_test, x_test )
 
 # fit data 
 # μ_post, Σ_post = post_dist( x_train, y_train, x_test, σ_f0, l_0, σ_n0 )
 
     # covariance from training data 
-    K    = k_fn(σ_f, l, x_train, x_train)  
+    K    = k_SE(σ_f, l, x_train, x_train)  
     K   += σ_n^2 * I       # add noise for positive definite 
-    Ks   = k_fn(σ_f, l, x_train, x_test)  
-    Kss  = k_fn(σ_f, l, x_test, x_test) 
+    Ks   = k_SE(σ_f, l, x_train, x_test)  
+    Kss  = k_SE(σ_f, l, x_test, x_test) 
     
     μ_post = Ks' * K^-1 * y_train 
     Σ_post = Kss - (Ks' * K^-1 * Ks)  
