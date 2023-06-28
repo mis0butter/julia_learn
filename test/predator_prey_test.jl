@@ -106,7 +106,7 @@ end
 # save fig 
 
 if savefig_option == 1
-    savefig("./sindy_gpsindy.pdf")
+    savefig("./test/outputs/sindy_gpsindy.pdf")
 end 
 
 
