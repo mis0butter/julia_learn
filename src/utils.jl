@@ -164,7 +164,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         if portion_mid 
             p = plot(t_train_A, x_train_A[:,i], 
                 c      = :gray, 
-                label  = "train (70%)", 
+                label  = "train (80%)", 
                 xlim   = ( xmin, xmax ) , 
                 ylim   = ( ymin - dy/3, ymax + dy/3 ) , 
                 xticks = xmin : dx : xmax , 
@@ -179,7 +179,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         else
             p = plot(t_train, x_train[:,i], 
                 c      = :gray, 
-                label  = "train (70%)", 
+                label  = "train (80%)", 
                 xlim   = ( xmin, xmax ) , 
                 ylim   = ( ymin - dy/3, ymax + dy/3 ) , 
                 xticks = xmin : dx : xmax , 
@@ -193,7 +193,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
             # c     = :blue,
             c     = RGB( 0, 0.35, 1 ) , 
             lw    = 3 ,  
-            label = "test (30%)" , 
+            label = "test (20%)" , 
             )
         plot!(t_sindy_val, x_sindy_val[:,i], 
             ls    = :dash , 
@@ -234,4 +234,80 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     display(p_train_val) 
 
 end 
+
+
+## ============================================ ##
+# plot prey vs. predator 
+
+using Plots 
+using Latexify 
+
+export plot_test_data 
+function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val )
+
+    # scalefontsizes(1.1)
+    ptitles = ["Prey", "Predator"]
+    
+    # determine xtick range 
+    xmin, dx, xmax = min_d_max( t_test )
+    
+    n_vars   = size(x_test, 2)
+    plot_vec = [] 
+
+    for i = 1 : n_vars 
+        
+        ymin, dy, ymax = min_d_max( x_test[:,i] ) 
+
+        # display test data 
+        p = plot(t_test, x_test[:,i], 
+            c      = RGB( 0, 0.35, 1 ) , 
+            lw     = 3 ,  
+            label  = "test (20%)", 
+            xlim   = ( xmin, xmax ) , 
+            ylim   = ( ymin - dy/3, ymax + dy/3 ) , 
+            xticks = xmin : dx : xmax , 
+            yticks = ymin : dy : ymax , 
+            xlabel = "Time (s)", 
+            title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
+            ) 
+        plot!(t_sindy_val, x_sindy_val[:,i], 
+            ls    = :dash , 
+            # c     = :red , 
+            c     = RGB( 1, 0.25, 0 ) , 
+            lw    = 3 , 
+            label = "SINDy" ,  
+            )
+        plot!(t_gpsindy_val, x_gpsindy_val[:,i], 
+            ls    = :dashdot , 
+            c     = RGB(0, 0.75, 0) , 
+            lw    = 2 , 
+            label = "GP SINDy" ,  
+            )
+    
+        push!( plot_vec, p ) 
+    
+    end 
+    
+    p = deepcopy(plot_vec[end])  
+        plot!(p, 
+        legend     = (-0.1,0.6) , 
+        # foreground_color_legend = nothing , 
+        framestyle = :none , 
+        title      = "", 
+        )
+    push!( plot_vec, p ) 
+    
+    p_train_val = plot(plot_vec ... , 
+        # layout = (1, n_vars+1), 
+        layout = grid( 1, n_vars+1, widths=[0.45, 0.45, 0.45] ) , 
+        size   = [ n_vars*400 250 ], 
+        margin = 5Plots.mm,
+        bottom_margin = 7Plots.mm,  
+        # plot_title = "Training vs. Validation Data", 
+        # titlefont = font(16), 
+        )
+    display(p_train_val) 
+
+end 
+
 

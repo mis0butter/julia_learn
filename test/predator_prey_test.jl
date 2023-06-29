@@ -60,10 +60,11 @@ dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy)
 dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy)
 
 t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
-t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, dt) 
+t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt) 
 
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
 ## ============================================ ##
 # print stats 
