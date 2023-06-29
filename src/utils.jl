@@ -72,8 +72,11 @@ export min_max_d
 function min_d_max( x )
 
     xmin = round( minimum(x), digits = 1 )  
-    xmax = round( maximum(x), digits = 1 ) 
-    dx   = round( ( xmax - xmin ) / 2, digits = 1 ) 
+    xmax = round( maximum(x), digits = 1 )
+    # xmin = minimum(x) 
+    # xmax = maximum(x)  
+    # dx   = round( ( xmax - xmin ) / 2, digits = 1 ) 
+    dx = ( xmax - xmin ) / 2 
 
     return xmin, dx, xmax  
 
@@ -131,7 +134,8 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     # determine xtick range 
     t_i = Int(round(3/4*length(t_train))) 
-    t   = [t_train[t_i : end] ; t_test]
+    # t   = [t_train[t_i : end] ; t_test]
+    t   = [t_train; t_test] 
     x   = [x_train ; x_test]
     xmin, dx, xmax = min_d_max( t )
     
