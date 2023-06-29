@@ -4,12 +4,34 @@
 # split into training and validation data 
 
 export split_train_test 
-function split_train_test(x, train_fraction)
+function split_train_test(x, test_fraction, portion)
 
-    ind = Int(round( size(x,1) * train_fraction ))  
+    # if test data = LAST portion 
+    if portion == 1/test_fraction 
 
-    x_train = x[1:ind,:]
-    x_test  = x[ind:end,:] 
+        ind = Int(round( size(x,1) * (1 - test_fraction) ))  
+
+        x_train = x[1:ind,:]
+        x_test  = x[ind:end,:] 
+
+    # if test data = FIRST portion 
+    elseif portion == 1 
+
+        ind = Int(round( size(x,1) * (test_fraction) ))  
+
+        x_train = x[ind:end,:] 
+        x_test  = x[1:ind,:]
+
+    # test data is in MIDDLE portion 
+    else 
+
+        ind1 = Int(round( size(x,1) * (test_fraction*( portion-1 )) )) 
+        ind2 = Int(round( size(x,1) * (test_fraction*( portion )) )) 
+
+        x_test  = x[ ind1:ind2,: ]
+        x_train = [ x[ 1:ind1,: ] ; x[ ind2:end,: ] ]
+
+    end 
 
     return x_train, x_test 
 

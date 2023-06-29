@@ -22,11 +22,12 @@ savefig_option = 0
 x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
 
 # split into training and validation data 
-train_fraction = 0.7 
-t_train, t_test             = split_train_test(t, train_fraction) 
-x_train, x_test             = split_train_test(x, train_fraction) 
-dx_true_train, dx_true_test = split_train_test(dx_true, train_fraction) 
-dx_fd_train, dx_fd_test     = split_train_test(dx_fd, train_fraction) 
+test_fraction = 0.2 
+portion       = 2 
+t_train, t_test             = split_train_test(t, test_fraction, portion) 
+x_train, x_test             = split_train_test(x, test_fraction, portion) 
+dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
+dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion) 
 
 
 ## ============================================ ##
@@ -53,7 +54,7 @@ hist_fd = Hist( [], [], [], [], [] )
 
 
 ## ============================================ ## 
-# generate + validate data 
+# generate + validate TEST data 
 
 dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
 dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy)
@@ -63,6 +64,19 @@ t_sindy_val, x_sindy_val     = validate_data(t_test, x_test, dx_sindy_fn, dt)
 
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+
+
+## ============================================ ## 
+# generate + validate TRAINING data 
+
+dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
+dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy)
+
+t_gpsindy_val, x_gpsindy_val = validate_data(t_train, x_train, dx_gpsindy_fn, dt) 
+t_sindy_val, x_sindy_val     = validate_data(t_train, x_train, dx_sindy_fn, dt) 
+
+# plot!! 
+plot_prey_predator( t_train, x_train, t_train, x_train, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
 ## ============================================ ##
 # print stats 
