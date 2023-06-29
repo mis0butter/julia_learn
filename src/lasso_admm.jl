@@ -54,58 +54,77 @@ using Plots
 using Latexify
 
 export plot_admm 
-function plot_admm( hist ) 
+function plot_admm( hist, var ) 
 
-    K = length(hist.objval) 
+    ind1 = 1
+    ind2 = Int(round(1/2 * length(hist.objval), digits=1))
+    if var == 2
+        ind1 = ind2 + 1 
+        ind2 = Int(length(hist.objval)) 
+    end 
+
+    K = length(hist.objval[ind1:ind2]) 
     
     # determine xtick range 
 
     # subplot 1 
-    p_objval = plot( 1:K, hist.objval, 
-        # title = "Obj Fn = f(x_k) + g(z_k)", 
+    vals = hist.objval[ind1:ind2]
+    ymin, dy, ymax = min_d_max( vals ) 
+    println("vals length = ", length(vals)) 
+    p_objval = plot( 1:K, vals, 
         legend = false , 
         title  = string( "\n Obj Fn = ", latexify( "f(x_k)+ g(z_k)" ) ), 
-        xticks = 0 : length(hist.objval)/2 : length(hist.objval) , 
-        # yticks = ymin : dy : ymax , 
+        yticks = ymin : dy : ymax , 
         ) 
     
     # subplot 2 
-    p_r_norm = plot( 1:K, hist.r_norm, 
-        # title = "|r|₂ = |x-z|₂", 
+    vals1 = hist.r_norm[ind1:ind2] 
+    ymin, dy, ymax = min_d_max( vals1 ) 
+    vals2 = hist.eps_pri[ind1:ind2] 
+    if maximum(vals2) > maximum(vals1) 
+        ymin, dy, ymax = min_d_max( vals2 ) 
+    end 
+    p_r_norm = plot( 1:K, vals1, 
         title = string( "\n |r|", latexify("_2"), " = |x-z|", latexify("_2") ), 
-        label = "|r|₂",          
-        xticks = 0 : length(hist.r_norm)/2 : length(hist.r_norm) , 
-
+        label = string( "|r|", latexify("_2") ),           
+        yticks = ymin : dy : ymax , 
+        ylim  = (ymin, ymax), 
         ) 
-    plot!( p_r_norm, 1:K, hist.eps_pri, 
+    plot!( p_r_norm, 1:K, vals2, 
         label = "tol", 
         ls = :dot, 
-        xticks = 0 : length(hist.eps_pri)/2 : length(hist.eps_pri) , 
-        # margin = 5Plots.mm,
         )
     
     # subplot 3 
-    # m =  "s_2" 
-    p_s_norm = plot(1:K, hist.s_norm, 
-        # title = "|s|₂ = |-ρ(z - z_old)|₂", 
-        # title = latexify(m), 
+    vals1 = hist.s_norm[ind1:ind2] 
+    ymin, dy, ymax = min_d_max( vals1 ) 
+    vals2 = hist.eps_dual[ind1:ind2] 
+    if maximum(vals2) > maximum(vals1) 
+        ymin, dy, ymax = min_d_max( vals2 ) 
+    end 
+    p_s_norm = plot( 1:K, vals1, 
         title = string( "\n |s|", latexify("_2"), " = |-ρ(z-z", latexify("_old"), ")|", latexify("_2") ), 
-        label = "|s|₂", 
-        xticks = 0 : length(hist.s_norm)/2 : length(hist.s_norm) , 
-        # top_margin = 10Plots.mm,
-        )
-
-    plot!(p_s_norm, 1:K, hist.eps_dual, 
-        label = "tol", ls = :dot 
+        label = string( "|s|", latexify("_2") ),           
+        yticks = ymin : dy : ymax , 
+        ylim  = (ymin, ymax), 
+        ) 
+    plot!( p_s_norm, 1:K, vals2, 
+        label = "tol", 
+        ls = :dot, 
         )
     
     # plot all 
     p_fig = plot(p_objval, p_r_norm, 
-        p_s_norm, layout = (1,3), size = [ 800,300 ], plot_title = "ADMM Lasso", 
+        p_s_norm, layout = (1,3), size = [ 800,300 ],         
+        plot_title  = string( "ADMM Lasso, ", latexify( "x_$(var)" ) ), 
         lw = 3, 
         xlabel = "iter", 
-        margin = 5Plots.mm,
+        # margin = 5Plots.mm,
+        top_margin = 7Plots.mm, 
+        legend = true, 
+        xticks = 0:K/2:K, 
         )
+        println("K = ", K)
 
     return p_fig 
 
