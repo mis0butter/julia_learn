@@ -57,30 +57,55 @@ export plot_admm
 function plot_admm( hist ) 
 
     K = length(hist.objval) 
+    
+    # determine xtick range 
 
     # subplot 1 
     p_objval = plot( 1:K, hist.objval, 
         # title = "Obj Fn = f(x_k) + g(z_k)", 
         legend = false , 
-        title  = string( "Obj Fn = ", latexify( "f(x_k)+ g(z_k)" ) ), 
-
+        title  = string( "\n Obj Fn = ", latexify( "f(x_k)+ g(z_k)" ) ), 
+        xticks = 0 : length(hist.objval)/2 : length(hist.objval) , 
+        # yticks = ymin : dy : ymax , 
         ) 
     
     # subplot 2 
     p_r_norm = plot( 1:K, hist.r_norm, 
-        title = "|r|₂ = |x-z|₂", label = "|r|₂" ) 
+        # title = "|r|₂ = |x-z|₂", 
+        title = string( "\n |r|", latexify("_2"), " = |x-z|", latexify("_2") ), 
+        label = "|r|₂",          
+        xticks = 0 : length(hist.r_norm)/2 : length(hist.r_norm) , 
+
+        ) 
     plot!( p_r_norm, 1:K, hist.eps_pri, 
-        label = "tol", ls = :dot )
+        label = "tol", 
+        ls = :dot, 
+        xticks = 0 : length(hist.eps_pri)/2 : length(hist.eps_pri) , 
+        # margin = 5Plots.mm,
+        )
     
     # subplot 3 
+    # m =  "s_2" 
     p_s_norm = plot(1:K, hist.s_norm, 
-        title = "|s|₂ = |-ρ(z - z_old)|₂", label = "|s|₂" )
+        # title = "|s|₂ = |-ρ(z - z_old)|₂", 
+        # title = latexify(m), 
+        title = string( "\n |s|", latexify("_2"), " = |-ρ(z-z", latexify("_old"), ")|", latexify("_2") ), 
+        label = "|s|₂", 
+        xticks = 0 : length(hist.s_norm)/2 : length(hist.s_norm) , 
+        # top_margin = 10Plots.mm,
+        )
+
     plot!(p_s_norm, 1:K, hist.eps_dual, 
-        label = "tol", ls = :dot )
+        label = "tol", ls = :dot 
+        )
     
     # plot all 
     p_fig = plot(p_objval, p_r_norm, 
-        p_s_norm, layout = (2,2), size = [ 800,600 ], plot_title = "ADMM Lasso", lw = 2, xlabel = "iter" )
+        p_s_norm, layout = (1,3), size = [ 800,300 ], plot_title = "ADMM Lasso", 
+        lw = 3, 
+        xlabel = "iter", 
+        margin = 5Plots.mm,
+        )
 
     return p_fig 
 
