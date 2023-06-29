@@ -133,8 +133,6 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     ptitles = ["Prey", "Predator"]
     
     # determine xtick range 
-    t_i = Int(round(3/4*length(t_train))) 
-    # t   = [t_train[t_i : end] ; t_test]
     t   = [t_train; t_test] 
     x   = [x_train ; x_test]
     xmin, dx, xmax = min_d_max( t )
@@ -148,10 +146,10 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     if any(tdiff .> ttol)
         portion_mid = true 
         ind = findfirst( tdiff .> ttol )
-        t_train_A = t_train[1:ind,:]
-        x_train_A = x_train[1:ind,:] 
         t_train_B = t_train[ind+1:end,:]
         x_train_B = x_train[ind+1:end,:]
+        t_train = t_train[1:ind,:]
+        x_train = x_train[1:ind,:] 
     else
         portion_mid = false 
     end
@@ -160,9 +158,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
         
         ymin, dy, ymax = min_d_max( x[:,i] ) 
 
-        # display training data 
-        if portion_mid 
-            p = plot(t_train_A, x_train_A[:,i], 
+        p = plot(t_train, x_train[:,i], 
                 c      = :gray, 
                 label  = "train (80%)", 
                 xlim   = ( xmin, xmax ) , 
@@ -172,20 +168,11 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
                 xlabel = "Time (s)", 
                 title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
                 ) 
+        # display training data 
+        if portion_mid 
             plot!( t_train_B, x_train_B[:,i], 
                 c      = :gray, 
                 primary = false, 
-                )
-        else
-            p = plot(t_train, x_train[:,i], 
-                c      = :gray, 
-                label  = "train (80%)", 
-                xlim   = ( xmin, xmax ) , 
-                ylim   = ( ymin - dy/3, ymax + dy/3 ) , 
-                xticks = xmin : dx : xmax , 
-                yticks = ymin : dy : ymax , 
-                xlabel = "Time (s)", 
-                title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
                 ) 
         end 
         plot!(t_test, x_test[:,i], 
