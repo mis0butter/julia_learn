@@ -23,7 +23,7 @@ x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option)
 
 # split into training and validation data 
 test_fraction = 0.2 
-portion       = 1 
+portion       = 5 
 t_train, t_test             = split_train_test(t, test_fraction, portion) 
 x_train, x_test             = split_train_test(x, test_fraction, portion) 
 dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
@@ -64,7 +64,8 @@ t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt)
 
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
-plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+
+# plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
 ## ============================================ ##
 # print stats 
@@ -74,36 +75,41 @@ if isequal( t_test[end], t_sindy_val[end] ) && isequal( t_test[end], t_gpsindy_v
     # print x0 
     println("x0 = ", round.(x0, digits = 2))
 
-    # print some coeff stats 
-    coeff_norm = [ opnorm( Ξ_true - Ξ_sindy ) , opnorm( Ξ_true - z_gpsindy ) ] 
-    println( "Ξ_true - Ξ_sindy = ", coeff_norm[1])
-    println( "Ξ_true - z_gpsindy = ", coeff_norm[2])
+    function diff_norm( Ξ_true, Ξ_sindy, i )
+        output = norm( Ξ_true[:,i] - Ξ_sindy[:,i] )
+        return output 
+    end 
 
-    # print some predicted stats 
-    valid_norm = zeros(1, 4) 
-
-    i = 1 
+    table_norm = []
+    # ----------------------- #
     # true - SINDy 
-    valid_norm[1,1] = norm( x_test[:,i] - x_sindy_val[:,i] ) 
-    # true - GP SINDy
-    valid_norm[1,2] = norm( x_test[:,i] - x_gpsindy_val[:,i] )
 
-    i = 2 
-    # true - SINDy 
-    valid_norm[1,3] = norm( x_test[:,i] - x_sindy_val[:,i] ) 
-    # true - GP SINDy
-    valid_norm[1,4] = norm( x_test[:,i] - x_gpsindy_val[:,i] )
+    # coeff 1 
+    push!(table_norm, diff_norm( Ξ_true, Ξ_sindy, 1 )) 
+    # coeff 2 
+    push!(table_norm, diff_norm( Ξ_true, Ξ_sindy, 2 ))
+    # dyn 1 
+    push!(table_norm, diff_norm( x_test, x_sindy_val, 1 ))
+    # dyn 2 
+    push!(table_norm, diff_norm( x_test, x_sindy_val, 2 ))
 
+    # ----------------------- #
+    # true - GPSINDy 
+
+    # coeff 1 
+    push!(table_norm, diff_norm( Ξ_true, z_gpsindy, 1 ))
+    # coeff 2 
+    push!(table_norm, diff_norm( Ξ_true, z_gpsindy, 2 ))
+    # dyn 1 
+    push!(table_norm, diff_norm( x_test, x_gpsindy_val, 1 ))
+    # dyn 2 
+    push!(table_norm, diff_norm( x_test, x_gpsindy_val, 2 ))
+
+    # ----------------------- #
     # for displaying in table 
-    table_norm = round.([ coeff_norm[1] valid_norm[1] valid_norm[2] coeff_norm[2] valid_norm[3]  valid_norm[4] ], digits = 2)
-    println("i = ", 1)
-    println("    x: truth - sindy = ", table_norm(1))
-    println("    x: truth - gpsindy = ", table_norm(2))
-    println("i = ", 2)
-    println("    x: truth - sindy = ", table_norm(3))
-    println("    x: truth - gpsindy = ", table_norm(4))
 
-    display(table_norm) 
+    table_norm = round.(table_norm, digits = 2)
+    display(table_norm[:,:]') 
 
 else
 
