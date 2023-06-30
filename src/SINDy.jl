@@ -53,11 +53,11 @@ function pool_data_rwrap( x_in, n_vars, poly_order )
         Θx    = [ Θx Θx_p ]
     end 
 
-    # append sine functions 
-    for i = 1 : n_vars 
-        vec = sin.(x_in[:,i]) 
-        Θx  = [Θx vec] 
-    end 
+    # # append sine functions 
+    # for i = 1 : n_vars 
+    #     vec = sin.(x_in[:,i]) 
+    #     Θx  = [Θx vec] 
+    # end 
 
     return Θx 
 end 
@@ -202,12 +202,12 @@ function pool_data(xmat, n_vars, poly_order)
         end 
     end 
 
-    # sine functions 
-    for i = 1 : n_vars 
-        ind  += 1 
-        vec   = sin.(xmat[:,i]) 
-        Θ = [Θ vec] 
-    end 
+    # # sine functions 
+    # for i = 1 : n_vars 
+    #     ind  += 1 
+    #     vec   = sin.(xmat[:,i]) 
+    #     Θ = [Θ vec] 
+    # end 
     
     return Θ 
 

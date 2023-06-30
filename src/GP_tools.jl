@@ -42,6 +42,24 @@ end
 
 
 ## ============================================ ##
+# sample from given mean and covariance 
+
+export k_periodic
+function k_periodic( σ_f, l, p, xp, xq )
+
+    K = σ_f^2 * exp.( -2/( l^2 ) * sin.( π/p * sq_dist(xp, xq)) )     
+
+    # deal with det(Ky) = 0 
+    # if det(K) == 0 
+    #     K *= length(xp)
+    # end  
+
+    return K 
+
+end 
+
+
+## ============================================ ##
 # define square distance function 
 
 export sq_dist 
