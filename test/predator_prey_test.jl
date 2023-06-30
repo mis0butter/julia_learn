@@ -44,7 +44,7 @@ poly_order = n_vars
 ## ============================================ ##
 # SINDy + GP + ADMM 
 
-λ = 0.02  
+λ = 0.02875 
 println("λ = ", λ)
 
 # finite difference 
@@ -52,6 +52,9 @@ hist_fd = Hist( [], [], [], [], [] )
 @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
 # display(z_gpsindy) 
 
+# plot 
+plot_admm(hist_fd, 1)
+plot_admm(hist_fd, 2)
 
 ## ============================================ ## 
 # generate + validate TEST data 
@@ -65,7 +68,7 @@ t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt)
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
-# plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 
 ## ============================================ ##
 # print stats 
@@ -120,9 +123,11 @@ end
 ## ============================================ ##
 # save fig 
 
+using Plots 
+
 if savefig_option == 1
     savefig("./test/outputs/sindy_gpsindy.pdf")
 end 
 
-
+# jldsave("test/outputs/test.jld2"; t, x, z_gpsindy, hist_fd)
 
