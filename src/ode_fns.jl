@@ -121,26 +121,33 @@ end
 # derivatives: finite difference  
 
 export fdiff 
-function fdiff(t, x, method) 
+function fdiff(t, x, fd_method) 
 
     # forward finite difference 
-    if method == 1 
+    if fd_method == 1 
 
         dx_fd = 0*x 
         for i = 1 : length(t)-1
             dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
         end 
-        dx_fd[end,:] = dx_fd[end-1,:] 
+
+        # deal with last index 
+        dx_fd[end,:] = ( x[end,:] - x[end-1,:] ) / ( t[end] - t[end-1] )
 
     # central finite difference 
-    elseif method == 2 
+    elseif fd_method == 2 
 
         dx_fd = 0*x 
         for i = 2 : length(t)-1
             dx_fd[i,:] = ( x[i+1,:] - x[i-1,:] ) / ( t[i+1] - t[i-1] )
         end 
-        dx_fd[1,:] = dx_fd[2,:] 
-        dx_fd[end,:] = dx_fd[end-1,:] 
+
+        # deal with 1st index 
+        i = 1 
+        dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
+
+        # deal with last index 
+        dx_fd[end,:] = ( x[end,:] - x[end-1,:] ) / ( t[end] - t[end-1] )
 
     # backward finite difference 
     else 
@@ -149,7 +156,10 @@ function fdiff(t, x, method)
         for i = 2 : length(t)
             dx_fd[i,:] = ( x[i,:] - x[i-1,:] ) / ( t[i] - t[i-1] )
         end 
-        dx_fd[1,:] = dx_fd[2,:] 
+
+        # deal with 1st index 
+        i = 1 
+        dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
 
     end 
 

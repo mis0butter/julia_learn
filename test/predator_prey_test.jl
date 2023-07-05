@@ -17,9 +17,10 @@ using LinearAlgebra
 fn             = predator_prey 
 plot_option    = 1 
 savefig_option = 0 
+fd_method      = 3 # 1 = forward, 2 = central, 3 = backward 
 
 # choose ODE, plot states --> measurements 
-x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option) 
+x0, dt, t, x, dx_true, dx_fd = ode_states( fn, plot_option, fd_method ) 
 
 # split into training and validation data 
 test_fraction = 0.2 

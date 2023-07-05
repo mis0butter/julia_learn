@@ -30,6 +30,21 @@ x_train, x_test             = split_train_test(x, test_fraction, portion)
 dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
 dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion) 
 
+# ## ============================================ ##
+# # finite difference unit test 
+
+# x0, dt, t, x, dx_true, dx_forward  = ode_states(fn, plot_option, 1) 
+# x0, dt, t, x, dx_true, dx_central  = ode_states(fn, plot_option, 2) 
+# x0, dt, t, x, dx_true, dx_backward = ode_states(fn, plot_option, 3) 
+
+# plot(t, dx_true[:,1], c = :black, label = "true", legend = true)
+# plot!(t, dx_fd_forward[:,1], ls = :dash, lw = 2, label = "forward" )
+# plot!(t, dx_fd_central[:,1], ls = :dashdot, lw = 2, label = "central" )
+# plot!(t, dx_fd_backward[:,1], ls = :dot, lw = 2, label = "backward")
+# plot!(title = "Finite Difference Derivative Comparison (dx1)")
+# plot!(xlim = ( 0, 3 ))
+# xlabel!("Time (s)")
+
 
 ## ============================================ ##
 # SINDy alone 

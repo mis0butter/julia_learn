@@ -108,17 +108,19 @@ function pool_data_test(xmat, n_vars, poly_order)
 
     # # fill out 1st column of Θ with ones (poly order = 0) 
     ind = 1 ; 
-    Θ   = ones(l, ind) 
+    # Θ   = ones(l, ind) 
 
     # # poly order 1 
     # for i = 1 : n_vars 
     #     ind += 1 
     #     Θ    = [ Θ xmat[:,i] ]
     # end 
-    Θ = [ xmat[:,1] ]
+    Θ = xmat[:,1]
+    Θ = Θ[:,:] 
 
     ind += 1 
-    Θ    = [ Θ xmat[:,1] .* xmat[:,2] ]
+    vec  = xmat[:,1] .* xmat[:,2]
+    Θ    = [ Θ vec[:,:] ]
 
     # # poly order 2 
     # if poly_order >= 2 
