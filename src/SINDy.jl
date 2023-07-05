@@ -39,63 +39,6 @@ end
 
 
 ## ============================================ ##
-
-export pool_data_rwrap
-function pool_data_rwrap( x_in, n_vars, poly_order )
-
-    l      = size(x_in, 1) 
-    # n_vars = size(x_in, 2) 
-
-    # construct data library 
-    Θx = ones(l, 1)
-    for p = 1 : poly_order 
-        Θx_p, = pool_data_recursion( x_in, p) 
-        Θx    = [ Θx Θx_p ]
-    end 
-
-    # # append sine functions 
-    # for i = 1 : n_vars 
-    #     vec = sin.(x_in[:,i]) 
-    #     Θx  = [Θx vec] 
-    # end 
-
-    return Θx 
-end 
-
-
-## ============================================ ##
-# putting it together (with control) 
-
-export SINDy_c_recursion
-function SINDy_c_recursion(x, dx, u, λ, poly_order )
-
-    if u == 0 
-        n_vars = size(x, 2) 
-        u_vars = 0 
-        x_in   = x 
-    else 
-        n_vars = size( [x u], 2 )
-        u_vars = size(u, 2) 
-        x_in   = [ x u ]
-    end 
-    x_vars = n_vars - u_vars 
-    h = [] 
-    for i = 1:x_vars 
-        push!(h, "dx$(i)")
-    end 
-    
-    # construct data library 
-    Θx = pool_data_rwrap( x_in, n_vars, poly_order )
-
-    # SINDy 
-    Ξ = sparsify_dynamics( Θx, dx, λ, x_vars ) 
-
-    return Ξ
-
-end 
-
-
-## ============================================ ##
 # solve sparse regression 
 
 export sparsify_dynamics 
@@ -215,6 +158,133 @@ end
 
 
 ## ============================================ ##
+# build data matrix 
+
+export pool_data_vecfn
+function pool_data_vecfn(n_vars, poly_order) 
+    # ----------------------- #
+    # Purpose: Build data vector of functions  
+    # 
+    # Inputs: 
+    #   n_vars      = # elements in state 
+    #   poly_order  = polynomial order (goes up to order 3) 
+    # 
+    # Outputs: 
+    #   Θ       = data matrix passed through function library 
+    # ----------------------- #
+    
+    # initialize empty vector of functions 
+    Θ = Vector{Function}(undef,0) 
+
+    # fil out 1st column of Θ with ones (poly order = 0) 
+    ind  = 1 
+    push!(Θ, x -> 1) 
+
+    # poly order 1 
+    for i = 1 : n_vars 
+
+        ind  += 1 
+        push!( Θ, x -> x[i] ) 
+
+    end 
+
+    # poly order 2 
+    if poly_order >= 2 
+        for i = 1 : n_vars 
+            for j = i:n_vars 
+
+                ind += 1 ; 
+                push!( Θ, x -> x[i] .* x[j] ) 
+
+            end 
+        end 
+    end 
+
+    # poly order 3 
+    if poly_order >= 3 
+        for i = 1 : n_vars 
+            for j = i : n_vars 
+                for k = j : n_vars 
+                    
+                    ind += 1 ;                     
+                    push!( Θ, x -> x[i] .* x[j] .* x[k] )
+
+                end 
+            end 
+        end 
+    end 
+
+    # # sine functions 
+    # for i = 1 : n_vars 
+
+    #     ind  += 1
+    #     push!(Θ, x -> sin.( x[i] ) )
+
+    # end 
+    
+    return Θ 
+
+end 
+
+
+## ============================================ ##
+
+export pool_data_rwrap
+function pool_data_rwrap( x_in, n_vars, poly_order )
+
+    l      = size(x_in, 1) 
+    # n_vars = size(x_in, 2) 
+
+    # construct data library 
+    Θx = ones(l, 1)
+    for p = 1 : poly_order 
+        Θx_p, = pool_data_recursion( x_in, p) 
+        Θx    = [ Θx Θx_p ]
+    end 
+
+    # # append sine functions 
+    # for i = 1 : n_vars 
+    #     vec = sin.(x_in[:,i]) 
+    #     Θx  = [Θx vec] 
+    # end 
+
+    return Θx 
+end 
+
+
+## ============================================ ##
+# putting it together (with control) 
+
+export SINDy_c_recursion
+function SINDy_c_recursion(x, dx, u, λ, poly_order )
+
+    if u == 0 
+        n_vars = size(x, 2) 
+        u_vars = 0 
+        x_in   = x 
+    else 
+        n_vars = size( [x u], 2 )
+        u_vars = size(u, 2) 
+        x_in   = [ x u ]
+    end 
+    x_vars = n_vars - u_vars 
+    h = [] 
+    for i = 1:x_vars 
+        push!(h, "dx$(i)")
+    end 
+    
+    # construct data library 
+    Θx = pool_data_rwrap( x_in, n_vars, poly_order )
+
+    # SINDy 
+    Ξ = sparsify_dynamics( Θx, dx, λ, x_vars ) 
+
+    return Ξ
+
+end 
+
+
+## ============================================ ##
 
 export pool_data_recursion  
 function pool_data_recursion( x, poly_order, Θ = Array{Float64}(undef, size(x,1), 0), v_ind = Int.(ones(poly_order)) ) 
@@ -304,76 +374,6 @@ function fibonacci(n)
         out = fibonacci(n-1) + fibonacci(n-2) 
         return out 
     end 
-
-end 
-
-
-## ============================================ ##
-# build data matrix 
-
-export pool_data_vecfn
-function pool_data_vecfn(n_vars, poly_order) 
-    # ----------------------- #
-    # Purpose: Build data vector of functions  
-    # 
-    # Inputs: 
-    #   n_vars      = # elements in state 
-    #   poly_order  = polynomial order (goes up to order 3) 
-    # 
-    # Outputs: 
-    #   Θ       = data matrix passed through function library 
-    # ----------------------- #
-    
-    # initialize empty vector of functions 
-    Θ = Vector{Function}(undef,0) 
-
-    # fil out 1st column of Θ with ones (poly order = 0) 
-    ind  = 1 
-    push!(Θ, x -> 1) 
-
-    # poly order 1 
-    for i = 1 : n_vars 
-
-        ind  += 1 
-        push!( Θ, x -> x[i] ) 
-
-    end 
-
-    # poly order 2 
-    if poly_order >= 2 
-        for i = 1 : n_vars 
-            for j = i:n_vars 
-
-                ind += 1 ; 
-                push!( Θ, x -> x[i] .* x[j] ) 
-
-            end 
-        end 
-    end 
-
-    # poly order 3 
-    if poly_order >= 3 
-        for i = 1 : n_vars 
-            for j = i : n_vars 
-                for k = j : n_vars 
-                    
-                    ind += 1 ;                     
-                    push!( Θ, x -> x[i] .* x[j] .* x[k] )
-
-                end 
-            end 
-        end 
-    end 
-
-    # # sine functions 
-    # for i = 1 : n_vars 
-
-    #     ind  += 1
-    #     push!(Θ, x -> sin.( x[i] ) )
-
-    # end 
-    
-    return Θ 
 
 end 
     

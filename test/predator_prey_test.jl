@@ -37,8 +37,8 @@ dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion)
 n_vars     = size(x, 2) 
 poly_order = n_vars 
 
-Ξ_sindy = SINDy_c_recursion(x, dx_fd, 0, λ, poly_order ) 
-Ξ_true  = SINDy_c_recursion(x, dx_true, 0, λ, poly_order ) 
+Ξ_sindy = SINDy( x, dx_fd, λ)
+Ξ_true = SINDy( x, dx_fd, λ)
 
 
 ## ============================================ ##
@@ -64,10 +64,6 @@ using DifferentialEquations
 dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
 dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy) 
 
-
-
-## ============================================ ##
-# test 
 
 t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
 t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt) 
