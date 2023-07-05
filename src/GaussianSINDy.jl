@@ -6,6 +6,7 @@ include("lasso_admm.jl")
 include("ode_fns.jl")  
 include("utils.jl")
 include("init_params.jl")
+include("SINDy_test.jl")
 
 
 ## ============================================ ## 

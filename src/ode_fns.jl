@@ -23,7 +23,7 @@ end
 
 export ode_sine 
 function ode_sine(dx, x, p, t)
-    dx[1] = -1/4 * sin(x[1])  
+    dx[1] = 1/2*sin(x[1])  
     # dx[2] = -1/2 * x[2] 
     return dx 
 end 
@@ -63,14 +63,14 @@ end
 using DifferentialEquations
 
 export ode_states 
-function ode_states(fn, plot_option)
+function ode_states(fn, plot_option, fd_method)
 
     x0, str, p, ts, dt = init_params(fn) 
     t, x = solve_ode(fn, x0, str, p, ts, dt, plot_option) 
 
     # ----------------------- #
     # derivatives 
-    dx_fd   = fdiff(t, x)               # (forward) finite difference 
+    dx_fd   = fdiff(t, x, fd_method)    # finite difference 
     dx_true = dx_true_fn(t, x, p, fn)   # true derivatives 
     dx_tv   = dx_tv_fn(x)               # variational derivatives 
     # dx_gp   = dx_gp_fn(t, dx_fd)        # gaussian process derivatives 
@@ -121,14 +121,37 @@ end
 # derivatives: finite difference  
 
 export fdiff 
-function fdiff(t, x) 
+function fdiff(t, x, method) 
 
-    # (forward) finite difference 
-    dx_fd = 0*x 
-    for i = 1 : length(t)-1
-        dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
+    # forward finite difference 
+    if method == 1 
+
+        dx_fd = 0*x 
+        for i = 1 : length(t)-1
+            dx_fd[i,:] = ( x[i+1,:] - x[i,:] ) / ( t[i+1] - t[i] )
+        end 
+        dx_fd[end,:] = dx_fd[end-1,:] 
+
+    # central finite difference 
+    elseif method == 2 
+
+        dx_fd = 0*x 
+        for i = 2 : length(t)-1
+            dx_fd[i,:] = ( x[i+1,:] - x[i-1,:] ) / ( t[i+1] - t[i-1] )
+        end 
+        dx_fd[1,:] = dx_fd[2,:] 
+        dx_fd[end,:] = dx_fd[end-1,:] 
+
+    # backward finite difference 
+    else 
+
+        dx_fd = 0*x 
+        for i = 2 : length(t)
+            dx_fd[i,:] = ( x[i,:] - x[i-1,:] ) / ( t[i] - t[i-1] )
+        end 
+        dx_fd[1,:] = dx_fd[2,:] 
+
     end 
-    dx_fd[end,:] = dx_fd[end-1,:] 
 
     return dx_fd 
 
