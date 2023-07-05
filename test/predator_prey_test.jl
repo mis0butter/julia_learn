@@ -44,7 +44,7 @@ poly_order = n_vars
 ## ============================================ ##
 # SINDy + GP + ADMM 
 
-λ = 0.02875 
+λ = 0.02 
 println("λ = ", λ)
 
 # finite difference 
@@ -59,8 +59,15 @@ plot_admm(hist_fd, 2)
 ## ============================================ ## 
 # generate + validate TEST data 
 
+using DifferentialEquations
+
 dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
-dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy)
+dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy) 
+
+
+
+## ============================================ ##
+# test 
 
 t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
 t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt) 
@@ -76,7 +83,7 @@ plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsin
 if isequal( t_test[end], t_sindy_val[end] ) && isequal( t_test[end], t_gpsindy_val[end] )
     
     # print x0 
-    println("x0 = ", round.(x0, digits = 2))
+    println("x0 = ", round.(x0, digits = 2)) 
 
     function diff_norm( Ξ_true, Ξ_sindy, i )
         output = norm( Ξ_true[:,i] - Ξ_sindy[:,i] )

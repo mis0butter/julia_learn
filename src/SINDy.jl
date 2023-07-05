@@ -365,13 +365,13 @@ function pool_data_vecfn(n_vars, poly_order)
         end 
     end 
 
-    # sine functions 
-    for i = 1 : n_vars 
+    # # sine functions 
+    # for i = 1 : n_vars 
 
-        ind  += 1
-        push!(Θ, x -> sin.( x[i] ) )
+    #     ind  += 1
+    #     push!(Θ, x -> sin.( x[i] ) )
 
-    end 
+    # end 
     
     return Θ 
 
