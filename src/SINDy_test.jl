@@ -99,28 +99,29 @@ function pool_data_test(xmat, n_vars, poly_order)
 #   poly_order  = polynomial order (goes up to order 3) 
 # 
 # Outputs: 
-#   Θ       = data matrix passed through function library 
+#   Θx          = data matrix passed through function library 
 # ----------------------- #
 
     # turn x into matrix and get length 
     # xmat = mapreduce(permutedims, vcat, x) 
     l = size(xmat, 1) 
 
-    # # fill out 1st column of Θ with ones (poly order = 0) 
+    # # fill out 1st column of Θx with ones (poly order = 0) 
     ind = 1 ; 
-    # Θ   = ones(l, ind) 
+    # Θx  = ones(l, ind) 
 
     # # poly order 1 
     # for i = 1 : n_vars 
     #     ind += 1 
-    #     Θ    = [ Θ xmat[:,i] ]
+    #     Θx   = [ Θx xmat[:,i] ]
     # end 
-    Θ = xmat[:,1]
-    Θ = Θ[:,:] 
+    # Θx = xmat[:,1]
+    # Θx = Θx[:,:] 
+    Θx = [ xmat[:,1] xmat[:,2] ]
 
     ind += 1 
     vec  = xmat[:,1] .* xmat[:,2]
-    Θ    = [ Θ vec[:,:] ]
+    Θx   = [ Θx vec[:,:] ]
 
     # # poly order 2 
     # if poly_order >= 2 
@@ -129,7 +130,7 @@ function pool_data_test(xmat, n_vars, poly_order)
 
     #             ind += 1 ; 
     #             vec  = xmat[:,i] .* xmat[:,j] 
-    #             Θ    = [Θ vec] 
+    #             Θx   = [Θx vec] 
 
     #         end 
     #     end 
@@ -143,7 +144,7 @@ function pool_data_test(xmat, n_vars, poly_order)
                     
     #                 ind += 1 ;                     
     #                 vec  = xmat[:,i] .* xmat[:,j] .* xmat[:,k] 
-    #                 Θ    = [Θ vec] 
+    #                 Θx   = [Θx vec] 
 
     #             end 
     #         end 
@@ -154,10 +155,10 @@ function pool_data_test(xmat, n_vars, poly_order)
     # for i = 1 : n_vars 
     #     ind  += 1 
     #     vec   = sin.(xmat[:,i]) 
-    #     Θ = [Θ vec] 
+    #     Θx    = [Θx vec] 
     # end 
     
-    return Θ 
+    return Θx  
 
 end 
 
