@@ -18,9 +18,9 @@ export f_obj
 function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
     # training kernel function 
-    # Ky  = k_SE((σ_f, l, dx, dx)) + σ_n^2 * I 
+    Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
     # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
-    Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
+    # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     
@@ -56,10 +56,10 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
     poly_order = n_vars 
 
     # construct data library 
-    Θx = pool_data(x, n_vars, poly_order) 
+    Θx = pool_data_test(x, n_vars, poly_order) 
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics(Θx, dx_fd, λ, n_vars) 
+    Ξ = sparsify_dynamics_test(Θx, dx_fd, λ, n_vars) 
 
     # ----------------------- #
     # objective function 

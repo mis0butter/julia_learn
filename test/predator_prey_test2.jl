@@ -22,127 +22,85 @@ fd_method      = 2 # 1 = forward, 2 = central, 3 = backward
 # choose ODE, plot states --> measurements 
 x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method) 
 
-# split into training and validation data 
-test_fraction = 0.2 
-portion       = 5 
-t_train, t_test             = split_train_test(t, test_fraction, portion) 
-x_train, x_test             = split_train_test(x, test_fraction, portion) 
-dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
-dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion) 
+Ξ_true = SINDy_test( x, dx_true, 0.1 ) 
+Ξ_true = Ξ_true[:,1] 
 
-# ## ============================================ ##
-# # finite difference unit test 
+dx_noise_vec = 0 : 0.02 : 0.5 
+Ξ_sindy_err_vec   = [] 
+z_gpsindy_err_vec = [] 
+for dx_noise = dx_noise_vec 
+    println("dx_noise = ", dx_noise)
 
-# x0, dt, t, x, dx_true, dx_forward  = ode_states(fn, plot_option, 1) 
-# x0, dt, t, x, dx_true, dx_central  = ode_states(fn, plot_option, 2) 
-# x0, dt, t, x, dx_true, dx_backward = ode_states(fn, plot_option, 3) 
+    Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise )
 
-# plot(t, dx_true[:,1], c = :black, label = "true", legend = true)
-# plot!(t, dx_fd_forward[:,1], ls = :dash, lw = 2, label = "forward" )
-# plot!(t, dx_fd_central[:,1], ls = :dashdot, lw = 2, label = "central" )
-# plot!(t, dx_fd_backward[:,1], ls = :dot, lw = 2, label = "backward")
-# plot!(title = "Finite Difference Derivative Comparison (dx1)")
-# plot!(xlim = ( 0, 3 ))
-# xlabel!("Time (s)")
+    println( "  Ξ_sindy = " );   display( Ξ_sindy )
+    println( "  z_gpsindy = " ); display( z_gpsindy )
+    println( "  Ξ_sindy_err = " );   display( Ξ_sindy_err )
+    println( "  z_gpsindy_err = " ); display( z_gpsindy_err )
+    push!(Ξ_sindy_err_vec, Ξ_sindy_err) 
+    push!(z_gpsindy_err_vec, z_gpsindy_err)
+end 
 
+p_Ξ = plot( dx_noise_vec, Ξ_sindy_err_vec, label = "SINDy" )
+    plot!( dx_noise_vec, z_gpsindy_err_vec, ls = :dash, label = "GPSINDy" )
+    plot!( 
+        legend = true, 
+        xlabel = "dx_noise", 
+        title  = "Ξ_true - Ξ_discovered" 
+        ) 
+display(p) 
 
-## ============================================ ##
-# SINDy alone 
+t_str = string( "dx_true + dx_noise*randn \n dx_noise = ", minimum( dx_noise_vec ), " --> ", maximum( dx_noise_vec ) )
+p_noise = plot( t, dx_true[:,1], title = t_str, xlabel = "Time (s)" )
+for dx_noise = dx_noise_vec
+    plot!( t, dx_true[:,1] .+ dx_noise*randn( size(dx_true, 1), 1 ) ) 
+end 
+display(p_noise)
 
-λ = 0.1  
-n_vars     = size(x, 2) 
-poly_order = n_vars 
-
-Ξ_true  = SINDy_test( x, dx_true, λ)
-Ξ_sindy = SINDy_test( x, dx_fd, λ)
-
-
-## ============================================ ##
-# SINDy + GP + ADMM 
-
-λ = 0.02 
-println("λ = ", λ)
-
-# finite difference 
-hist_fd = Hist( [], [], [], [], [] ) 
-@time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
-# display(z_gpsindy) 
-
-# plot 
-plot_admm(hist_fd, 1)
-plot_admm(hist_fd, 2)
 
 ## ============================================ ## 
-# generate + validate TEST data 
 
-dx_gpsindy_fn = build_dx_fn(poly_order, z_gpsindy) 
-dx_sindy_fn   = build_dx_fn(poly_order, Ξ_sindy) 
+function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise) 
 
-t_gpsindy_val, x_gpsindy_val = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
-t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt) 
+    # HACK - adding noise to truth derivatives 
+    dx_fd = dx_true .+ dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
+    # dx_fd = dx_true 
 
-# plot!! 
-plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
-plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+    # split into training and validation data 
+    test_fraction = 0.2 
+    portion       = 5 
+    t_train, t_test             = split_train_test(t, test_fraction, portion) 
+    x_train, x_test             = split_train_test(x, test_fraction, portion) 
+    dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
+    dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion) 
 
-## ============================================ ##
-# print stats 
 
-if isequal( t_test[end], t_sindy_val[end] ) && isequal( t_test[end], t_gpsindy_val[end] )
-    
-    # print x0 
-    println("x0 = ", round.(x0, digits = 2)) 
+    ## ============================================ ##
+    # SINDy alone 
 
-    function diff_norm( Ξ_true, Ξ_sindy, i )
-        output = norm( Ξ_true[:,i] - Ξ_sindy[:,i] )
-        return output 
-    end 
+    λ = 0.1  
+    n_vars     = size(x, 2) 
+    poly_order = n_vars 
 
-    table_norm = []
-    # ----------------------- #
-    # true - SINDy 
+    Ξ_true  = SINDy_test( x, dx_true, λ ) 
+    Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
 
-    # coeff 1 
-    push!(table_norm, diff_norm( Ξ_true, Ξ_sindy, 1 )) 
-    # coeff 2 
-    push!(table_norm, diff_norm( Ξ_true, Ξ_sindy, 2 ))
-    # dyn 1 
-    push!(table_norm, diff_norm( x_test, x_sindy_val, 1 ))
-    # dyn 2 
-    push!(table_norm, diff_norm( x_test, x_sindy_val, 2 ))
 
-    # ----------------------- #
-    # true - GPSINDy 
+    ## ============================================ ##
+    # SINDy + GP + ADMM 
 
-    # coeff 1 
-    push!(table_norm, diff_norm( Ξ_true, z_gpsindy, 1 ))
-    # coeff 2 
-    push!(table_norm, diff_norm( Ξ_true, z_gpsindy, 2 ))
-    # dyn 1 
-    push!(table_norm, diff_norm( x_test, x_gpsindy_val, 1 ))
-    # dyn 2 
-    push!(table_norm, diff_norm( x_test, x_gpsindy_val, 2 ))
+    λ = 0.02 
 
-    # ----------------------- #
-    # for displaying in table 
+    # finite difference 
+    hist_fd = Hist( [], [], [], [], [] ) 
+    @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
+    # display(z_gpsindy) 
 
-    table_norm = round.(table_norm, digits = 2)
-    display(table_norm[:,:]') 
+    dx1_sindy_err = norm( Ξ_true[:,1] - Ξ_sindy[:,1] ) 
+    dx1_gpsindy_err = norm( Ξ_true[:,1] - z_gpsindy[:,1] ) 
 
-else
-
-    println("poop something diverged" )
+    # return Ξ_sindy, z_gpsindy
+    return Ξ_sindy[:,1], dx1_sindy_err, z_gpsindy[:,1], dx1_gpsindy_err  
 
 end 
-
-## ============================================ ##
-# save fig 
-
-using Plots 
-
-if savefig_option == 1
-    savefig("./test/outputs/sindy_gpsindy.pdf")
-end 
-
-# jldsave("test/outputs/test.jld2"; t, x, z_gpsindy, hist_fd)
 
