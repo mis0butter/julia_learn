@@ -1,6 +1,9 @@
 
 struct Hist 
     objval 
+    fval 
+    gval 
+    hp 
     r_norm 
     s_norm 
     eps_pri 
@@ -27,21 +30,29 @@ x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method)
 Ξ_true = SINDy_test( x, dx_true, 0.1 ) 
 Ξ_true = Ξ_true[:,1] 
 
-# dx_noise_vec = 0 : 0.02 : 0.5 
-dx_noise_vec = 0.0
-Ξ_sindy_err_vec   = [] 
-z_gpsindy_err_vec = [] 
+dx_noise_vec = 0 : 0.1 : 1.0  
+dx_noise = 0.0
+
+Ξ_sindy_vec         = [] 
+Ξ_sindy_err_vec     = [] 
+z_gpsindy_vec       = [] 
+z_gpsindy_err_vec   = [] 
+hist_gpsindy_vec    = [] 
 for dx_noise = dx_noise_vec 
     println("dx_noise = ", dx_noise)
 
-    Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise )
+    Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_gpsindy = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise )
 
-    println( "  Ξ_sindy = " );   println( Ξ_sindy )
-    println( "  z_gpsindy = " ); println( z_gpsindy )
-    println( "  Ξ_sindy_err = " );   println( Ξ_sindy_err )
-    println( "  z_gpsindy_err = " ); println( z_gpsindy_err )
+    println( "  Ξ_sindy = " );          println( Ξ_sindy )
+    println( "  z_gpsindy = " );        println( z_gpsindy )
+    println( "  Ξ_sindy_err = " );      println( Ξ_sindy_err )
+    println( "  z_gpsindy_err = " );    println( z_gpsindy_err )
+
+    push!(Ξ_sindy_vec, Ξ_sindy) 
+    push!(z_gpsindy_vec, z_gpsindy)
     push!(Ξ_sindy_err_vec, Ξ_sindy_err) 
     push!(z_gpsindy_err_vec, z_gpsindy_err)
+    push!( hist_gpsindy_vec, hist_gpsindy )
 end 
 
 Ξ_sindy_err_vec   = mapreduce(permutedims, vcat, Ξ_sindy_err_vec)
@@ -129,7 +140,7 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise)
     λ = 0.02 
 
     # finite difference 
-    hist_fd = Hist( [], [], [], [], [] ) 
+    hist_fd = Hist( [], [], [], [], [], [], [], [] ) 
     @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
     # display(z_gpsindy) 
 
@@ -137,7 +148,7 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise)
     z_gpsindy_err = [ norm( Ξ_true[:,1] - z_gpsindy[:,1] ), norm( Ξ_true[:,2] - z_gpsindy[:,2] )  ] 
 
     # return Ξ_sindy, z_gpsindy
-    return Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err  
+    return Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_fd 
 
 end 
 

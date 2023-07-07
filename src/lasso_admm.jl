@@ -189,6 +189,9 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
         σ_f = result.minimizer[1] 
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
+        # σ_f = 1.0 
+        # l   = 1.0 
+        # σ_n = 1.0 
         
         # ----------------------- #
         # z-update (soft thresholding) 
@@ -207,6 +210,9 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
 
         p = f(x, σ_f, l, σ_n) + g(z)   
         push!( hist.objval, p )
+        push!( hist.fval, f( x, σ_f, l, σ_n ) )
+        push!( hist.gval, g(z) )
+        push!( hist.hp, [ σ_f, l, σ_n ] )
         push!( hist.r_norm, norm(x - z) )
         push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
         push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(x), norm(-z)) ) 

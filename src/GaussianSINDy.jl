@@ -104,3 +104,50 @@ end
 
 end 
 
+## ============================================ ##
+
+export monte_carlo_gpsindy 
+function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise) 
+
+    # HACK - adding noise to truth derivatives 
+    dx_fd = dx_true .+ dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
+    # dx_fd = dx_true 
+
+    # split into training and validation data 
+    test_fraction = 0.2 
+    portion       = 5 
+    t_train, t_test             = split_train_test(t, test_fraction, portion) 
+    x_train, x_test             = split_train_test(x, test_fraction, portion) 
+    dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
+    dx_fd_train, dx_fd_test     = split_train_test(dx_fd, test_fraction, portion) 
+
+
+    ## ============================================ ##
+    # SINDy alone 
+
+    λ = 0.1  
+    n_vars     = size(x, 2) 
+    poly_order = n_vars 
+
+    Ξ_true  = SINDy_test( x, dx_true, λ ) 
+    Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
+
+
+    ## ============================================ ##
+    # SINDy + GP + ADMM 
+
+    λ = 0.02 
+
+    # finite difference 
+    hist_fd = Hist( [], [], [], [], [], [], [], [] ) 
+    @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
+    # display(z_gpsindy) 
+
+    Ξ_sindy_err   = [ norm( Ξ_true[:,1] - Ξ_sindy[:,1] ), norm( Ξ_true[:,2] - Ξ_sindy[:,2] )  ] 
+    z_gpsindy_err = [ norm( Ξ_true[:,1] - z_gpsindy[:,1] ), norm( Ξ_true[:,2] - z_gpsindy[:,2] )  ] 
+
+    # return Ξ_sindy, z_gpsindy
+    return Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_fd 
+
+end 
+
