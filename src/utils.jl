@@ -1,4 +1,13 @@
+## ============================================ ##
+# convert vector of vectors into matrix 
 
+export vv2m 
+function vv2m( vecvec )
+
+    mat = mapreduce(permutedims, vcat, vecvec)
+
+    return mat 
+end 
 
 ## ============================================ ##
 # split into training and validation data 

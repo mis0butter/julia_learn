@@ -107,7 +107,15 @@ for i in hist_gpsindy_vec
     push!( f_vals_fin, [ i.fval[l], i.fval[end] ] )
     push!( g_vals_fin, [ i.gval[l], i.gval[end] ] )
 end 
+obj_vals_fin = vv2m( obj_vals_fin )
+f_vals_fin   = vv2m( f_vals_fin )
+g_vals_fin   = vv2m( g_vals_fin )
 
+i = 1 
+p_objvals = plot( dx_noise_vec, obj_vals_fin[:,i], label = "objval" )
+    plot!( dx_noise_vec, f_vals_fin[:,i], ls = :dash, label = "fval" )
+    plot!( dx_noise_vec, g_vals_fin[:,i], ls = :dot, label = "gval" )
+    plot!( legend = true, title = "Final Fn Val for each iter", xlabel = "dx_noise" )
 
 ## ============================================ ##
 # save data  
