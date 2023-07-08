@@ -161,21 +161,15 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
 
     # counter 
     iter = 0 
+
+    # update λ
+    λ = f( x, σ_f, l, σ_n )
     
     # begin iterations 
     for k = 1 : max_iter 
 
         # increment counter 
         iter += 1 
-
-        # ----------------------- #
-        # x-update (optimization) 
-
-        # optimization 
-        f_opt(x) = aug_L(x, σ_f, l, σ_n, z, u) 
-        od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
-        result   = optimize( od, x, LBFGS() ) 
-        x        = result.minimizer 
 
         # ----------------------- # 
         # hp-update (optimization) 
@@ -185,16 +179,27 @@ function lasso_admm_hp_opt( f, g, n, λ, ρ, α, hist )
         od     = OnceDifferentiable( hp_opt, σ_0 ; autodiff = :forward ) 
         result = optimize( od, lower, upper, σ_0, Fminbox(LBFGS()) ) 
         
-        # assign optimized hyperparameters 
+        # # assign optimized hyperparameters 
         σ_f = result.minimizer[1] 
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
         # σ_f = 1.0 
         # l   = 1.0 
-        # σ_n = 1.0 
+        # σ_n = 0.1 
+
+        # ----------------------- #
+        # x-update (optimization) 
+
+        # optimization 
+        f_opt(x) = aug_L(x, σ_f, l, σ_n, z, u) 
+        od       = OnceDifferentiable( f_opt, x ; autodiff = :forward ) 
+        result   = optimize( od, x, LBFGS() ) 
+        x        = result.minimizer 
         
         # ----------------------- #
         # z-update (soft thresholding) 
+    
+        λ = f( x, σ_f, l, σ_n )
 
         z_old = z 
         x_hat = α*x + (1 .- α)*z_old 

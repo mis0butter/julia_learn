@@ -31,26 +31,30 @@ x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method)
 Ξ_true = SINDy_test( x, dx_true, 0.1 ) 
 Ξ_true = Ξ_true[:,1] 
 
-dx_noise_vec = 0 : 0.1 : 1.0  
-dx_noise = 0.0
+dx_noise_vec = 0 : 0.1 : 0.2   
+dx_noise  = 1.0  
+λ_gpsindy = 0.02 
 
 Ξ_sindy_vec         = [] 
 Ξ_sindy_err_vec     = [] 
 z_gpsindy_vec       = [] 
 z_gpsindy_err_vec   = [] 
 hist_gpsindy_vec    = [] 
-for dx_noise = dx_noise_vec 
+# for dx_noise = dx_noise_vec 
+for λ_gpsindy = 0 : 0.02 : 0.1 
+
     println("dx_noise = ", dx_noise)
+    println("λ_gpsindy = ", λ_gpsindy)
 
-    Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_gpsindy = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise )
+    Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_gpsindy = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy )
 
-    println( "  Ξ_sindy = " );          println( Ξ_sindy )
-    println( "  z_gpsindy = " );        println( z_gpsindy )
+    # println( "  Ξ_sindy = " );          println( Ξ_sindy )
+    # println( "  z_gpsindy = " );        println( z_gpsindy )
     println( "  Ξ_sindy_err = " );      println( Ξ_sindy_err )
     println( "  z_gpsindy_err = " );    println( z_gpsindy_err )
 
     push!(Ξ_sindy_vec, Ξ_sindy) 
-    push!(z_gpsindy_vec, z_gpsindy)
+    push!(z_gpsindy_vec, z_gpsindy) 
     push!(Ξ_sindy_err_vec, Ξ_sindy_err) 
     push!(z_gpsindy_err_vec, z_gpsindy_err)
     push!( hist_gpsindy_vec, hist_gpsindy )
@@ -60,9 +64,10 @@ end
 z_gpsindy_err_vec = mapreduce(permutedims, vcat, z_gpsindy_err_vec)
 
 
-## ============================================ ##
 # ----------------------- #
 using Plots 
+
+dx_noise_vec = 0 : 0.02 : 0.1 
 
 p_Ξ = [] 
 for i = 1:2
@@ -88,12 +93,12 @@ p_Ξ = plot(p_Ξ ... ,
     ) 
 display(p_Ξ)
 
-t_str = string( "dx_true + dx_noise*randn \n dx_noise = ", minimum( dx_noise_vec ), " --> ", maximum( dx_noise_vec ) )
-p_noise = plot( t, dx_true[:,1], title = t_str, xlabel = "Time (s)" )
-for dx_noise = dx_noise_vec
-    plot!(p_noise, t, dx_true[:,1] .+ dx_noise*randn( size(dx_true, 1), 1 ) ) 
-end 
-display(p_noise)
+# t_str = string( "dx_true + dx_noise*randn \n dx_noise = ", minimum( dx_noise_vec ), " --> ", maximum( dx_noise_vec ) )
+# p_noise = plot( t, dx_true[:,1], title = t_str, xlabel = "Time (s)" )
+# for dx_noise = dx_noise_vec
+#     plot!(p_noise, t, dx_true[:,1] .+ dx_noise*randn( size(dx_true, 1), 1 ) ) 
+# end 
+# display(p_noise)
 
 ## ============================================ ##
 

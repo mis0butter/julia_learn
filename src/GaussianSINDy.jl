@@ -107,7 +107,7 @@ end
 ## ============================================ ##
 
 export monte_carlo_gpsindy 
-function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise) 
+function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy) 
 
     # HACK - adding noise to truth derivatives 
     dx_fd = dx_true .+ dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
@@ -136,11 +136,11 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise)
     ## ============================================ ##
     # SINDy + GP + ADMM 
 
-    λ = 0.02 
+    # λ = 0.02 
 
     # finite difference 
     hist_fd = Hist( [], [], [], [], [], [], [], [] ) 
-    @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ, hist_fd ) 
+    @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ_gpsindy, hist_fd ) 
     # display(z_gpsindy) 
 
     Ξ_sindy_err   = [ norm( Ξ_true[:,1] - Ξ_sindy[:,1] ), norm( Ξ_true[:,2] - Ξ_sindy[:,2] )  ] 
