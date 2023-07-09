@@ -9,7 +9,7 @@ function gauss_sample(μ, K)
 # function gauss_sample(μ::Vector, K::Matrix) 
 
     # adding rounding ... 
-    K = round.( K, digits = 12 )
+    K = round.( K, digits = 10 )
     
     # cholesky decomposition, get lower triangular decomp 
     C = cholesky(K) ; 

@@ -19,27 +19,30 @@ using Formatting
 # Random.seed!(0) 
 
 # true hyperparameters 
-σ_f0 = 1.0 ;    σ_f = σ_f0 
+σ_f0 = 0.5 ;    σ_f = σ_f0 
 l_0  = 1.0 ;    l   = l_0 
 σ_n0 = 0.1 ;    σ_n = σ_n0 
 p    = 1.0 
 
 # generate training data 
-N = 5 
+N = 80 
 x_train  = sort( 2π*rand(N) ) 
-y_train  = sin.(x_train) .+ 0.1*randn(N) 
+# y_train  = sin.(3*x_train) .+ 0.2*randn(N) 
 
 # training data covariance 
 Σ_train  = k_SE( σ_f0, l_0, x_train, x_train )
 # Σ_train  = k_periodic( σ_f0, l_0, p, x_train, x_train )
 Σ_train += σ_n0^2 * I 
 
+y_train = gauss_sample(0*x_train, Σ_train ) 
+
 # test data points (PRIOR) 
-x_test  = collect( 0 : 0.1 : 2π )
+x_test  = collect( 0 : 0.01 : 2π )
 Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
 # Σ_test  = k_periodic( σ_f0, l_0, p, x_test, x_test )
-Σ_test += σ_n0^2 * I 
+# Σ_test += σ_n0^2 * I 
 
+plot(y_train) 
 
 
 ## ============================================ ##
@@ -48,7 +51,6 @@ x_test  = collect( 0 : 0.1 : 2π )
 
 Kss = k_SE( σ_f0, l_0, x_test, x_test )
 # Kss = k_periodic( σ_f0, l_0, p, x_test, x_test )
-Kss += σ_n0^2 * I 
 
 # fit data 
 μ_post, Σ_post = post_dist( x_train, y_train, x_test, σ_f0, l_0, σ_n0 )
@@ -74,18 +76,19 @@ p_prior = plot(
     xticks = 0:3:6, 
     yticks  = -3:3:3, 
     xguidefontsize = 18, 
-    yguidefontsize = 18 
+    yguidefontsize = 18, 
+    title = "Prior"
     )
 
-f = gauss_sample(x_test*0, Σ_test) 
+f = gauss_sample(x_test*0, Σ_test + σ_n0^2*I) 
 plot!(p_prior, x_test, f, c = :red, lw = 3, linestyle = :dash )
-f = gauss_sample(x_test*0, Σ_test) 
+f = gauss_sample(x_test*0, Σ_test + σ_n0^2*I) 
 plot!(p_prior, x_test, f, c = :blue, lw = 3, linestyle = :dashdotdot )
-f = gauss_sample(x_test*0, Σ_test) 
+f = gauss_sample(x_test*0, Σ_test + σ_n0^2*I) 
 plot!(p_prior, x_test, f, c = :green, lw = 3 )
 
-## ============================================ ##
 
+# ----------------------- #
 # scatter plot of training data 
 p_post = scatter(
     x_train, y_train, 
@@ -103,17 +106,23 @@ p_post = scatter(
     xticks = 0:3:6, 
     yticks = -3:3:3, 
     xguidefontsize = 18, 
-    yguidefontsize = 18 
+    yguidefontsize = 18, 
+    title = "Posterior"
     )
 plot!(p_post, x_test, μ_post, rib = 3*std_post , lw = 3, fa = 0.15, c = :black, label = "μ ± 3σ ")
 
+p = [ p_prior, p_post ]
+plot(  p ... , 
+    layout = (1,2) , 
+    size   = [ 800 300 ]
+)
 
 ## ============================================ ##
 # sample from trained GP 
 
-
-test = gauss_sample( μ_post, Σ_post + σ_n^2*I)
-
+p_train = p_post 
+test = gauss_sample( μ_post, Σ_post + σ_n0^2*I)
+plot!(p_train, x_test, test, ls = :dash)
 
 ## ============================================ ## 
 # solve for hyperparameters
@@ -122,9 +131,10 @@ println("samples = ", N)
 
 # test reassigning function 
 log_p_hp(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, 0*y_train ) 
+# log_p_hp(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_test, test, μ_post ) 
 log_p_hp(( σ_f, l, σ_n )) 
 
-σ_0   = [σ_f0, l_0, σ_n0] * 1.1 
+σ_0   = [σ_f0, l_0, σ_n0] * 2.0 
 lower = [0.0, 0.0, 0.0]  
 upper = [Inf, Inf, Inf] 
 
@@ -139,7 +149,7 @@ l   = result.minimizer[2]
 σ_n = result.minimizer[3] 
 
 
-## ============================================ ##
+# ----------------------- #
 # posterior distribution ROUND 2 (YES hyperparameters tuned)
 # (based on training data) 
 
@@ -150,10 +160,16 @@ cov_prior = diag(Kss );     std_prior = sqrt.(cov_prior)
 cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post) 
 
 # plot fitted / predict / post data 
-plot!(p_train, x_test, μ_post, rib = 3*std_post, fillalpha = 0.15, c = :blue, label = "μ ± 3σ (σ_opt)")
+plot!(p_post, x_test, μ_post, 
+    rib = 3*std_post, 
+    fillalpha = 0.15, 
+    c = :red, 
+    ls = :dash, 
+    label = "μ ± 3σ (σ_opt)"
+    )
 
-xlabel!("x") 
-ylabel!("y") 
+# xlabel!("x") 
+# ylabel!("y") 
 
 
 ## ============================================ ## 
