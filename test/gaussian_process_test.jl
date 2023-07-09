@@ -21,7 +21,7 @@ using Formatting
 # true hyperparameters 
 σ_f0 = 1.0 ;    σ_f = σ_f0 
 l_0  = 1.0 ;    l   = l_0 
-σ_n0 = 0.001 ;    σ_n = σ_n0 
+σ_n0 = 0.1 ;    σ_n = σ_n0 
 p    = 1.0 
 
 # generate training data 
@@ -30,14 +30,14 @@ x_train  = sort( 2π*rand(N) )
 y_train  = sin.(x_train) .+ 0.1*randn(N) 
 
 # training data covariance 
-# Σ_train  = k_SE( σ_f0, l_0, x_train, x_train )
-Σ_train  = k_periodic( σ_f0, l_0, p, x_train, x_train )
+Σ_train  = k_SE( σ_f0, l_0, x_train, x_train )
+# Σ_train  = k_periodic( σ_f0, l_0, p, x_train, x_train )
 Σ_train += σ_n0^2 * I 
 
 # test data points (PRIOR) 
-x_test  = collect( 0 : 0.01 : 2π )
-# Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
-Σ_test  = k_periodic( σ_f0, l_0, p, x_test, x_test )
+x_test  = collect( 0 : 0.1 : 2π )
+Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
+# Σ_test  = k_periodic( σ_f0, l_0, p, x_test, x_test )
 Σ_test += σ_n0^2 * I 
 
 
@@ -46,9 +46,9 @@ x_test  = collect( 0 : 0.01 : 2π )
 # posterior distribution ROUND 1 (NO hyperparameters tuned yet)
 # (based on training data) 
 
-# Kss = k_SE( σ_f0, l_0, x_test, x_test )
-Kss = k_periodic( σ_f0, l_0, p, x_test, x_test )
-#  += σ_n0^2 * I 
+Kss = k_SE( σ_f0, l_0, x_test, x_test )
+# Kss = k_periodic( σ_f0, l_0, p, x_test, x_test )
+Kss += σ_n0^2 * I 
 
 # fit data 
 μ_post, Σ_post = post_dist( x_train, y_train, x_test, σ_f0, l_0, σ_n0 )
@@ -77,12 +77,12 @@ p_prior = plot(
     yguidefontsize = 18 
     )
 
-# f = gauss_sample(x_test*0, Σ_test) 
-# plot!(p_prior, x_test, f, c = :red, lw = 3, linestyle = :dash )
-# f = gauss_sample(x_test*0, Σ_test) 
-# plot!(p_prior, x_test, f, c = :blue, lw = 3, linestyle = :dashdotdot )
-# f = gauss_sample(x_test*0, Σ_test) 
-# plot!(p_prior, x_test, f, c = :green, lw = 3 )
+f = gauss_sample(x_test*0, Σ_test) 
+plot!(p_prior, x_test, f, c = :red, lw = 3, linestyle = :dash )
+f = gauss_sample(x_test*0, Σ_test) 
+plot!(p_prior, x_test, f, c = :blue, lw = 3, linestyle = :dashdotdot )
+f = gauss_sample(x_test*0, Σ_test) 
+plot!(p_prior, x_test, f, c = :green, lw = 3 )
 
 ## ============================================ ##
 
@@ -108,13 +108,20 @@ p_post = scatter(
 plot!(p_post, x_test, μ_post, rib = 3*std_post , lw = 3, fa = 0.15, c = :black, label = "μ ± 3σ ")
 
 
+## ============================================ ##
+# sample from trained GP 
+
+
+test = gauss_sample( μ_post, Σ_post + σ_n^2*I)
+
+
 ## ============================================ ## 
 # solve for hyperparameters
 
 println("samples = ", N) 
 
 # test reassigning function 
-log_p_hp(( σ_f, l, σ_n )) = log_p(( σ_f, l, σ_n, x_train, y_train, 0*y_train )) 
+log_p_hp(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, 0*y_train ) 
 log_p_hp(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0] * 1.1 

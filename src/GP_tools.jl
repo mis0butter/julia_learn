@@ -7,6 +7,9 @@ using LinearAlgebra
 export gauss_sample 
 function gauss_sample(μ, K) 
 # function gauss_sample(μ::Vector, K::Matrix) 
+
+    # adding rounding ... 
+    K = round.( K, digits = 12 )
     
     # cholesky decomposition, get lower triangular decomp 
     C = cholesky(K) ; 
