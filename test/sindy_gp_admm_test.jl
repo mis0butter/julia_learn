@@ -136,7 +136,7 @@ dx_noise  = 1.0
     iter = 0 
 
     # update λ
-    λ = log(f_hp( ξ, σ_f, l, σ_n )) 
+    # λ = log(f_hp( ξ, log(σ_f), log(l), log(σ_n) )) 
     
     # begin iterations 
     k = 1 
@@ -150,7 +150,7 @@ dx_noise  = 1.0
         # x-update (optimization) 
 
         # optimization 
-        f_opt(ξ) = aug_L(ξ, σ_f, l, σ_n, z, u) 
+        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
         od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
         result   = optimize( od, ξ, LBFGS() ) 
         ξ        = result.minimizer 
@@ -161,8 +161,8 @@ dx_noise  = 1.0
 
         # mean and covariance 
         mZero = MeanZero() ;            # zero mean function 
-        kern  = SE( σ_f , l ) ;          # squared eponential kernel (hyperparams on log scale) 
-        log_noise = σ_n ;              # (optional) log std dev of obs noise 
+        kern  = SE( 0.0 , 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
+        log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
         # fit GP 
         y_train = dx - Θx*ξ   
@@ -172,29 +172,31 @@ dx_noise  = 1.0
         σ_f = result.minimizer[1]
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
+
+        display( [σ_f, l, σ_n] )
+
+
+## ============================================ ##
+        # x-update (optimization) 
+
+        # optimization 
+        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
+        od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
+        result   = optimize( od, ξ, LBFGS() ) 
+        ξ        = result.minimizer 
         
 ## ============================================ ##
         # z-update (soft thresholding) 
     
         # λ = f_hp( ξ, σ_f, l, σ_n )
-        f_hp( ξ, σ_f, l, σ_n )
+        # f_hp( ξ, σ_f, l, σ_n )
 
         λ = 0.1 
 
         z_old = z 
         ξ_hat = α*ξ + (1 .- α)*z_old 
 
-        # z     = shrinkage(ξ_hat + u, λ/ρ) 
-        κ  = λ/ρ 
-        ξx = ξ_hat + u 
-        z  = 0*ξx ; 
-        for i = 1:length(ξx) 
-            z[i] = max( 0, ξx[i] - κ ) - max( 0, -ξx[i] - κ ) 
-        end 
-
-        z_if = shrinkage( ξ_hat + u, λ/ρ )
-
-        z 
+        z = shrinkage( ξ_hat + u, λ/ρ )
 
 ## ============================================ ##
         # diagnostics + termination checks 
@@ -215,9 +217,9 @@ dx_noise  = 1.0
         push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
         push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
 
-        # if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
-        #     break 
-        # end 
+        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+            println("converged!")  
+        end 
 
     # end 
     
