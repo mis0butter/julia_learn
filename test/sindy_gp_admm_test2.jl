@@ -120,9 +120,9 @@ dx_noise  = 1.0
     ξ = z = u = zeros(n) 
 
     # initial hyperparameters 
-    σ_f0 = log(1.0) ; σ_f = σ_f0  
-    l_0  = log(1.0) ; l   = l_0   
-    σ_n0 = log(0.1) ; σ_n = σ_n0 
+    σ_f0 = 1.0 ; σ_f = σ_f0  
+    l_0  = 1.0 ; l   = l_0   
+    σ_n0 = 0.1 ; σ_n = σ_n0 
 
     # augmented Lagrangian (scaled form) 
     aug_L(ξ, σ_f, l, σ_n, z, u) = f_hp(ξ, σ_f, l, σ_n) + g(z) + ρ/2 .* norm( ξ - z + u )^2 
@@ -134,7 +134,7 @@ dx_noise  = 1.0
     # ξ-update (optimization) 
 
     # optimization 
-    f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
+    f_opt(ξ) = aug_L(ξ, σ_f, l, σ_n, z, u) 
     od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
     result   = optimize( od, ξ, LBFGS() ) 
     ξ        = result.minimizer 
@@ -152,18 +152,13 @@ dx_noise  = 1.0
         # ----------------------- #
         # hp-update (optimization) 
 
-        # mean and covariance 
-        mZero = MeanZero() ;            # zero mean function 
-        kern  = SE( 0.0, 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
-        log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+        hp0   = [σ_f, l, σ_n]  
 
-        # fit GP 
-        # y_train = dx - Θx*ξ   
-        y_train = Θx*ξ
-        gp  = GP(t, y_train, mZero, kern, log_noise) 
-        # gp  = GP(t, dx, Θx*ξ, kern, log_noise) 
+        log_hp(( σ_f, l, σ_n )) = aug_L(ξ, σ_f, l, σ_n, z, u) 
+        od = OnceDifferentiable( log_hp, hp0 ; autodiff = :forward ) 
+        @time result = optimize( od, hp0, LBFGS() ) 
+        println("log_p min (LBFGS) = \n ", result.minimizer) 
 
-        result = optimize!(gp) 
         σ_f = result.minimizer[1] 
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
@@ -174,7 +169,7 @@ dx_noise  = 1.0
         # ξ-update (optimization) 
 
         # optimization 
-        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
+        f_opt(ξ) = aug_L(ξ, σ_f, l, σ_n, z, u) 
         od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
         result   = optimize( od, ξ, LBFGS() ) 
         ξ        = result.minimizer 
@@ -184,8 +179,8 @@ dx_noise  = 1.0
         # ----------------------- #
         # z-update (soft thresholding) 
     
-        λ = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
-        println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )
+        λ = log(f_hp( ξ, σ_f, l, σ_n ))/10 
+        println( "f_obj = ", f_hp( ξ, σ_f, l, σ_n ) )
         println( "λ = ", λ )
         # f_hp( ξ, σ_f, l, σ_n )
 
