@@ -35,19 +35,20 @@ function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     
-    # # if Ky really small 
-    # if det(Ky) == 0 
-    #     # e     = eigvals_june(Ky) 
-    #     # e     = eigen(Ky).values 
-    #     # log_e = log.(e) 
-    #     # Ky    = sum(log_e) 
-    #     # term += 1/2*log( tr(Ky) ) 
-    #     println("det(Ky) = 0")
-    #     term += 1/2*log( det(Ky) ) 
-    # else
-    #     term += 1/2*log( det(Ky) ) 
-    # end 
+    # # ----------------------- #
+    # # LU factorization 
 
+    # # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
+    # A = Ky 
+    # b = ( dx - Θx*ξ ) 
+    # C = cholesky(A) ; L = C.L ; U = C.U 
+
+    # y = L \ b 
+    # x = U \ y 
+    
+    # term  = 1/2*( dx - Θx*ξ )'*x
+
+    # ----------------------- #
     term += 1/2*log( tr(Ky) ) 
 
     return term 
