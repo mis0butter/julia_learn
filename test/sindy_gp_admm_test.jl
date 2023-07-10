@@ -148,25 +148,10 @@ dx_noise  = 1.0
         # ----------------------- #
         # hp-update (optimization) 
 
-        # mean and covariance 
-        mZero = MeanZero() ;            # zero mean function 
-        kern  = SE( 0.0, 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
-        log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+        hp = opt_hp(t, dx, Θx, ξ) 
+        σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
 
-        # fit GP 
-        # y_train = dx - Θx*ξ   
-        y_train = Θx*ξ
-        gp  = GP(t, y_train, mZero, kern, log_noise) 
-        # gp  = GP(t, dx, Θx*ξ, kern, log_noise) 
-
-        result = optimize!(gp) 
-        σ_f = result.minimizer[1] 
-        l   = result.minimizer[2] 
-        σ_n = result.minimizer[3] 
-
-        println( "hp = ", [σ_f, l, σ_n] ) 
-
-        test = opt_hp(t, dx, Θx, ξ) 
+        println( "hp = ", hp ) 
 
 ## ============================================ ##
         # ----------------------- #
@@ -187,8 +172,7 @@ dx_noise  = 1.0
 
         z_old = z 
         ξ_hat = α*ξ + (1 .- α)*z_old 
-
-        z = shrinkage( ξ_hat + u, λ/ρ )
+        z     = shrinkage( ξ_hat + u, λ/ρ )
 
         println( "z = ", z )
 

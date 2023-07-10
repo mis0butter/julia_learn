@@ -5,6 +5,7 @@ using GaussianProcesses
 
 export opt_ξ
 function opt_ξ( aug_L, ξ, σ_f, l, σ_n, z, u )
+# ----------------------- #
 # PURPOSE: 
 #       Optimize ξ for augmented Lagrangian obj fn 
 # INPUTS: 
@@ -17,6 +18,7 @@ function opt_ξ( aug_L, ξ, σ_f, l, σ_n, z, u )
 #       u       : dual variable 
 # OUTPUTS: 
 #       ξ       : output dynamics coefficient (ADMM primary variable x) 
+# ----------------------- #
 
     # optimization 
     f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
@@ -31,6 +33,7 @@ end
 
 export opt_hp 
 function opt_hp(t_train, dx_train, Θx, ξ) 
+# ----------------------- #
 # PURPPOSE: 
 #       Optimize hyperparameters for marginal likelihood of data  
 # INPUTS: 
@@ -40,6 +43,7 @@ function opt_hp(t_train, dx_train, Θx, ξ)
 #       ξ           : dynamics coefficients 
 # OUTPUTS: 
 #       hp          : hyperparameters 
+# ----------------------- #
 
     # mean and covariance 
     mZero = MeanZero() ;            # zero mean function 
@@ -59,4 +63,27 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     hp  = [σ_f, l, σ_n] 
 
     return hp 
+end 
+
+
+## ============================================ ##
+
+export shrinkage 
+function shrinkage(x, κ) 
+# ----------------------- #
+# PURPOSE: 
+#       shrinkage / L1-norm min / soft thresholding 
+# INPUTS: 
+#       x   : input data 
+#       κ   : shrinkage threshold 
+# OUTPUTS: 
+#       z   : shrunk data 
+# ----------------------- #
+
+    z = 0*x ; 
+    for i = 1:length(x) 
+        z[i] = max( 0, x[i] - κ ) - max( 0, -x[i] - κ ) 
+    end 
+
+    return z 
 end 

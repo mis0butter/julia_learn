@@ -14,21 +14,6 @@ end
 ## ============================================ ##
 # shrinkage 
 
-export shrinkage 
-function shrinkage(x, κ) 
-
-    z = 0*x ; 
-    for i = 1:length(x) 
-        z[i] = max( 0, x[i] - κ ) - max( 0, -x[i] - κ ) 
-    end 
-
-    return z 
-end 
-
-
-## ============================================ ##
-# shrinkage 
-
 export shrinkage_if 
 function shrinkage_if(x, κ) 
 
