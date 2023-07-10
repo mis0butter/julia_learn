@@ -133,13 +133,9 @@ dx_noise  = 1.0
     # ----------------------- # 
     # ξ-update (optimization) 
 
-    # optimization 
-    f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
-    od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
-    result   = optimize( od, ξ, LBFGS() ) 
-    ξ        = result.minimizer 
-
+    ξ = opt_ξ( aug_L, 0*ξ, σ_f, l, σ_n, z, u ) 
     println( "ξ = ", ξ )
+
 
 ## ============================================ ##
 ## ============================================ ##
@@ -171,14 +167,9 @@ dx_noise  = 1.0
         println( "hp = ", [σ_f, l, σ_n] ) 
 
         # ----------------------- #
-        # ξ-update (optimization) 
+        # ξ-update 
 
-        # optimization 
-        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
-        od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
-        result   = optimize( od, ξ, LBFGS() ) 
-        ξ        = result.minimizer 
-
+        ξ = opt_ξ( aug_L, 0*ξ, σ_f, l, σ_n, z, u ) 
         println( "ξ = ", ξ )
         
         # ----------------------- #

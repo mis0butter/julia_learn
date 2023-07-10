@@ -19,6 +19,11 @@ include("utils.jl")
 include("init_params.jl")
 include("SINDy_test.jl")
 
+# ----------------------- #
+# redo fns 
+
+include("opt_fns.jl") 
+
 
 ## ============================================ ## 
 # SINDy + GP objective function 
