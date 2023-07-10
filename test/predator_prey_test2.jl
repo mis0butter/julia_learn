@@ -20,7 +20,7 @@ using Dates
 
 #  
 fn             = predator_prey 
-plot_option    = 1 
+plot_option    = 0 
 savefig_option = 0 
 fd_method      = 2 # 1 = forward, 2 = central, 3 = backward 
 
@@ -31,20 +31,28 @@ x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method)
 Ξ_true = SINDy_test( x, dx_true, 0.1 ) 
 Ξ_true = Ξ_true[:,1] 
 
-dx_noise_vec = 0 : 0.1 : 0.2   
+# dx_noise_vec = collect(0 : 0.1 : 1.0)
+dx_noise_vec = 0.1 
 dx_noise  = 1.0  
 λ_gpsindy = 0.02 
+# dx_noise_vec = [] 
+# dx_noise_vec_iter = 0 : 0.1 : 1.0 
+# for i in dx_noise_vec_iter 
+#     for j = 1:10  
+#         push!(dx_noise_vec, i)
+#     end 
+# end 
 
 Ξ_sindy_vec         = [] 
 Ξ_sindy_err_vec     = [] 
 z_gpsindy_vec       = [] 
 z_gpsindy_err_vec   = [] 
 hist_gpsindy_vec    = [] 
-# for dx_noise = dx_noise_vec 
-for λ_gpsindy = 0 : 0.02 : 0.1 
+for dx_noise = dx_noise_vec 
+# for λ_gpsindy = 0 : 0.02 : 0.1 
 
     println("dx_noise = ", dx_noise)
-    println("λ_gpsindy = ", λ_gpsindy)
+    # println("λ_gpsindy = ", λ_gpsindy)
 
     Ξ_sindy, Ξ_sindy_err, z_gpsindy, z_gpsindy_err, hist_gpsindy = monte_carlo_gpsindy( x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy )
 
@@ -64,19 +72,22 @@ end
 z_gpsindy_err_vec = mapreduce(permutedims, vcat, z_gpsindy_err_vec)
 
 
+## ============================================ ##
 # ----------------------- #
 using Plots 
 
-dx_noise_vec = 0 : 0.02 : 0.1 
+# dx_noise_vec = 0 : 0.02 : 0.1 
 
 p_Ξ = [] 
 for i = 1:2
-    p_ξ = plot( dx_noise_vec, Ξ_sindy_err_vec[:,i], label = "SINDy" )
-    plot!( p_ξ, dx_noise_vec, z_gpsindy_err_vec[:,i], ls = :dash, label = "GPSINDy" )
-    plot!( p_ξ, 
+    p_ξ = scatter( dx_noise_vec, Ξ_sindy_err_vec[:,i], shape = :circle, c = :blue, label = "SINDy" )
+    boxplot!( p_ξ, dx_noise_vec, Ξ_sindy_err_vec[:,i], bar_width = 0.05, lw = 1, fillalpha = 0.2, c = :blue, linealpha = 0.5 )
+    scatter!( p_ξ, dx_noise_vec, z_gpsindy_err_vec[:,i], shape = :+, c = :red, label = "GPSINDy" )
+    boxplot!( p_ξ, dx_noise_vec, z_gpsindy_err_vec[:,i], bar_width = 0.03, lw = 1, fillalpha = 0.2, c = :red, linealpha = 0.5 ) 
+    scatter!( p_ξ, 
         legend = false, 
         xlabel = "dx_noise", 
-        title  = string( "ξ", i, "_true - ξ", i, "_discovered" ), 
+        title  = string( "|ξ", i, "_true - ξ", i, "_discovered|" ), 
         ) 
     push!(p_Ξ, p_ξ)
 end 
@@ -88,17 +99,19 @@ plot!(p,
     )
 push!( p_Ξ, p ) 
 p_Ξ = plot(p_Ξ ... , 
-    layout = grid( 1, 3, widths=[0.45, 0.45, 0.45] ) , 
+    layout = grid( 1, 3, 
+    widths = [0.45, 0.45, 0.45] ) , 
     size   = [ 800 300 ], 
     ) 
 display(p_Ξ)
 
-# t_str = string( "dx_true + dx_noise*randn \n dx_noise = ", minimum( dx_noise_vec ), " --> ", maximum( dx_noise_vec ) )
-# p_noise = plot( t, dx_true[:,1], title = t_str, xlabel = "Time (s)" )
-# for dx_noise = dx_noise_vec
-#     plot!(p_noise, t, dx_true[:,1] .+ dx_noise*randn( size(dx_true, 1), 1 ) ) 
-# end 
-# display(p_noise)
+t_str = string( "dx_true + dx_noise*randn \n dx_noise = ", minimum( dx_noise_vec ), " --> ", maximum( dx_noise_vec ) )
+p_noise = plot( t, dx_true[:,1], title = t_str, xlabel = "Time (s)" )
+for dx_noise = dx_noise_vec
+    plot!(p_noise, t, dx_true[:,1] .+ dx_noise*randn( size(dx_true, 1), 1 ) ) 
+end 
+display(p_noise) 
+
 
 ## ============================================ ##
 
@@ -121,6 +134,7 @@ p_objvals = plot( dx_noise_vec, obj_vals_fin[:,i], label = "objval" )
     plot!( dx_noise_vec, f_vals_fin[:,i], ls = :dash, label = "fval" )
     plot!( dx_noise_vec, g_vals_fin[:,i], ls = :dot, label = "gval" )
     plot!( legend = true, title = "Final Fn Val for each iter", xlabel = "dx_noise" )
+display(p_objvals) 
 
 ## ============================================ ##
 # save data  
@@ -134,8 +148,9 @@ if !ispath(dir_name)
     mkdir(dir_name)
 end 
 
-savefig(p_Ξ, string(dir_name, "\\p_Ξ.pdf") )
-savefig(p_noise, string( dir_name, "\\p_noise_3nonlin.pdf" )) 
+savefig( p_Ξ, string(dir_name, "\\p_Ξ.pdf") )
+savefig( p_noise, string( dir_name, "\\p_noise_3nonlin.pdf" ) ) 
+savefig( p_objvals, string( dir_name, "\\p_objvals.pdf" ) )
 
 # save 
 jldsave(string( dir_name, "\\batch_results_3nonlin.jld2" ); t, dx_noise_vec, dx_true, Ξ_sindy_vec, Ξ_sindy_err_vec, z_gpsindy_vec, z_gpsindy_err_vec, hist_gpsindy_vec)

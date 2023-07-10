@@ -27,29 +27,21 @@ p    = 1.0
 # generate training data 
 N = 80 
 x_train  = sort( 2π*rand(N) ) 
-# y_train  = sin.(3*x_train) .+ 0.2*randn(N) 
 
 # training data covariance 
 Σ_train  = k_SE( σ_f0, l_0, x_train, x_train )
 # Σ_train  = k_periodic( σ_f0, l_0, p, x_train, x_train )
 Σ_train += σ_n0^2 * I 
-
 y_train = gauss_sample(0*x_train, Σ_train ) 
 
 # test data points (PRIOR) 
 x_test  = collect( 0 : 0.01 : 2π )
-Σ_test  = k_SE( σ_f0, l_0, x_test, x_test )
-# Σ_test  = k_periodic( σ_f0, l_0, p, x_test, x_test )
-# Σ_test += σ_n0^2 * I 
 
-plot(y_train) 
-
-
-## ============================================ ##
+# ----------------------- #
 # posterior distribution ROUND 1 (NO hyperparameters tuned yet)
 # (based on training data) 
 
-Kss = k_SE( σ_f0, l_0, x_test, x_test )
+Kss = Σ_test = k_SE( σ_f0, l_0, x_test, x_test )
 # Kss = k_periodic( σ_f0, l_0, p, x_test, x_test )
 
 # fit data 
@@ -62,7 +54,6 @@ cov_post  = diag(Σ_post );  std_post  = sqrt.(cov_post);
 # plot fitted / predict / post data 
 p_prior = plot( 
     x_test, x_test*0 , 
-    ylim = [-3.3,3.3] , 
     rib = 3*std_prior , 
     linealpha = 0, 
     fa = 0.15, 
@@ -92,7 +83,6 @@ plot!(p_prior, x_test, f, c = :green, lw = 3 )
 # scatter plot of training data 
 p_post = scatter(
     x_train, y_train, 
-    ylim = [-3.3,3.3], 
     c = :black, 
     markersize = 5, 
     label = "training points", 
@@ -117,12 +107,6 @@ plot(  p ... ,
     size   = [ 800 300 ]
 )
 
-## ============================================ ##
-# sample from trained GP 
-
-p_train = p_post 
-test = gauss_sample( μ_post, Σ_post + σ_n0^2*I)
-plot!(p_train, x_test, test, ls = :dash)
 
 ## ============================================ ## 
 # solve for hyperparameters
@@ -131,7 +115,6 @@ println("samples = ", N)
 
 # test reassigning function 
 log_p_hp(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, 0*y_train ) 
-# log_p_hp(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_test, test, μ_post ) 
 log_p_hp(( σ_f, l, σ_n )) 
 
 σ_0   = [σ_f0, l_0, σ_n0] * 2.0 

@@ -1,5 +1,16 @@
 module GaussianSINDy
 
+struct Hist 
+    objval 
+    fval 
+    gval 
+    hp 
+    r_norm 
+    s_norm 
+    eps_pri 
+    eps_dual 
+end 
+
 include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
@@ -47,7 +58,7 @@ end
 ## ============================================ ##
 
 export sindy_gp_admm 
-function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
+function sindy_gp_admm( t, x, dx_fd, λ, hist_hp_opt )
 
     # ----------------------- #
     # SINDy 
@@ -89,7 +100,8 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
         # admm!!! 
 
         n = length(ξ)
-        x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_hp_opt( f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
+        # x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_hp_opt( t, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
+        x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_gp_opt( t, dx, Θx, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
 
         # ----------------------- #
         # output solution 
@@ -102,7 +114,6 @@ function sindy_gp_admm( x, dx_fd, λ, hist_hp_opt )
 
 end 
 
-end 
 
 ## ============================================ ##
 
@@ -140,7 +151,7 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy)
 
     # finite difference 
     hist_fd = Hist( [], [], [], [], [], [], [], [] ) 
-    @time z_gpsindy, hist_fd = sindy_gp_admm( x_train, dx_fd_train, λ_gpsindy, hist_fd ) 
+    @time z_gpsindy, hist_fd = sindy_gp_admm( t, x_train, dx_fd_train, λ_gpsindy, hist_fd ) 
     # display(z_gpsindy) 
 
     Ξ_sindy_err   = [ norm( Ξ_true[:,1] - Ξ_sindy[:,1] ), norm( Ξ_true[:,2] - Ξ_sindy[:,2] )  ] 
@@ -151,3 +162,6 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy)
 
 end 
 
+## ============================================ ##
+
+end 
