@@ -4,21 +4,21 @@ using GaussianProcesses
 ## ============================================ ##
 
 export opt_ξ
-function opt_ξ( aug_L, ξ, σ_f, l, σ_n, z, u )
+function opt_ξ( aug_L, ξ, z, u, hp )
 # ----------------------- #
 # PURPOSE: 
 #       Optimize ξ for augmented Lagrangian obj fn 
 # INPUTS: 
 #       aug_L   : augmented Lagrangian for SINDy-GP-ADMM 
 #       ξ       : input dynamics coefficients (ADMM primary variable x)
-#       σ_f     : signal noise hyperparameter 
-#       l       : length scale hyperparameter 
-#       σ_n     : observation noise hyperparameter 
-#       z       : : input dynamics coefficients (ADMM primary variable z)
+#       z       : input dynamics coefficients (ADMM primary variable z)
 #       u       : dual variable 
+#       hp      : log-scaled hyperparameters 
 # OUTPUTS: 
 #       ξ       : output dynamics coefficient (ADMM primary variable x) 
 # ----------------------- #
+
+    σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
 
     # optimization 
     f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
@@ -86,4 +86,41 @@ function shrinkage(x, κ)
     end 
 
     return z 
+end 
+
+## ============================================ ##
+
+function admm_lasso(t, dx, Θx, ξ, z, u, aug_L) 
+# PURPOSE: 
+
+
+    # ----------------------- #
+    # hp-update (optimization) 
+
+    hp = opt_hp(t, dx, Θx, ξ) 
+    σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
+
+    println( "hp = ", hp ) 
+
+    # ----------------------- #
+    # ξ-update 
+
+    ξ = opt_ξ( aug_L, 0*ξ, σ_f, l, σ_n, z, u ) 
+    println( "ξ = ", ξ )
+    
+    # ----------------------- #
+    # z-update (soft thresholding) 
+
+    λ = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
+    println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )
+    println( "λ = ", λ ) 
+
+    z_old = z 
+    ξ_hat = α*ξ + (1 .- α)*z_old 
+    z     = shrinkage( ξ_hat + u, λ/ρ )
+
+    # u-update 
+    u += (ξ_hat - z) 
+
+    return ξ, z, u 
 end 
