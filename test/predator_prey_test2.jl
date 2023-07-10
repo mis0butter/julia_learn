@@ -1,14 +1,4 @@
 
-struct Hist 
-    objval 
-    fval 
-    gval 
-    hp 
-    r_norm 
-    s_norm 
-    eps_pri 
-    eps_dual 
-end 
 
 using GaussianSINDy
 using LinearAlgebra 
@@ -42,6 +32,8 @@ dx_noise  = 1.0
 #         push!(dx_noise_vec, i)
 #     end 
 # end 
+
+## ============================================ ##
 
 Ξ_sindy_vec         = [] 
 Ξ_sindy_err_vec     = [] 

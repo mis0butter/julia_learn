@@ -32,6 +32,11 @@ function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
     Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
     # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
     # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
+    
+    # while det(Ky) == 0 
+    #     println( "det(Ky) = 0" )
+    #     Ky += σ_n * I 
+    # end 
 
     term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
     
@@ -101,6 +106,8 @@ function sindy_gp_admm( t, x, dx_fd, λ, hist_hp_opt )
         # admm!!! 
 
         n = length(ξ)
+        println("t size = ", size(t))
+        println( "Θx size = ", size(Θx) )
         # x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_hp_opt( t, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
         x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_gp_opt( t, dx, Θx, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
 
@@ -152,7 +159,10 @@ function monte_carlo_gpsindy(x0, dt, t, x, dx_true, dx_fd, dx_noise, λ_gpsindy)
 
     # finite difference 
     hist_fd = Hist( [], [], [], [], [], [], [], [] ) 
-    @time z_gpsindy, hist_fd = sindy_gp_admm( t, x_train, dx_fd_train, λ_gpsindy, hist_fd ) 
+
+    println( "t_train size = ", size(t_train) )
+    println( "dx_fd_train size = ", size(dx_fd_train) )
+    @time z_gpsindy, hist_fd = sindy_gp_admm( t_train, x_train, dx_fd_train, λ_gpsindy, hist_fd ) 
     # display(z_gpsindy) 
 
     Ξ_sindy_err   = [ norm( Ξ_true[:,1] - Ξ_sindy[:,1] ), norm( Ξ_true[:,2] - Ξ_sindy[:,2] )  ] 

@@ -95,6 +95,7 @@ dx_noise  = 1.0
     # loop with state j
 
     j = 1 
+    println( "j = ", j )
     # for j = 1 : n_vars 
 
         # initial loss function vars 
@@ -112,7 +113,7 @@ dx_noise  = 1.0
 
         n = length(ξ)
         
-## ============================================ ##
+# ----------------------- #
 # LASSO ADMM GP OPT 
 
 
@@ -139,15 +140,17 @@ dx_noise  = 1.0
     # λ = log(f_hp( ξ, log(σ_f), log(l), log(σ_n) )) 
     
     # begin iterations 
-    k = 1 
+    # k = 1 
     # for k = 1 : max_iter 
+
+## ============================================ ##
 
         # increment counter 
         iter += 1 
+        println( "iter = ", iter )
 
-
-## ============================================ ##
-        # x-update (optimization) 
+        # ----------------------- # 
+        # ξ-update (optimization) 
 
         # optimization 
         f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
@@ -155,17 +158,19 @@ dx_noise  = 1.0
         result   = optimize( od, ξ, LBFGS() ) 
         ξ        = result.minimizer 
 
+        println( "ξ = ", ξ )
 
-## ============================================ ##
+        # ----------------------- #
         # hp-update (optimization) 
 
         # mean and covariance 
         mZero = MeanZero() ;            # zero mean function 
-        kern  = SE( 0.0 , 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
+        kern  = SE( 0.0, 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
         log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
         # fit GP 
         y_train = dx - Θx*ξ   
+        # y_train = Θx*ξ
         gp  = GP(t, y_train, mZero, kern, log_noise) 
 
         result = optimize!(gp) 
@@ -173,32 +178,36 @@ dx_noise  = 1.0
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
 
-        display( [σ_f, l, σ_n] )
+        println( "hp = ", [σ_f, l, σ_n] )
 
 
-## ============================================ ##
-        # x-update (optimization) 
+        # ----------------------- #
+        # ξ-update (optimization) 
 
         # optimization 
         f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
         od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
         result   = optimize( od, ξ, LBFGS() ) 
         ξ        = result.minimizer 
+
+        println( "ξ = ", ξ )
         
-## ============================================ ##
+        # ----------------------- #
         # z-update (soft thresholding) 
     
         # λ = f_hp( ξ, σ_f, l, σ_n )
         # f_hp( ξ, σ_f, l, σ_n )
 
-        λ = 0.1 
+        # λ = 0.1 
 
         z_old = z 
         ξ_hat = α*ξ + (1 .- α)*z_old 
 
         z = shrinkage( ξ_hat + u, λ/ρ )
 
-## ============================================ ##
+        println( "z = ", z )
+
+        # ----------------------- #
         # diagnostics + termination checks 
 
         # ----------------------- #
@@ -217,7 +226,7 @@ dx_noise  = 1.0
         push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
         push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
 
-        if hist.r_norm[k] < hist.eps_pri[k] && hist.s_norm[k] < hist.eps_dual[k] 
+        if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
             println("converged!")  
         end 
 

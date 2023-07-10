@@ -180,7 +180,7 @@ function lasso_admm_gp_opt( t, dx, Θx, f, g, n, λ, ρ, α, hist )
     iter = 0 
 
     # update λ
-    λ = log(f( ξ, σ_f, l, σ_n )) 
+    # λ = log(f( ξ, σ_f, l, σ_n )) 
     
     # begin iterations 
     for k = 1 : max_iter 
@@ -192,7 +192,7 @@ function lasso_admm_gp_opt( t, dx, Θx, f, g, n, λ, ρ, α, hist )
         # ξ-update (optimization) 
 
         # optimization 
-        f_opt(ξ) = aug_L(ξ, σ_f, l, σ_n, z, u) 
+        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
         od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
         result   = optimize( od, ξ, LBFGS() ) 
         ξ        = result.minimizer 
@@ -202,23 +202,35 @@ function lasso_admm_gp_opt( t, dx, Θx, f, g, n, λ, ρ, α, hist )
 
         # mean and covariance 
         mZero = MeanZero() ;            # zero mean function 
-        kern  = SE( σ_f , l ) ;          # squared eponential kernel (hyperparams on log scale) 
-        log_noise = σ_n ;              # (optional) log std dev of obs noise 
+        kern  = SE( 1.0 , 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
+        log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
         # fit GP 
         y_train = dx - Θx*ξ   
-        gp  = GP(t, y_train, mZero, kern, log_noise) 
+        println( "t size = ", size(t) )
+        println( "Θx*ξ size = ", size(Θx*ξ) )
+        println( "y_train size = ", size(y_train) )
+        gp  = GP(vec(t), y_train, mZero, kern, log_noise) 
 
         result = optimize!(gp) 
         σ_f = result.minimizer[1]
         l   = result.minimizer[2] 
         σ_n = result.minimizer[3] 
+
+        # ----------------------- #
+        # ξ-update (optimization) 
+
+        # optimization 
+        f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
+        od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
+        result   = optimize( od, ξ, LBFGS() ) 
+        ξ        = result.minimizer 
         
         # ----------------------- #
         # z-update (soft thresholding) 
     
         # println( "f = ", f( ξ, σ_f, l, σ_n ) )
-        λ = log( abs(f( ξ, σ_f, l, σ_n )) ) 
+        # λ = log( abs(f( ξ, σ_f, l, σ_n )) ) 
 
         z_old = z 
         ξ_hat = α*ξ + (1 .- α)*z_old 
