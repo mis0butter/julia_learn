@@ -140,6 +140,7 @@ dx_noise  = 1.0
 
 ## ============================================ ##
 ## ============================================ ##
+admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, true )
 ## ============================================ ##
 
         # increment counter 
@@ -154,7 +155,6 @@ dx_noise  = 1.0
 
         println( "hp = ", hp ) 
 
-## ============================================ ##
         # ----------------------- #
         # ξ-update 
 
@@ -164,8 +164,8 @@ dx_noise  = 1.0
         # ----------------------- #
         # z-update (soft thresholding) 
     
-        λ = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
-        println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )
+        # λ = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
+        # println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )
         println( "λ = ", λ )
         # f_hp( ξ, σ_f, l, σ_n )
 

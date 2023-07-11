@@ -91,7 +91,7 @@ end
 ## ============================================ ##
 
 export admm_lasso 
-function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, print_vars = false) 
+function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false) 
 # ----------------------- #
 # PURPOSE: 
 #       Run one iteration of ADMM LASSO 
@@ -103,6 +103,7 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, print_vars = false)
 #       z           : input dynamics coefficients (ADMM primary variable z)
 #       u           : input dual variable 
 #       aug_L       : augmented Lagrangian for SINDy-GP-ADMM 
+#       λ           : L1 norm threshold  
 #       print_vars  : option to display ξ, z, u, hp 
 # OUTPUTS: 
 #       ξ           : output dynamics coefficients (ADMM primary variable x)
@@ -116,11 +117,11 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, print_vars = false)
     σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
 
     # ξ-update 
-    ξ = opt_ξ( aug_L, ξ, σ_f, l, σ_n, z, u ) 
+    ξ = opt_ξ( aug_L, ξ, z, u, hp ) 
     
     # z-update (soft thresholding) 
-    λ     = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
     z_old = z 
+    α     = 1.0 ; ρ = 1.0           # α = relaxation parameter, ρ ... idk. See Boyd ADMM paper 
     ξ_hat = α*ξ + (1 .- α)*z_old 
     z     = shrinkage( ξ_hat + u, λ/ρ ) 
 
@@ -133,8 +134,6 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, print_vars = false)
         println( "ξ = ", ξ )
         println( "z = ", z )
         println( "u = ", u )
-        println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )        
-        println( "λ = ", λ ) 
     end 
 
     return ξ, z, u, hp 
