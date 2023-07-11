@@ -25,47 +25,6 @@ include("SINDy_test.jl")
 include("opt_fns.jl") 
 
 
-## ============================================ ## 
-# SINDy + GP objective function 
-
-using LinearAlgebra
-
-export f_obj 
-function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
-
-    # training kernel function 
-    Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
-    # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
-    # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
-
-    while det(Ky) == 0 
-        println( "det(Ky) = 0" )
-        Ky += σ_n * I 
-    end 
-
-    term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
-    
-    # # ----------------------- #
-    # # LU factorization 
-
-    # # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
-    # A = Ky 
-    # b = ( dx - Θx*ξ ) 
-    # C = cholesky(A) ; L = C.L ; U = C.U 
-
-    # y = L \ b 
-    # x = U \ y 
-    
-    # term  = 1/2*( dx - Θx*ξ )'*x
-
-    # ----------------------- #
-    term += 1/2*log( tr(Ky) ) 
-
-    return term 
-
-end 
-
-
 ## ============================================ ##
 
 export sindy_gp_admm 

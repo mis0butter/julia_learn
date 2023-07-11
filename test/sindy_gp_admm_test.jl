@@ -40,25 +40,6 @@ dx_noise  = 1.0
 
     dx_fd = dx_true + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
 
-# ----------------------- #
-# SINDy alone 
-
-    λ = 0.2 
-    n_vars     = size(x, 2) 
-    poly_order = n_vars 
-
-    Ξ_true  = SINDy_test( x, dx_true, λ ) 
-    Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
-
-# ----------------------- #
-# SINDy + GP + ADMM 
-
-    # λ = 0.02 
-
-    # finite difference 
-    hist = Hist( [], [], [], [], [], [], [], [] ) 
-
-    
 ## ============================================ ##
 ## ============================================ ##
 ## ============================================ ##
@@ -66,130 +47,88 @@ dx_noise  = 1.0
 
     # ----------------------- #
     # SINDy 
-
-    n_vars = size(x, 2) 
+    
+    λ          = 0.2 
+    n_vars     = size(x, 2) 
     poly_order = n_vars 
 
-    # construct data library 
+    Ξ_true  = SINDy_test( x, dx_true, λ ) 
+    Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
+
+    # SINDy  
     Θx = pool_data_test(x, n_vars, poly_order) 
+    Ξ  = sparsify_dynamics_test(Θx, dx_fd, λ, n_vars) 
 
-    # first cut - SINDy 
-    Ξ = sparsify_dynamics_test(Θx, dx_fd, λ, n_vars) 
-
-    # ----------------------- #
-    # objective function 
-
-    z_soln = 0 * Ξ 
-
-    # ADMM stuff 
-    ρ = 1.0 
-    α = 1.0 
+    n = size(Ξ, 1)
 
     # ----------------------- #
     # loop with state j
 
+    hist_nvars = [] 
+
     j = 1 
     println( "j = ", j )
-    # for j = 1 : n_vars 
+    # for j = 1 : n_vars
+    
+        hist = Hist( [], [], [], [], [], [], [], [] )  
 
         # initial loss function vars 
-        ξ  = 0 * Ξ[:,j] 
         dx = dx_fd[:,j] 
 
         # assign for f_hp_opt 
-        f_hp(ξ, σ_f, l, σ_n) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+        f_hp(ξ, (σ_f, l, σ_n)) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
 
         # l1 norm 
         g(z) = λ * sum(abs.(z)) 
 
-        # ----------------------- #
-        # admm!!! 
+        # augmented Lagrangian (scaled form) 
+        ρ = 1.0 
+        aug_L(ξ, hp, z, u) = f_hp(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2         
 
-        n = length(ξ)
+        # ----------------------- # 
+        # LASSO ADMM GP OPT 
+
+        # define constants 
+        max_iter = 1000  
+        abstol   = 1e-2 
+        reltol   = 1e-2           # save matrix-vector multiply 
+
+        # ADMM solver 
+        ξ = z = u = zeros(n) 
+
+        # counter 
+        iter = 0 
         
-# ----------------------- #
-# LASSO ADMM GP OPT 
+        # ----------------------- # 
+        # ξ-update (optimization) 
 
-
-    # define constants 
-    max_iter = 1000  
-    abstol   = 1e-2 
-    reltol   = 1e-2           # save matrix-vector multiply 
-
-    # ADMM solver 
-    ξ = z = u = zeros(n) 
-
-    # initial hyperparameters 
-    σ_f0 = log(1.0) ; σ_f = σ_f0  
-    l_0  = log(1.0) ; l   = l_0   
-    σ_n0 = log(0.1) ; σ_n = σ_n0 
-
-    # augmented Lagrangian (scaled form) 
-    aug_L(ξ, σ_f, l, σ_n, z, u) = f_hp(ξ, σ_f, l, σ_n) + g(z) + ρ/2 .* norm( ξ - z + u )^2 
-
-    # counter 
-    iter = 0 
-    
-    # ----------------------- # 
-    # ξ-update (optimization) 
-
-    hp = [ σ_f, l, σ_n ]
-    ξ = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
-    println( "ξ = ", ξ )
-
+        hp = log.( [ 1.0, 1.0, 0.1 ] )
+        ξ = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
+        println( "ξ = ", ξ ) 
 
 ## ============================================ ##
-## ============================================ ##
-admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, true )
-## ============================================ ##
+
+    # for k = 1:max_iter 
 
         # increment counter 
         iter += 1 
         println( "iter = ", iter )
 
-        # ----------------------- #
-        # hp-update (optimization) 
-
-        hp = opt_hp(t, dx, Θx, ξ) 
-        σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
-
-        println( "hp = ", hp ) 
-
-        # ----------------------- #
-        # ξ-update 
-
-        ξ = opt_ξ( aug_L, ξ, z, u, hp )
-        println( "ξ = ", ξ )
-        
-        # ----------------------- #
-        # z-update (soft thresholding) 
-    
-        # λ = log(f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ))/10 
-        # println( "f_obj = ", f_hp( ξ, exp(σ_f), exp(l), exp(σ_n) ) )
-        println( "λ = ", λ )
-        # f_hp( ξ, σ_f, l, σ_n )
-
-        # λ = 0.1 
-
         z_old = z 
-        ξ_hat = α*ξ + (1 .- α)*z_old 
-        z     = shrinkage( ξ_hat + u, λ/ρ )
 
+        # ADMM LASSO! 
+        ξ, z, u, hp = admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, true )     
+        σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3]    
+
+        println( "ξ = ", ξ )
         println( "z = ", z )
+        println( "hp = ", hp )
 
-        # ----------------------- #
-        # diagnostics + termination checks 
-
-        # ----------------------- #
-        # u-update 
-
-        u += (ξ_hat - z) 
-
-        p = f_hp(ξ, σ_f, l, σ_n) + g(z)   
+        p = f_hp(ξ, hp) + g(z)   
         push!( hist.objval, p )
-        push!( hist.fval, f_hp( ξ, σ_f, l, σ_n ) )
-        push!( hist.gval, g(z) )
-        push!( hist.hp, [ σ_f, l, σ_n ] )
+        push!( hist.fval, f_hp( ξ, hp ) )
+        push!( hist.gval, g(z) ) 
+        push!( hist.hp, hp )
         push!( hist.r_norm, norm(ξ - z) )
         push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
         push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
@@ -199,6 +138,7 @@ admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, true )
             println("converged!")  
             println( "gpsindy err = ", norm( Ξ_true[:,j] - z ) ) 
             println( "sindy err   = ", norm( Ξ_true[:,j] - Ξ_sindy[:,j] ) ) 
+            push!(hist_nvars, hist)
         end 
 
     # end 

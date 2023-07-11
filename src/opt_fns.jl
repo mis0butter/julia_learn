@@ -1,5 +1,73 @@
 using Optim 
 using GaussianProcesses
+using LinearAlgebra
+
+## ============================================ ##
+
+export LU_inv 
+function LU_inv( A, b )
+
+    # LU factorization 
+
+    C = cholesky(A) ; L = C.L ; U = C.U 
+
+    y = L \ b 
+    x = U \ y 
+    
+    return x 
+end 
+
+## ============================================ ## 
+
+export f_obj 
+function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+
+    # training kernel function 
+    Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
+    # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
+    # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
+
+    while det(Ky) == 0 
+        println( "det(Ky) = 0" )
+        Ky += σ_n * I 
+    end 
+    
+    # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
+    A = Ky 
+    b = ( dx - Θx*ξ ) 
+    x = LU_inv(A, b) 
+    # x = A \ b 
+    term  = 1/2*( dx - Θx*ξ )'*x
+    # term  = 1/2*( dx - Θx*ξ )' * A \ b 
+    # term  = 1/2*( dx - Θx*ξ )' * Ky \ ( dx - Θx*ξ )
+
+    # term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+
+    # ----------------------- #
+    term += 1/2*log( tr(Ky) ) 
+
+    return term 
+
+end 
+
+
+## ============================================ ##
+
+export obj_fns 
+function obj_fns( dx, Θx, λ )
+
+    # assign for f_hp_opt 
+    f_hp(ξ, (σ_f, l, σ_n)) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+
+    # l1 norm 
+    g(z) = λ * sum(abs.(z)) 
+
+    # augmented Lagrangian (scaled form) 
+    ρ = 1.0 
+    aug_L(ξ, hp, z, u) = f_hp(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2      
+
+    return f_hp, g, aug_L 
+end 
 
 ## ============================================ ##
 
@@ -18,10 +86,8 @@ function opt_ξ( aug_L, ξ, z, u, hp )
 #       ξ       : output dynamics coefficient (ADMM primary variable x) 
 # ----------------------- #
 
-    σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
-
     # optimization 
-    f_opt(ξ) = aug_L(ξ, exp(σ_f), exp(l), exp(σ_n), z, u) 
+    f_opt(ξ) = aug_L(ξ, exp.(hp), z, u) 
     od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
     result   = optimize( od, ξ, LBFGS() ) 
     ξ        = result.minimizer 
@@ -114,7 +180,6 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false)
 
     # hp-update (optimization) 
     hp  = opt_hp(t, dx, Θx, ξ) 
-    σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3] 
 
     # ξ-update 
     ξ = opt_ξ( aug_L, ξ, z, u, hp ) 
@@ -127,14 +192,6 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false)
 
     # u-update 
     u += (ξ_hat - z) 
-
-    # print states 
-    if print_vars 
-        println( "hp = ", hp ) 
-        println( "ξ = ", ξ )
-        println( "z = ", z )
-        println( "u = ", u )
-    end 
-
+    
     return ξ, z, u, hp 
 end 
