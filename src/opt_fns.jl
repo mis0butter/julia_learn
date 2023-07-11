@@ -244,7 +244,7 @@ function gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )
 #       abstol  : abs tol 
 #       reltol  : rel tol 
 # OUTPUTS: 
-#       z       : sparse dynamics coefficient (hopefully) 
+#       Ξ       : sparse dynamics coefficient (hopefully) 
 #       hist    : diagnostics struct 
 # ----------------------- # 
 
@@ -258,7 +258,6 @@ for j = 1 : n_vars
 
     dx = dx_fd[:,j] 
 
-    # ----------------------- #
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
     f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
@@ -275,13 +274,12 @@ for j = 1 : n_vars
 
         # end condition 
         if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
-            println("converged!")  
             break 
         end 
 
     end 
 
-    # ----------------------- #
+    # push diagnostics 
     push!( hist_nvars, hist ) 
     Ξ[:,j] = z 
     
@@ -290,3 +288,49 @@ for j = 1 : n_vars
     return Ξ, hist_nvars  
 end 
 
+## ============================================ ##
+
+function monte_carlo_gpsindy( noise_vec )
+    
+    # choose ODE, plot states --> measurements 
+    fn = predator_prey 
+    x0, dt, t, x, dx_true, dx_fd = ode_states(fn, 0, 2) 
+    
+    # SINDy 
+    λ = 0.1 ; n_vars = size(x, 2) ; poly_order = n_vars 
+    Ξ_true  = SINDy_test( x, dx_true, λ ) 
+    
+    # function library   
+    Θx = pool_data_test(x, n_vars, poly_order) 
+
+    # constants 
+    abstol = 1e-2 ; reltol = 1e-2   
+    α      = 1.0  ; ρ = 1.0     
+
+    sindy_err_vec   = [] 
+    gpsindy_err_vec = [] 
+    for dx_noise = noise_vec 
+    
+        # use this for derivative data noise 
+        println( "dx_noise = ", dx_noise )
+        dx_fd = dx_true + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
+    
+        # SINDy 
+        Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
+    
+        # GPSINDy 
+        Ξ_gpsindy, hist_nvars = gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )  
+    
+        sindy_err   = [] 
+        gpsindy_err = [] 
+        for i = 1:n_vars 
+            push!( sindy_err,   norm( Ξ_true[:,i] - Ξ_sindy[:,i] ) )
+            push!( gpsindy_err, norm( Ξ_true[:,i] - Ξ_gpsindy[:,i] ) )
+        end
+        push!( sindy_err_vec,   sindy_err ) 
+        push!( gpsindy_err_vec, gpsindy_err ) 
+    
+    end 
+
+    return sindy_err_vec, gpsindy_err_vec
+end 

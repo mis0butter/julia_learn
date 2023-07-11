@@ -17,25 +17,30 @@ fd_method      = 2 # 1 = forward, 2 = central, 3 = backward
 x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method) 
 
 # SINDy 
-λ = 0.2 ; n_vars = size(x, 2) ; poly_order = n_vars 
+λ = 0.1 ; n_vars = size(x, 2) ; poly_order = n_vars 
 Ξ_true  = SINDy_test( x, dx_true, λ ) 
-Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
 
 # function library   
 Θx = pool_data_test(x, n_vars, poly_order) 
+
+dx_noise_vec = 0 : 0.1 : 1.0 
 
 ## ============================================ ##
 # GPSINDy 
 
 sindy_err_vec   = [] 
 gpsindy_err_vec = [] 
-for dx_noise = 0 : 0.1 : 1.0 
+for dx_noise = dx_noise_vec 
 
     # use this for derivative data noise 
-    dx_noise  = 1.0 
+    dx_noise  = 1.0 ; println( "dx_noise = ", dx_noise )
     dx_fd = dx_true + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
 
-    λ = 0.1 ; α = 1.0 ; ρ = 1.0 
+    # SINDy 
+    Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
+
+    # GPSINDy 
+    α = 1.0 ; ρ = 1.0 
     abstol = 1e-2 ; reltol = 1e-2           
     Ξ_gpsindy, hist_nvars = gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )  
 
@@ -51,9 +56,6 @@ for dx_noise = 0 : 0.1 : 1.0
 end 
 
 ## ============================================ ##
-# back to MONTE CARLO GP SINDy
 
-    Ξ_sindy_err   = [ norm( Ξ_true[:,1] - Ξ_sindy[:,1] ), norm( Ξ_true[:,2] - Ξ_sindy[:,2] )  ] 
-    Ξ_gpsindy_err = [ norm( Ξ_true[:,1] - Ξ_gpsindy[:,1] ), norm( Ξ_true[:,2] - Ξ_gpsindy[:,2] )  ] 
-
-    
+noise_vec = 0 : 0.1 : 1.0 
+sindy_err_vec, gpsindy_err_vec = monte_carlo_gpsindy(noise_vec) 
