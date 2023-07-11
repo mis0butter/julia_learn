@@ -133,7 +133,8 @@ dx_noise  = 1.0
     # ----------------------- # 
     # ξ-update (optimization) 
 
-    ξ = opt_ξ( aug_L, 0*ξ, σ_f, l, σ_n, z, u ) 
+    hp = [ σ_f, l, σ_n ]
+    ξ = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
     println( "ξ = ", ξ )
 
 
