@@ -75,15 +75,8 @@ dx_noise  = 1.0
         # initial loss function vars 
         dx = dx_fd[:,j] 
 
-        # assign for f_hp_opt 
-        f_hp(ξ, (σ_f, l, σ_n)) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
-
-        # l1 norm 
-        g(z) = λ * sum(abs.(z)) 
-
-        # augmented Lagrangian (scaled form) 
-        ρ = 1.0 
-        aug_L(ξ, hp, z, u) = f_hp(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2         
+        α = 1.0 ; ρ = 1.0 
+        f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
 
         # ----------------------- # 
         # LASSO ADMM GP OPT 
@@ -103,7 +96,7 @@ dx_noise  = 1.0
         # ξ-update (optimization) 
 
         hp = log.( [ 1.0, 1.0, 0.1 ] )
-        ξ = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
+        ξ  = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
         println( "ξ = ", ξ ) 
 
 ## ============================================ ##
@@ -117,22 +110,14 @@ dx_noise  = 1.0
         z_old = z 
 
         # ADMM LASSO! 
-        ξ, z, u, hp = admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, true )     
+        ξ, z, u, hp = admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, true )     
         σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3]    
 
         println( "ξ = ", ξ )
         println( "z = ", z )
         println( "hp = ", hp )
 
-        p = f_hp(ξ, hp) + g(z)   
-        push!( hist.objval, p )
-        push!( hist.fval, f_hp( ξ, hp ) )
-        push!( hist.gval, g(z) ) 
-        push!( hist.hp, hp )
-        push!( hist.r_norm, norm(ξ - z) )
-        push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
-        push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
-        push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+        hist = push_hist( hist, f_hp, g, ξ, z, z_old, u, hp, ρ, n, abstol, reltol)
 
         if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
             println("converged!")  

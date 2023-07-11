@@ -1,6 +1,27 @@
 using Optim 
 using GaussianProcesses
-using LinearAlgebra
+using LinearAlgebra 
+
+## ============================================ ##
+
+export push_hist 
+function push_hist( hist, f_hp, g, ξ, z, z_old, u, hp, ρ, n, abstol, reltol)
+# ----------------------- # 
+# push diagnostics to hist 
+# ----------------------- # 
+
+    p = f_hp(ξ, hp) + g(z)   
+    push!( hist.objval, p )
+    push!( hist.fval, f_hp( ξ, hp ) )
+    push!( hist.gval, g(z) ) 
+    push!( hist.hp, hp )
+    push!( hist.r_norm, norm(ξ - z) )
+    push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
+    push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
+    push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+
+    return hist 
+end 
 
 ## ============================================ ##
 
@@ -52,7 +73,7 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
     x       = LU_inv(A, b) 
     objval  = 1/2*( dx - Θx*ξ )'*x
 
-    # term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+    # objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
 
     # scale? 
     objval += 1/2*log( tr(Ky) ) 
@@ -61,11 +82,10 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
 
 end 
 
-
 ## ============================================ ##
 
 export obj_fns 
-function obj_fns( dx, Θx, λ )
+function obj_fns( dx, Θx, λ, ρ )
 # ----------------------- # 
 # PURPOSE: 
 #       Produce obj fns for SINDy-GP-ADMM 
@@ -73,6 +93,7 @@ function obj_fns( dx, Θx, λ )
 #       dx      : derivative data 
 #       Θx      : function library 
 #       λ       : L1 norm threshold 
+#       ρ       : idk what this does but Boyd sets it to 1     
 # OUTPUTS: 
 #       f       : main obj fn  
 #       g       : z obj fn 
@@ -86,7 +107,6 @@ function obj_fns( dx, Θx, λ )
     g(z) = λ * sum(abs.(z)) 
 
     # augmented Lagrangian (scaled form) 
-    ρ = 1.0 
     aug_L(ξ, hp, z, u) = f(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2      
 
     return f, g, aug_L 
@@ -154,19 +174,12 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     return hp 
 end 
 
-
 ## ============================================ ##
 
 export shrinkage 
 function shrinkage(x, κ) 
 # ----------------------- #
-# PURPOSE: 
-#       shrinkage / L1-norm min / soft thresholding 
-# INPUTS: 
-#       x   : input data 
-#       κ   : shrinkage threshold 
-# OUTPUTS: 
-#       z   : shrunk data 
+# shrinkage / L1-norm min / soft thresholding 
 # ----------------------- #
 
     z = 0*x ; 
@@ -180,7 +193,7 @@ end
 ## ============================================ ##
 
 export admm_lasso 
-function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false) 
+function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, print_vars = false) 
 # ----------------------- #
 # PURPOSE: 
 #       Run one iteration of ADMM LASSO 
@@ -193,6 +206,8 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false)
 #       u           : input dual variable 
 #       aug_L       : augmented Lagrangian for SINDy-GP-ADMM 
 #       λ           : L1 norm threshold  
+#       α           : relaxation parameter 
+#       ρ           : idk what this does, but Boyd sets it to 1 
 #       print_vars  : option to display ξ, z, u, hp 
 # OUTPUTS: 
 #       ξ           : output dynamics coefficients (ADMM primary variable x)
@@ -209,7 +224,6 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, print_vars = false)
     
     # z-update (soft thresholding) 
     z_old = z 
-    α     = 1.0 ; ρ = 1.0           # α = relaxation parameter, ρ ... idk. See Boyd ADMM paper 
     ξ_hat = α*ξ + (1 .- α)*z_old 
     z     = shrinkage( ξ_hat + u, λ/ρ ) 
 
