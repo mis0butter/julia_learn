@@ -230,7 +230,7 @@ end
 ## ============================================ ##
 
 export gpsindy 
-function gpsindy( t, dx, Θx, λ, α, ρ, abstol, reltol ) 
+function gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol ) 
 # ----------------------- # 
 # PURPOSE: 
 #       Main gpsindy function 
@@ -248,20 +248,26 @@ function gpsindy( t, dx, Θx, λ, α, ρ, abstol, reltol )
 #       hist    : diagnostics struct 
 # ----------------------- # 
 
-    # ξ-update (optimization) 
-    n = size(Θx, 2) 
-    ξ = z = u = zeros(n) 
+# set up 
+hist_nvars = [] 
+Ξ          = zeros( size(Θx, 2), size(dx_fd, 2) ) 
+
+# loop with state j
+n_vars = size(dx_fd, 2) 
+for j = 1 : n_vars
+
+    dx = dx_fd[:,j] 
+
+    # ----------------------- #
+    # ξ-update 
+    n = size(Θx, 2); ξ = z = u = zeros(n) 
     f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
-    ξ = opt_ξ( aug_L, ξ, z, u, log.( [ 1.0, 1.0, 0.1 ] ) ) 
+    ξ = opt_ξ( aug_L, ξ, z, u, log.( [1.0, 1.0, 0.1] ) ) 
 
     hist = Hist( [], [], [], [], [], [], [], [] )  
 
-    iter = 0 
+    # loop until convergence or max iter 
     for k = 1 : 1000  
-
-        # increment counter 
-        iter += 1 
-        println( "iter = ", iter )
 
         # ADMM LASSO! 
         z_old = z 
@@ -275,6 +281,12 @@ function gpsindy( t, dx, Θx, λ, α, ρ, abstol, reltol )
 
     end 
 
-    return z, hist 
+    # ----------------------- #
+    push!( hist_nvars, hist ) 
+    Ξ[:,j] = z 
+    
+    end 
+
+    return Ξ, hist_nvars  
 end 
 
