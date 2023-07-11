@@ -152,7 +152,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
     # constants 
     α = 1.0  ; ρ = 1.0     
 
-    sindy_err_vec = [] ; gpsindy_err_vec = [] 
+    sindy_err_vec = [] ; gpsindy_err_vec = [] ; hist_nvars_vec = [] 
     for dx_noise = noise_vec 
     
         # use this for derivative data noise 
@@ -164,19 +164,12 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
     
         # GPSINDy 
         Ξ_gpsindy, hist_nvars = gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )  
-    
-        # error metrics  
-        # sindy_err = [] ; gpsindy_err = [] 
-        # for i = 1:n_vars 
-        #     push!( sindy_err,   norm( Ξ_true[:,i] - Ξ_sindy[:,i] ) )
-        #     push!( gpsindy_err, norm( Ξ_true[:,i] - Ξ_gpsindy[:,i] ) )
-        # end
-        # push!( sindy_err_vec,   sindy_err ) 
-        # push!( gpsindy_err_vec, gpsindy_err ) 
 
+        # metrics & diagnostics 
+        push!( hist_nvars_vec, hist_nvars )
         sindy_err_vec, gpsindy_err_vec = l2_metric( n_vars, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
     
     end 
 
-    return sindy_err_vec, gpsindy_err_vec
+    return sindy_err_vec, gpsindy_err_vec, hist_nvars_vec 
 end 
