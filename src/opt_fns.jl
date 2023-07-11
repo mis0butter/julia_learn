@@ -6,10 +6,13 @@ using LinearAlgebra
 
 export LU_inv 
 function LU_inv( A, b )
+# ----------------------- #
+# A * x = b --> x = A^-1 * b  
+# Use LU factorization instead of matrix inverse 
+# ----------------------- #
 
-    # LU factorization 
-
-    C = cholesky(A) ; L = C.L ; U = C.U 
+    C = cholesky(A) ; 
+    L = C.L ; U = C.U 
 
     y = L \ b 
     x = U \ y 
@@ -20,7 +23,18 @@ end
 ## ============================================ ## 
 
 export f_obj 
-function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
+# ----------------------- #
+# PURPOSE: 
+#       Evaluate objective fn 
+# INPUTS: 
+#       (σ_f, l, σ_n)   : hyperparameters 
+#       dx              : derivative data inputs 
+#       ξ               : dynamics coefficients 
+#       Θx              : function library of dynamics 
+# OUTPUTS: 
+#       objval          : objective fn value 
+# ----------------------- #
 
     # training kernel function 
     Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
@@ -33,20 +47,17 @@ function f_obj( σ_f, l, σ_n, dx, ξ, Θx )
     end 
     
     # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
-    A = Ky 
-    b = ( dx - Θx*ξ ) 
-    x = LU_inv(A, b) 
-    # x = A \ b 
-    term  = 1/2*( dx - Θx*ξ )'*x
-    # term  = 1/2*( dx - Θx*ξ )' * A \ b 
-    # term  = 1/2*( dx - Θx*ξ )' * Ky \ ( dx - Θx*ξ )
+    A       = Ky 
+    b       = ( dx - Θx*ξ ) 
+    x       = LU_inv(A, b) 
+    objval  = 1/2*( dx - Θx*ξ )'*x
 
     # term  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
 
-    # ----------------------- #
-    term += 1/2*log( tr(Ky) ) 
+    # scale? 
+    objval += 1/2*log( tr(Ky) ) 
 
-    return term 
+    return objval  
 
 end 
 
@@ -55,18 +66,30 @@ end
 
 export obj_fns 
 function obj_fns( dx, Θx, λ )
+# ----------------------- # 
+# PURPOSE: 
+#       Produce obj fns for SINDy-GP-ADMM 
+# INPUTS: 
+#       dx      : derivative data 
+#       Θx      : function library 
+#       λ       : L1 norm threshold 
+# OUTPUTS: 
+#       f       : main obj fn  
+#       g       : z obj fn 
+#       aug_L   : augmented Lagrangian for ADMM 
+# ----------------------- # 
 
     # assign for f_hp_opt 
-    f_hp(ξ, (σ_f, l, σ_n)) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+    f(ξ, hp) = f_obj( hp, dx, ξ, Θx )
 
     # l1 norm 
     g(z) = λ * sum(abs.(z)) 
 
     # augmented Lagrangian (scaled form) 
     ρ = 1.0 
-    aug_L(ξ, hp, z, u) = f_hp(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2      
+    aug_L(ξ, hp, z, u) = f(ξ, hp) + g(z) + ρ/2 .* norm( ξ - z + u )^2      
 
-    return f_hp, g, aug_L 
+    return f, g, aug_L 
 end 
 
 ## ============================================ ##
@@ -111,17 +134,17 @@ function opt_hp(t_train, dx_train, Θx, ξ)
 #       hp          : log-scaled hyperparameters 
 # ----------------------- #
 
-    # mean and covariance 
-    mZero = MeanZero() ;            # zero mean function 
-    kern  = SE( 0.0, 0.0 ) ;          # squared eponential kernel (hyperparams on log scale) 
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
     # fit GP 
     # y_train = dx_train - Θx*ξ   
     y_train = Θx*ξ
-    gp  = GP(t_train, y_train, mZero, kern, log_noise) 
+    gp      = GP(t_train, y_train, mZero, kern, log_noise) 
     # gp  = GP(t_train, dx_train, Θx*ξ, kern, log_noise) 
-    result = optimize!(gp) 
+    result  = optimize!(gp) 
 
     σ_f = result.minimizer[1] 
     l   = result.minimizer[2] 
