@@ -17,13 +17,13 @@ include("lasso_admm.jl")
 include("ode_fns.jl")  
 include("utils.jl")
 include("init_params.jl")
-include("SINDy_test.jl")
 
 # ----------------------- #
 # redo fns 
 
+include("SINDy_test.jl")
 include("opt_fns.jl") 
-
+include("gpsindy_fns.jl")
 
 ## ============================================ ##
 
@@ -86,6 +86,9 @@ function sindy_gp_admm( t, x, dx_fd, λ, hist_hp_opt )
 
 end 
 
+## ============================================ ##
+
+end 
 
 ## ============================================ ##
 
@@ -138,5 +141,3 @@ end
 # end 
 
 # ## ============================================ ##
-
-# end 
