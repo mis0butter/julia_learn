@@ -4,27 +4,6 @@ using LinearAlgebra
 
 ## ============================================ ##
 
-export push_hist 
-function push_hist( hist, f_hp, g, ξ, z, z_old, u, hp, ρ, n, abstol, reltol)
-# ----------------------- # 
-# push diagnostics to hist 
-# ----------------------- # 
-
-    p = f_hp(ξ, hp) + g(z)   
-    push!( hist.objval, p )
-    push!( hist.fval, f_hp( ξ, hp ) )
-    push!( hist.gval, g(z) ) 
-    push!( hist.hp, hp )
-    push!( hist.r_norm, norm(ξ - z) )
-    push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
-    push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
-    push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
-
-    return hist 
-end 
-
-## ============================================ ##
-
 export LU_inv 
 function LU_inv( A, b )
 # ----------------------- #
@@ -193,7 +172,7 @@ end
 ## ============================================ ##
 
 export admm_lasso 
-function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, print_vars = false) 
+function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist ) 
 # ----------------------- #
 # PURPOSE: 
 #       Run one iteration of ADMM LASSO 
@@ -201,20 +180,24 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, print_vars = false)
 #       t           : training data ordinates ( x ) 
 #       dx          : training data ( f(x) )
 #       Θx          : function library (candidate dynamics) 
-#       ξ           : input dynamics coefficients (ADMM primary variable x)
-#       z           : input dynamics coefficients (ADMM primary variable z)
-#       u           : input dual variable 
-#       aug_L       : augmented Lagrangian for SINDy-GP-ADMM 
+#       (ξ, z, u)   : dynamics coefficients primary and dual vars 
 #       λ           : L1 norm threshold  
 #       α           : relaxation parameter 
 #       ρ           : idk what this does, but Boyd sets it to 1 
 #       print_vars  : option to display ξ, z, u, hp 
+#       abstol      : abs tol 
+#       reltol      : rel tol 
+#       hist        : diagnostics struct 
 # OUTPUTS: 
 #       ξ           : output dynamics coefficients (ADMM primary variable x)
 #       z           : output dynamics coefficients (ADMM primary variable z)
 #       u           : input dual variable 
 #       hp          : log-scaled hyperparameters 
+#       hist        : diagnostis struct 
 # ----------------------- #
+
+    # objective fns 
+    f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
 
     # hp-update (optimization) 
     hp  = opt_hp(t, dx, Θx, ξ) 
@@ -230,5 +213,68 @@ function admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, print_vars = false)
     # u-update 
     u += (ξ_hat - z) 
     
-    return ξ, z, u, hp 
+    # push diagnostics 
+    n = length(ξ) 
+    push!( hist.objval, f_hp(ξ, hp) + g(z) )
+    push!( hist.fval, f_hp( ξ, hp ) )
+    push!( hist.gval, g(z) ) 
+    push!( hist.hp, hp )
+    push!( hist.r_norm, norm(ξ - z) )
+    push!( hist.s_norm, norm( -ρ*(z - z_old) ) )
+    push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
+    push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
+    
+    return ξ, z, u, hp, hist 
 end 
+
+## ============================================ ##
+
+export gpsindy 
+function gpsindy( t, dx, Θx, λ, α, ρ, abstol, reltol ) 
+# ----------------------- # 
+# PURPOSE: 
+#       Main gpsindy function 
+# INPUTS: 
+#       t       : training data ordinates ( x ) 
+#       dx      : training data ( f(x) )
+#       Θx      : function library (candidate dynamics) 
+#       λ       : L1 norm threshold  
+#       α       : relaxation parameter 
+#       ρ       : idk what this does, but Boyd sets it to 1 
+#       abstol  : abs tol 
+#       reltol  : rel tol 
+# OUTPUTS: 
+#       z       : sparse dynamics coefficient (hopefully) 
+#       hist    : diagnostics struct 
+# ----------------------- # 
+
+    # ξ-update (optimization) 
+    n = size(Θx, 2) 
+    ξ = z = u = zeros(n) 
+    f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
+    ξ = opt_ξ( aug_L, ξ, z, u, log.( [ 1.0, 1.0, 0.1 ] ) ) 
+
+    hist = Hist( [], [], [], [], [], [], [], [] )  
+
+    iter = 0 
+    for k = 1 : 1000  
+
+        # increment counter 
+        iter += 1 
+        println( "iter = ", iter )
+
+        # ADMM LASSO! 
+        z_old = z 
+        ξ, z, u, hp, hist = admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )     
+
+        # end condition 
+        if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
+            println("converged!")  
+            break 
+        end 
+
+    end 
+
+    return z, hist 
+end 
+

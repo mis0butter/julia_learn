@@ -63,70 +63,57 @@ dx_noise  = 1.0
 
     # ----------------------- #
     # loop with state j
-
+    
     hist_nvars = [] 
 
     j = 1 
     println( "j = ", j )
     # for j = 1 : n_vars
-    
-        hist = Hist( [], [], [], [], [], [], [], [] )  
 
-        # initial loss function vars 
-        dx = dx_fd[:,j] 
+    # initial loss function vars 
+    dx = dx_fd[:,j] 
 
-        α = 1.0 ; ρ = 1.0 
-        f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
-
-        # ----------------------- # 
-        # LASSO ADMM GP OPT 
-
-        # define constants 
-        max_iter = 1000  
-        abstol   = 1e-2 
-        reltol   = 1e-2           # save matrix-vector multiply 
-
-        # ADMM solver 
-        ξ = z = u = zeros(n) 
-
-        # counter 
-        iter = 0 
-        
-        # ----------------------- # 
-        # ξ-update (optimization) 
-
-        hp = log.( [ 1.0, 1.0, 0.1 ] )
-        ξ  = opt_ξ( aug_L, 0*ξ, z, u, hp ) 
-        println( "ξ = ", ξ ) 
+    abstol   = 1e-2 
+    reltol   = 1e-2           # save matrix-vector multiply 
 
 ## ============================================ ##
+z, hist = gpsindy( t, dx, Θx, λ, α, ρ, abstol, reltol )     
+## ============================================ ##
 
-    # for k = 1:max_iter 
+    hist = Hist( [], [], [], [], [], [], [], [] )  
+
+    # ξ-update (optimization) 
+    ξ = z = u = zeros(n) 
+    f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
+    ξ  = opt_ξ( aug_L, ξ, z, u, log.( [ 1.0, 1.0, 0.1 ] ) ) 
+
+    # define constants 
+    max_iter = 1000  
+    α = 1.0 ; ρ = 1.0 
+
+    iter = 0 
+    for k = 1:max_iter 
 
         # increment counter 
         iter += 1 
         println( "iter = ", iter )
 
-        z_old = z 
-
         # ADMM LASSO! 
-        ξ, z, u, hp = admm_lasso(t, dx, Θx, ξ, z, u, aug_L, λ, α, ρ, true )     
-        σ_f = hp[1] ; l = hp[2] ; σ_n = hp[3]    
+        z_old = z 
+        ξ, z, u, hp, hist = admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )     
 
-        println( "ξ = ", ξ )
-        println( "z = ", z )
-        println( "hp = ", hp )
-
-        hist = push_hist( hist, f_hp, g, ξ, z, z_old, u, hp, ρ, n, abstol, reltol)
+        # push diagnostics 
+        println( "ξ = ", ξ ) ; println( "z = ", z ) ; println( "hp = ", hp )
 
         if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
             println("converged!")  
             println( "gpsindy err = ", norm( Ξ_true[:,j] - z ) ) 
             println( "sindy err   = ", norm( Ξ_true[:,j] - Ξ_sindy[:,j] ) ) 
             push!(hist_nvars, hist)
+            break 
         end 
 
-    # end 
+    end 
     
 ## ============================================ ##
 # back to MONTE CARLO GP SINDy
