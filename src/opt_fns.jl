@@ -42,7 +42,7 @@ function LU_inv( A, b )
 # Use LU factorization instead of matrix inverse 
 # ----------------------- #
 
-    C = cholesky(A) ; 
+    C = cholesky(A) 
     L = C.L ; U = C.U 
 
     y = L \ b 
@@ -86,7 +86,7 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
     # objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
 
     # scale? 
-    objval += 1/2*log( tr(Ky) ) 
+    objval += 1/2*sum(log.( Ky )) 
 
     return objval  
 

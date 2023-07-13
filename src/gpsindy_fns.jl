@@ -90,6 +90,29 @@ n_vars = size(dx_fd, 2)
 for j = 1 : n_vars
 
     dx = dx_fd[:,j] 
+    
+    # smooth derivatives 
+    # dx, Σ_post, hp = post_dist_hp_opt( t, dx, t, true )
+    # ----------------------- # 
+    
+    # IC 
+    hp = [ 1.0, 1.0, 0.1 ] 
+
+    # optimization 
+    hp_opt(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, t, dx, 0*dx )
+    od       = OnceDifferentiable( hp_opt, hp ; autodiff = :forward ) 
+    result   = optimize( od, hp, LBFGS() ) 
+    hp       = result.minimizer 
+
+    dx_post, Σ_post = post_dist( t, dx, t, hp[1], hp[2], hp[3] ) 
+
+    p = scatter( t, dx, label = "train", shape = :xcross, legend = true )
+    scatter!( p, t, dx_post, label = "post", ms = 3 )
+    display(p) 
+
+    dx = dx_post 
+
+    # ----------------------- # 
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
@@ -170,6 +193,10 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
         sindy_err_vec, gpsindy_err_vec = l2_metric( n_vars, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
     
     end 
+
+    # make matrices 
+    sindy_err_vec   = mapreduce(permutedims, vcat, sindy_err_vec)
+    gpsindy_err_vec = mapreduce(permutedims, vcat, gpsindy_err_vec)
 
     return sindy_err_vec, gpsindy_err_vec, hist_nvars_vec 
 end 

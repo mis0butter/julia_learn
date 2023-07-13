@@ -1,5 +1,5 @@
 using LinearAlgebra 
-
+using Optim 
 
 ## ============================================ ##
 # sample from given mean and covariance 
@@ -86,7 +86,30 @@ end
 
 
 ## ============================================ ##
-# marginal log-likelihood for Gaussian Process 
+# marginal log-likelihood for Gaussian Processes  
+
+export mlog_like 
+function mlog_like( σ_f, l, σ_n, x, y, μ )
+# from algorithm 2.1 of Rasmussen GP textbook  
+    
+    # training kernel function 
+    K = k_SE(σ_f, l, x, x) 
+
+    C = cholesky( K + σ_n^2 * I  )
+    α = C.U \ ( C.L \ y ) 
+
+    # NEGATIVE log-likelihood 
+    n = length(y) 
+    log_p = 1/2 * y' * α + sum( log.( diag(C.L) ) ) + n/2 * log( 2π )
+    # log_p = 1/2 * y' * α + log( det(K + σ_n^2) )
+    
+    return log_p 
+
+end 
+
+
+## ============================================ ##
+# marginal log-likelihood for Gaussian Processes 
 
 export log_p 
 function log_p( σ_f, l, σ_n, x, y, μ )
@@ -117,7 +140,6 @@ function post_dist( x_train, y_train, x_test, σ_f, l, σ_n )
 
     # covariance from training data 
     K    = k_SE(σ_f, l, x_train, x_train)  
-    K   += σ_n^2 * I       # add noise for positive definite 
     Ks   = k_SE(σ_f, l, x_train, x_test)  
     Kss  = k_SE(σ_f, l, x_test, x_test) 
 
@@ -125,10 +147,47 @@ function post_dist( x_train, y_train, x_test, σ_f, l, σ_n )
     # mu_cond    = K(Xs,X)*inv(K(X,X))*y
     # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
     # fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ) 
-    μ_post = Ks' * K^-1 * y_train 
-    Σ_post = Kss - (Ks' * K^-1 * Ks)  
+    # μ_post = Ks' * K^-1 * y_train 
+    # Σ_post = Kss - (Ks' * K^-1 * Ks)  
+
+    C = cholesky(K + σ_n^2 * I) 
+    α = C.U \ ( C.L \ y_train ) 
+    v = C.L \ Ks 
+    μ_post = Ks' * α 
+    Σ_post = Kss - v'*v 
 
     return μ_post, Σ_post
 
 end 
+
+## ============================================ ##
+# hp optimization (June) --> post mean  
+
+export post_dist_hp_opt 
+function post_dist_hp_opt( x_train, y_train, x_test, plot_option = false )
+
+    println( "x_train = ", x_train ) 
+    println( "y_train = ", y_train ) 
+    println( "x_test = ", x_test )
+
+    # IC 
+    hp = [ 1.0, 1.0, 0.1 ] 
+
+    # optimization 
+    hp_opt(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, 0*y_train )
+    od       = OnceDifferentiable( hp_opt, hp ; autodiff = :forward ) 
+    result   = optimize( od, hp, LBFGS() ) 
+    hp       = result.minimizer 
+
+    μ_post, Σ_post = post_dist( x_train, y_train, x_test, hp[1], hp[2], hp[3] ) 
+
+    if plot_option 
+        p = scatter( x_train, y_train, label = "train" )
+        scatter!( p, x_test, μ_post, label = "post", ls = :dash )
+        display(p) 
+    end 
+
+    return μ_post, Σ_post, hp 
+end 
+
 
