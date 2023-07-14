@@ -11,7 +11,7 @@ using GaussianSINDy
 # end 
 
 # noise_vec = collect( 0 : 0.1 : 0.1 )
-noise_vec = 0.5 
+noise_vec = 0.0 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           
