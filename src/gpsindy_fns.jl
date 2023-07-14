@@ -1,6 +1,7 @@
 using Optim 
 using GaussianProcesses
 using LinearAlgebra 
+using Statistics 
 
 ## ============================================ ##
 
@@ -90,6 +91,11 @@ n_vars = size(dx_fd, 2)
 for j = 1 : n_vars
 
     dx = dx_fd[:,j] 
+
+    # normalize data 
+    μ_dx = mean(dx) 
+    σ_dx = std(dx)
+    dx   = ( dx .- μ_dx ) ./ σ_dx  
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 

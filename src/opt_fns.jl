@@ -78,12 +78,12 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
     end 
     
     # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
-    A       = Ky 
-    b       = ( dx - Θx*ξ ) 
-    x       = LU_inv(A, b) 
-    objval  = 1/2*( dx - Θx*ξ )'*x
+    # A       = Ky 
+    # b       = ( dx - Θx*ξ ) 
+    # x       = LU_inv(A, b) 
+    # objval  = 1/2*( dx - Θx*ξ )'*x
 
-    # objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+    objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
 
     # scale? 
     objval += 1/2*sum(log.( Ky )) 
