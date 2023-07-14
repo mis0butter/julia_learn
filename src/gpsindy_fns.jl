@@ -153,25 +153,25 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
     sindy_err_vec = [] ; gpsindy_err_vec = [] ; hist_nvars_vec = [] 
     for noise = noise_vec 
     
-        # add noise 
-        println( "noise = ", noise )
-        x_noise  = x_true + noise*rand( size(x_true, 1), size(x_true, 2) )
-        dx_noise = fdiff(t, x_noise, 2)
-
-        # SINDy 
-        Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+        # # add noise 
+        # println( "noise = ", noise )
+        # x_noise  = x_true + noise*rand( size(x_true, 1), size(x_true, 2) )
+        # dx_noise = fdiff(t, x_noise, 2)
 
         # normalize data for GPSINDy 
-        x_norm = 0 * x_noise 
-        for i = 1:n_vars 
-            x_norm[:,i] = ( x_noise[:,i] .- mean( x_noise[:,i] ) ) ./ std( x_noise[:,i] )
-        end 
-        dx_norm = fdiff( t, x_norm, 2 )
+        x_norm  = norm_data( t, x_true )
+        # dx_norm = fdiff(t, x_norm, 2) 
+        dx_norm = norm_data( t, dx_true )
         
-        # function library   
+        # SINDy 
+        Ξ_sindy = SINDy_test( x_norm, dx_norm, λ ) 
+
+        # # function library   
+        Θx_true = pool_data_test(x_true, n_vars, poly_order) 
         Θx_norm = pool_data_test(x_norm, n_vars, poly_order) 
     
         # GPSINDy 
+        # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_true, Θx_true, λ, α, ρ, abstol, reltol )  
         Ξ_gpsindy, hist_nvars = gpsindy( t, dx_norm, Θx_norm, λ, α, ρ, abstol, reltol )  
 
         # metrics & diagnostics 
