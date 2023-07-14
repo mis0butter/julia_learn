@@ -13,7 +13,7 @@ function norm_data( t, x )
     for i = 1:n_vars 
         x_norm[:,i] = ( x[:,i] .- mean( x[:,i] ) ) ./ std( x[:,i] )
     end 
-
+    
     return x_norm 
 end 
 

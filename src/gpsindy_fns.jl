@@ -125,7 +125,7 @@ end
 ## ============================================ ##
 
 export monte_carlo_gpsindy 
-function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol ) 
+function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case ) 
 # ----------------------- #
 # PURPOSE:  
 #       Run GPSINDy monte carlo 
@@ -134,6 +134,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
 #       λ               : L1 norm threshold 
 #       abstol          : abs tol 
 #       reltol          : rel tol 
+#       case            : 0 = true, 1 = noise, 2 = norm 
 # OUTPUTS: 
 #       sindy_err_vec   : sindy error stats 
 #       gpsindy_err_vec : gpsindy error stats 
@@ -153,26 +154,41 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
     sindy_err_vec = [] ; gpsindy_err_vec = [] ; hist_nvars_vec = [] 
     for noise = noise_vec 
     
-        # # add noise 
-        # println( "noise = ", noise )
-        # x_noise  = x_true + noise*rand( size(x_true, 1), size(x_true, 2) )
-        # dx_noise = fdiff(t, x_noise, 2)
-
-        # normalize data for GPSINDy 
-        x_norm  = norm_data( t, x_true )
-        # dx_norm = fdiff(t, x_norm, 2) 
-        dx_norm = norm_data( t, dx_true )
         
-        # SINDy 
-        Ξ_sindy = SINDy_test( x_norm, dx_norm, λ ) 
+        # use true data 
+        if case == 0 
+            
+            Ξ_sindy = SINDy_test( x_true, dx_true, λ ) 
+            Θx      = pool_data_test(x_true, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_true, Θx, λ, α, ρ, abstol, reltol )  
 
-        # # function library   
-        Θx_true = pool_data_test(x_true, n_vars, poly_order) 
-        Θx_norm = pool_data_test(x_norm, n_vars, poly_order) 
+        # use noisy data  
+        elseif case == 1 
+
+            # add noise 
+            println( "noise = ", noise ) 
+
+            x_noise  = x_true + 0 * noise*randn( size(x_true, 1), size(x_true, 2) )
+            # dx_noise = fdiff(t, x_noise, 2)
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+
+            Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
     
-        # GPSINDy 
-        # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_true, Θx_true, λ, α, ρ, abstol, reltol )  
-        Ξ_gpsindy, hist_nvars = gpsindy( t, dx_norm, Θx_norm, λ, α, ρ, abstol, reltol )  
+        # use normalized (true) data 
+        else 
+
+            x_norm  = norm_data( t, x_true) 
+            # dx_norm = fdiff(t, x_norm, 2) 
+            dx_norm = norm_data( t, dx_true )
+
+            Ξ_true  = SINDy_test( x_norm, dx_norm, λ ) 
+            Ξ_sindy = SINDy_test( x_norm, dx_norm, λ ) 
+            Θx      = pool_data_test(x_norm, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_norm, Θx, λ, α, ρ, abstol, reltol )  
+
+        end 
 
         # metrics & diagnostics 
         push!( hist_nvars_vec, hist_nvars )

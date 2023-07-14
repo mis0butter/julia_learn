@@ -34,7 +34,7 @@ x_test  = t
 μ, σ²   = predict_y( gp, x_test )
 μ_post, Σ_post = post_dist( x_train, y_train, x_test, exp(σ_f), exp(l), exp(σ_n) ) 
 
-plot(gp; xlabel="x", ylabel="y", title="Gaussian Process", legend = true, fmt=:png) 
+p_gp = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process", legend = true, fmt=:png) 
 plot!( x_test, μ, label = "gp toolbox", c = :red )
 plot!( t, dx_true, label = "true", c = :green ) 
 plot!( x_test, μ_post, label = "post", ls = :dash, c = :cyan, lw = 1.5 )
@@ -44,16 +44,16 @@ plot!( x_test, μ_post, label = "post", ls = :dash, c = :cyan, lw = 1.5 )
 
 # toolbox 
 optimize!(gp) 
-p_opt = plot( gp, title = "Opt HPs", legend = true ) 
-plot!( p_opt, t, dx_true, label = "true", c = :green ) 
+plot!( gp, title = "Opt HPs", label = "opt toolbox", legend = true ) 
+plot!( p_gp, t, dx_true, label = "true", c = :green ) 
 
 ## ============================================ ##
 # hp optimization (June) --> post mean  
 
-μ_post, Σ_post, hp = post_dist_hp_opt( x_train, y_train, x_test )
+μ_post, Σ_post, hp_post = post_dist_hp_opt( x_train, y_train, x_test )
 
 plot!( p_opt, x_test, μ_post, label = "post"  )
-plot!( p_opt, x_test, μ_post2, label = "post2", ls = :dash )
+# plot!( p_opt, x_test, μ_post2, label = "post2", ls = :dash )
 
 ## ============================================ ##
 # optimize hps 
@@ -64,6 +64,8 @@ result  = optimize!(gp)
 l   = result.minimizer[2] 
 σ_n = result.minimizer[3] 
 hp  = [σ_f, l, σ_n] 
+
+## ============================================ ##
 
 # kernel  
 mZero     = MeanZero() ;            # zero mean function 
