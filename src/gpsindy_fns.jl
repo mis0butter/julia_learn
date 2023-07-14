@@ -92,11 +92,6 @@ for j = 1 : n_vars
 
     dx = dx_fd[:,j] 
 
-    # normalize data 
-    μ_dx = mean(dx) 
-    σ_dx = std(dx)
-    dx   = ( dx .- μ_dx ) ./ σ_dx  
-
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
     f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
@@ -146,30 +141,38 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol )
     
     # choose ODE, plot states --> measurements 
     fn = predator_prey 
-    x0, dt, t, x, dx_true, dx_fd = ode_states(fn, 0, 2) 
+    x0, dt, t, x_true, dx_true, dx_fd = ode_states(fn, 0, 2) 
     
-    # SINDy 
-    n_vars = size(x, 2) ; poly_order = n_vars 
-    Ξ_true = SINDy_test( x, dx_true, λ ) 
-    
-    # function library   
-    Θx = pool_data_test(x, n_vars, poly_order) 
+    # truth coeffs 
+    n_vars = size(x_true, 2) ; poly_order = n_vars 
+    Ξ_true = SINDy_test( x_true, dx_true, λ ) 
 
     # constants 
     α = 1.0  ; ρ = 1.0     
 
     sindy_err_vec = [] ; gpsindy_err_vec = [] ; hist_nvars_vec = [] 
-    for dx_noise = noise_vec 
+    for noise = noise_vec 
     
-        # use this for derivative data noise 
-        println( "dx_noise = ", dx_noise )
-        dx_fd = dx_true + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
-    
+        # add noise 
+        println( "noise = ", noise )
+        x_noise  = x_true + noise*rand( size(x_true, 1), size(x_true, 2) )
+        dx_noise = fdiff(t, x_noise, 2)
+
         # SINDy 
-        Ξ_sindy = SINDy_test( x, dx_fd, λ ) 
+        Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+
+        # normalize data for GPSINDy 
+        x_norm = 0 * x_noise 
+        for i = 1:n_vars 
+            x_norm[:,i] = ( x_noise[:,i] .- mean( x_noise[:,i] ) ) ./ std( x_noise[:,i] )
+        end 
+        dx_norm = fdiff( t, x_norm, 2 )
+        
+        # function library   
+        Θx_norm = pool_data_test(x_norm, n_vars, poly_order) 
     
         # GPSINDy 
-        Ξ_gpsindy, hist_nvars = gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )  
+        Ξ_gpsindy, hist_nvars = gpsindy( t, dx_norm, Θx_norm, λ, α, ρ, abstol, reltol )  
 
         # metrics & diagnostics 
         push!( hist_nvars_vec, hist_nvars )
