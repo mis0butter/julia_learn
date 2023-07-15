@@ -1,20 +1,20 @@
 using Statistics 
 
 ## ============================================ ##
-# normalize data for x and dx 
+# standardize data for x and dx 
 
-export norm_data 
-function norm_data( t, x )
+export stand_data 
+function stand_data( t, x )
 
     n_vars = size(x, 2) 
     
     # loop through states 
-    x_norm = 0 * x 
+    x_stand = 0 * x 
     for i = 1:n_vars 
-        x_norm[:,i] = ( x[:,i] .- mean( x[:,i] ) ) ./ std( x[:,i] )
+        x_stand[:,i] = ( x[:,i] .- mean( x[:,i] ) ) ./ std( x[:,i] )
     end 
     
-    return x_norm 
+    return x_stand 
 end 
 
 ## ============================================ ##

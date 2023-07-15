@@ -9,12 +9,11 @@ using GaussianSINDy
 #         push!(noise_vec, i)
 #     end 
 # end 
+noise_vec = collect( 0 : 0.1 : 1.0 )
+# noise_vec = 0.2 
 
-# case: 0 = true, 1 = noise, 2 = normalize 
-case = 1 
-
-# noise_vec = collect( 0 : 0.1 : 0.4 )
-noise_vec = 0.2 
+# case: 0 = true, 1 = noise, 2 = standardize true, 3 = standardize noisy 
+case = 3 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           
