@@ -86,7 +86,8 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
     objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
 
     # scale? 
-    objval += 1/2*sum(log.( Ky )) 
+    # objval += 1/2*sum(log.( Ky )) 
+    objval += 1/2*log( tr(Ky) ) 
 
     return objval  
 
