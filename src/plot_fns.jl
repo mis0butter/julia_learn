@@ -19,7 +19,7 @@ function boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
             boxplot!( p_ξ, noise_vec, gpsindy_err_vec[:,i], bar_width = 0.04, lw = 1, fillalpha = 0.2, c = :red, linealpha = 0.5 ) 
             scatter!( p_ξ, 
                 legend = false, 
-                xlabel = "dx_noise", 
+                xlabel = "noise", 
                 title  = string( "|ξ", i, "_true - ξ", i, "_discovered|" ), 
                 xticks = xmin : dx : xmax, 
                 # yticks = ymin : dy : ymax, 

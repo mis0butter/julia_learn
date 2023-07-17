@@ -166,23 +166,27 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             # add noise 
             println( "noise = ", noise ) 
-
             x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
             # dx_noise = fdiff(t, x_noise, 2)
             dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
-            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            # Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy  = Ξ_sindy 
+            hist_nvars = [] 
     
         # use standardized true data 
         elseif case == 2 
 
             x_stand  = stand_data( t, x_true) 
-            dx_stand = fdiff(t, x_stand, 2) 
-            # dx_stand = stand_data( t, dx_true )
+            # dx_stand = fdiff(t, x_stand, 2) 
+            dx_stand = stand_data( t, dx_true )
 
-            Ξ_true  = SINDy_test( x_stand, dx_stand, λ ) 
+            x_stand_true  = stand_data( t, x_true ) 
+            dx_stand_true = stand_data( t, dx_true ) 
+
+            Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
             Ξ_sindy = SINDy_test( x_stand, dx_stand, λ ) 
             Θx      = pool_data_test(x_stand, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_stand, Θx, λ, α, ρ, abstol, reltol )  
@@ -192,16 +196,23 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             # add noise 
             println( "noise = ", noise ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = fdiff(t, x_noise, 2) 
+            # dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-            x_stand  = stand_data( t, x_true + noise*randn( size(x_true, 1), size(x_true, 2) ) ) 
-            println( "x stand err = ", norm( x_true - x_stand ) ) 
-            dx_stand = fdiff(t, x_stand, 2) 
-            # dx_stand = stand_data( t, dx_true + noise*randn( size(x_true, 1), size(x_true, 2) ) ) 
+            # standardize noisy data 
+            x_stand_noise  = stand_data( t, x_noise ) 
+            # dx_stand = fdiff(t, x_stand, 2) 
+            dx_stand_noise = stand_data( t, dx_noise ) 
 
-            Ξ_true  = SINDy_test( x_stand, dx_stand, λ ) 
-            Ξ_sindy = SINDy_test( x_stand, dx_stand, λ ) 
-            Θx      = pool_data_test(x_stand, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_stand, Θx, λ, α, ρ, abstol, reltol )  
+            # standardize true dadta 
+            x_stand_true  = stand_data( t, x_true ) 
+            dx_stand_true = stand_data( t, dx_true ) 
+
+            Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
+            Ξ_sindy = SINDy_test( x_stand_noise, dx_stand_noise, λ ) 
+            Θx      = pool_data_test(x_stand_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_stand_noise, Θx, λ, α, ρ, abstol, reltol )  
 
         end 
 
