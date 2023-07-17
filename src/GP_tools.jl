@@ -135,8 +135,8 @@ function post_dist( x_train, y_train, x_test, σ_f, l, σ_n )
     # x  = training data  
     # xs = test data 
     # joint distribution 
-    #   [ y  ]     (    [ K(x,x)+Ïƒ_n^2*I  K(x,xs)  ] ) 
-    #   [ fs ] ~ N ( 0, [ K(xs,x)         K(xs,xs) ] ) 
+    #   [ y  ]     (    [ K(x,x) + σ_n^2*I  K(x,xs)  ] ) 
+    #   [ fs ] ~ N ( 0, [ K(xs,x)           K(xs,xs) ] ) 
 
     # covariance from training data 
     K    = k_SE(σ_f, l, x_train, x_train)  
@@ -146,6 +146,7 @@ function post_dist( x_train, y_train, x_test, σ_f, l, σ_n )
     # conditional distribution 
     # mu_cond    = K(Xs,X)*inv(K(X,X))*y
     # sigma_cond = K(Xs,Xs) - K(Xs,X)*inv(K(X,X))*K(X,Xs) 
+
     # fs | (Xs, X, y) ~ N ( mu_cond, sigma_cond ) 
     # μ_post = Ks' * K^-1 * y_train 
     # Σ_post = Kss - (Ks' * K^-1 * Ks)  
@@ -165,10 +166,6 @@ end
 
 export post_dist_hp_opt 
 function post_dist_hp_opt( x_train, y_train, x_test, plot_option = false )
-
-    println( "x_train = ", x_train ) 
-    println( "y_train = ", y_train ) 
-    println( "x_test = ", x_test )
 
     # IC 
     hp = [ 1.0, 1.0, 0.1 ] 

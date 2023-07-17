@@ -182,6 +182,8 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     σ_n = result.minimizer[3] 
     hp  = [σ_f, l, σ_n] 
 
+    println( "log(hp) opt = ", hp ) 
+
     return hp 
 end 
 
