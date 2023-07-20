@@ -17,12 +17,13 @@ dx_fd = dx_fd[:,1] ; dx_true = dx_true[:,1]
 ## ============================================ ## 
 # GP! NO hp optimization 
 
-σ_f = log(1.0) ; l = log(1.0) ; σ_n = log(0.1) 
+σ_f = 2.0 ; l = 3.0 ; σ_n = 0.1 
 
 # kernel  
 mZero     = MeanZero() ;            # zero mean function 
-kern      = SE( σ_f, l ) ;        # squared eponential kernel (hyperparams on log scale) 
-log_noise = σ_n ;              # (optional) log std dev of obs noise 
+kern      = SE( log(l), log(σ_f) ) ;        # squared eponential kernel (hyperparams on log scale) 
+# kern      = SE( log(σ_f), log(l) ) ;        # squared eponential kernel (hyperparams on log scale) 
+log_noise = log(σ_n) ;              # (optional) log std dev of obs noise 
 
 # fit GP 
 # y_train = dx_train - Θx*ξ   
@@ -30,15 +31,20 @@ x_train = t
 y_train = dx_fd
 gp      = GP(x_train, y_train, mZero, kern, log_noise) 
 
+σ_f = sqrt( gp.kernel.σ2 ) 
+l   = sqrt( gp.kernel.ℓ2 )  
+σ_n = exp( gp.logNoise.value )  
+hp  = [σ_f, l, σ_n] 
+
 # tests 
 x_test  = t 
 μ, σ²   = predict_y( gp, x_test )
-μ_post, Σ_post = post_dist( x_train, y_train, x_test, exp(σ_f), exp(l), exp(σ_n) ) 
+μ_post, Σ_post = post_dist( x_train, y_train, x_test, σ_f, l, σ_n ) 
 σ²_post = diag( Σ_post ) 
 
 a = Animation()
 
-plt = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process (no HP opt)", label = "gp toolbox", legend = :outerright, size = [800 300] ) 
+plt = plot(gp; xlabel="x", ylabel="y", title="Gaussian Process (no HP opt)", label = "gp toolbox", legend = :outerright, size = [800 300], ylim = ( -30, 15 ) ) 
     frame(a, plt) 
 plot!( plt, t, dx_true, label = "true", c = :green ) 
     frame(a, plt) 
@@ -86,16 +92,16 @@ println( "manual opt hp     = ", hp_post )
 
 result  = optimize!(gp) 
 
-σ_f = result.minimizer[1] 
-l   = result.minimizer[2] 
-σ_n = result.minimizer[3] 
+σ_f = sqrt( gp.kernel.σ2 ) 
+l   = sqrt( gp.kernel.ℓ2 )  
+σ_n = exp( gp.logNoise.value )  
 hp  = [σ_f, l, σ_n] 
 
 ## ============================================ ##
 
 # kernel  
 mZero     = MeanZero() ;            # zero mean function 
-kern      = SE( σ_f, l) ;        # squared eponential kernel (hyperparams on log scale) 
+kern      = SE( log(σ_f), log(l) ) ;        # squared eponential kernel (hyperparams on log scale) 
 log_noise = log(σ_n) ;              # (optional) log std dev of obs noise 
 
 # fit GP 
