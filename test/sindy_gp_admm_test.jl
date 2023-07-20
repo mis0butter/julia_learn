@@ -3,7 +3,7 @@ using GaussianSINDy
 ## ============================================ ##
 
 noise_vec = [] 
-noise_vec_iter = 0 : 0.1 : 0.2 
+noise_vec_iter = 0.05 : 0.05 : 0.1 
 for i in noise_vec_iter 
     for j = 1:10  
         push!(noise_vec, i)

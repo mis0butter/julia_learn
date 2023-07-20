@@ -135,13 +135,13 @@ function opt_ξ( aug_L, ξ, z, u, hp )
 #       ξ       : input dynamics coefficients (ADMM primary variable x)
 #       z       : input dynamics coefficients (ADMM primary variable z)
 #       u       : dual variable 
-#       hp      : log-scaled hyperparameters 
+#       hp      : hyperparameters 
 # OUTPUTS: 
 #       ξ       : output dynamics coefficient (ADMM primary variable x) 
 # ----------------------- #
 
     # optimization 
-    f_opt(ξ) = aug_L(ξ, exp.(hp), z, u) 
+    f_opt(ξ) = aug_L(ξ, hp, z, u) 
     od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
     result   = optimize( od, ξ, LBFGS() ) 
     ξ        = result.minimizer 
@@ -171,18 +171,39 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
     # fit GP 
-    # y_train = dx_train - Θx*ξ   
-    y_train = Θx*ξ
+    # y_train = dx_train 
+    y_train = dx_train - Θx*ξ   
+    # y_train = Θx*ξ
     gp      = GP(t_train, y_train, mZero, kern, log_noise) 
     # gp  = GP(t_train, dx_train, Θx*ξ, kern, log_noise) 
-    result  = optimize!(gp) 
 
-    σ_f = result.minimizer[1] 
-    l   = result.minimizer[2] 
-    σ_n = result.minimizer[3] 
+    # ----------------------- #
+    # plot 
+
+    plt = scatter( t_train, dx_train, label = "dx_train", c = :black, title = "Opt HPs in ADMM" ) 
+    plot!( plt, t_train, Θx*ξ, label = "Θx*ξ", c = :green, ms = 3 ) 
+    plot!( plt, legend = :outerright, size = [800 300] ) 
+
+    # ----------------------- #
+    # optimize 
+
+    optimize!(gp) 
+
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt( gp.kernel.ℓ2 )  
+    σ_n = exp( gp.logNoise.value )  
     hp  = [σ_f, l, σ_n] 
 
-    println( "log(hp) opt = ", hp ) 
+    # check for 0 
+    for i = 1:3 
+        if abs(hp[i]) < 1e-10 
+            hp[i] = 1e-10 
+        end 
+    end 
+    
+    display(plt) 
+
+    println( "hp opt = ", hp ) 
 
     return hp 
 end 

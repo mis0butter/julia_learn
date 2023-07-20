@@ -34,7 +34,7 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
     f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
 
     # hp-update (optimization) 
-    hp  = opt_hp(t, dx, Θx, ξ) 
+    hp = opt_hp(t, dx, Θx, ξ) 
 
     # ξ-update 
     ξ = opt_ξ( aug_L, ξ, z, u, hp ) 
@@ -202,7 +202,6 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             # standardize noisy data 
             x_stand_noise  = stand_data( t, x_noise ) 
-            # dx_stand = fdiff(t, x_stand, 2) 
             dx_stand_noise = stand_data( t, dx_noise ) 
 
             # standardize true dadta 
