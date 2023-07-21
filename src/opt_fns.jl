@@ -178,13 +178,6 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     # gp  = GP(t_train, dx_train, Θx*ξ, kern, log_noise) 
 
     # ----------------------- #
-    # plot 
-
-    plt = scatter( t_train, dx_train, label = "dx_train", c = :black, title = "Opt HPs in ADMM" ) 
-    plot!( plt, t_train, Θx*ξ, label = "Θx*ξ", c = :green, ms = 3 ) 
-    plot!( plt, legend = :outerright, size = [800 300] ) 
-
-    # ----------------------- #
     # optimize 
 
     optimize!(gp) 
@@ -200,8 +193,6 @@ function opt_hp(t_train, dx_train, Θx, ξ)
             hp[i] = 1e-10 
         end 
     end 
-    
-    display(plt) 
 
     println( "hp opt = ", hp ) 
 

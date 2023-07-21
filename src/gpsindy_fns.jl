@@ -2,6 +2,7 @@ using Optim
 using GaussianProcesses
 using LinearAlgebra 
 using Statistics 
+using Plots 
 
 ## ============================================ ##
 
@@ -28,6 +29,7 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
 #       u           : input dual variable 
 #       hp          : log-scaled hyperparameters 
 #       hist        : diagnostis struct 
+#       plt         : plot for checking performance of coefficients 
 # ----------------------- #
 
     # objective fns 
@@ -47,6 +49,12 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
     # u-update 
     u += (ξ_hat - z) 
     
+    # ----------------------- #
+    # plot 
+    plt = scatter( t, dx, label = "train (noise)", c = :black, ms = 3 ) 
+    plot!( plt, t, Θx*ξ, label = "Θx*ξ", c = :green, ms = 3 ) 
+
+    # ----------------------- #
     # push diagnostics 
     n = length(ξ) 
     push!( hist.objval, f_hp(ξ, hp) + g(z) )
@@ -58,7 +66,7 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
     push!( hist.eps_pri, sqrt(n)*abstol + reltol*max(norm(ξ), norm(-z)) ) 
     push!( hist.eps_dual, sqrt(n)*abstol + reltol*norm(ρ*u) ) 
     
-    return ξ, z, u, hp, hist 
+    return ξ, z, u, hp, hist, plt 
 end 
 
 ## ============================================ ##
@@ -88,9 +96,15 @@ hist_nvars = []
 
 # loop with state j
 n_vars = size(dx_fd, 2) 
-for j = 1 : n_vars
+for j = 1 : n_vars 
 
     dx = dx_fd[:,j] 
+    
+    # start animation 
+    a = Animation() 
+    plt = scatter( t, dx, label = "train (noise)", c = :black, ms = 3 ) 
+    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" ) 
+    frame(a, plt) 
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
@@ -104,7 +118,9 @@ for j = 1 : n_vars
 
         # ADMM LASSO! 
         z_old = z 
-        ξ, z, u, hp, hist = admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )     
+        ξ, z, u, hp, hist, plt = admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )    
+        plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+        frame(a, plt) 
 
         # end condition 
         if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
@@ -116,10 +132,14 @@ for j = 1 : n_vars
     # push diagnostics 
     push!( hist_nvars, hist ) 
     Ξ[:,j] = z 
+
+    g = gif(a, fps = 2) 
+    display(g) 
+    display(plt) 
     
     end 
 
-    return Ξ, hist_nvars  
+    return Ξ, hist_nvars 
 end 
 
 ## ============================================ ##
@@ -212,8 +232,24 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy = SINDy_test( x_stand_noise, dx_stand_noise, λ ) 
             Θx      = pool_data_test(x_stand_noise, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_stand_noise, Θx, λ, α, ρ, abstol, reltol )  
+            
+            n_vars = size(x_true, 2) 
+            plt_nvars = [] 
+            for i = 1 : n_vars 
+                plt = scatter( t, dx_stand_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
+                plot!( plt, t, Θx * Ξ_sindy[:,i], label = "SINDy" )   
+                plot!( plt, t, Θx * Ξ_gpsindy[:,i], label = "GPSINDy" )   
+                plot!( plt, legend = :outerright, size = [800 300], title = string( "Fitting ξ", i ), xlabel = "Time (s)" ) 
+                push!( plt_nvars, plt ) 
+            end 
+            plt_nvars = plot( plt_nvars ... , 
+                layout = (2,1), 
+                size   = [800 600] 
+                ) 
+            display(plt_nvars) 
 
         end 
+
 
         # metrics & diagnostics 
         push!( hist_nvars_vec, hist_nvars )

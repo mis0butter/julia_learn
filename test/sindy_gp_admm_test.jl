@@ -2,15 +2,15 @@ using GaussianSINDy
 
 ## ============================================ ##
 
-noise_vec = [] 
-noise_vec_iter = 0.05 : 0.05 : 0.1 
-for i in noise_vec_iter 
-    for j = 1:10  
-        push!(noise_vec, i)
-    end 
-end 
+# noise_vec = [] 
+# noise_vec_iter = 0.05 : 0.05 : 0.1 
+# for i in noise_vec_iter 
+#     for j = 1:10  
+#         push!(noise_vec, i)
+#     end 
+# end 
 # noise_vec = collect( 0 : 0.05 : 0.2 )
-# noise_vec = 0.2 
+noise_vec = 0.1  
 
 # case: 0 = true, 1 = noise, 2 = standardize true, 3 = standardize noisy 
 case = 3 
