@@ -5,11 +5,14 @@ using LinearAlgebra
 ## ============================================ ##
 
 export l2_metric 
-function l2_metric( n_vars, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
+# function l2_metric( n_vars, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
+function l2_metric( n_vars, dx_train, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
 # ----------------------- # 
 # PURPOSE: 
 #       Compute L2 error metric for GPSINDy dynamics coefficients  
 # INPUTS: 
+#       n_vars 
+#       Θx 
 #       Ξ_true 
 #       Ξ_sindy 
 #       Ξ_gpsindy 
@@ -23,8 +26,18 @@ function l2_metric( n_vars, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsind
     # error metrics  
     sindy_err = [] ; gpsindy_err = [] 
     for i = 1:n_vars 
+
+        # truth derivatives - discovered 
+        # push!( sindy_err,   norm( Θx * Ξ_true[:,i] - Θx * Ξ_sindy[:,i] ) )
+        # push!( gpsindy_err, norm( Θx * Ξ_true[:,i] - Θx * Ξ_gpsindy[:,i] ) )
+
+        # truth coefficients - discovered 
         push!( sindy_err,   norm( Ξ_true[:,i] - Ξ_sindy[:,i] ) )
         push!( gpsindy_err, norm( Ξ_true[:,i] - Ξ_gpsindy[:,i] ) )
+
+        # training derivatives - discovered 
+        # push!( sindy_err,   norm( dx_train[:,i] - Θx * Ξ_sindy[:,i] ) )
+        # push!( gpsindy_err, norm( dx_train[:,i] - Θx * Ξ_gpsindy[:,i] ) )
     end
     push!( sindy_err_vec,   sindy_err ) 
     push!( gpsindy_err_vec, gpsindy_err ) 
@@ -88,6 +101,7 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 
     objval += 1/2*log( tr(Ky) ) 
+    # objval += 1/2*log( det(Ky) ) 
 
     return objval  
 

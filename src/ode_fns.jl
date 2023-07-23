@@ -83,7 +83,7 @@ function ode_states(fn, plot_option, fd_method)
         plot_deriv(t, dx_true, dx_fd, dx_tv, str) 
     end 
 
-    return x0, dt, t, x, dx_true, dx_fd, dx_tv 
+    return x0, dt, t, x, dx_true, dx_fd, dx_tv, p 
 
 end 
 

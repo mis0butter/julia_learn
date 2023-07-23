@@ -187,4 +187,33 @@ function post_dist_hp_opt( x_train, y_train, x_test, plot_option = false )
     return μ_post, Σ_post, hp 
 end 
 
+## ============================================ ##
+# posterior mean with GP toolbox 
+
+using GaussianProcesses
+
+export post_dist_GP 
+function post_dist_GP( t_train, t_test, x_noise ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    x_train   = t_train 
+    x_smooth  = 0 * x_noise  
+    n_vars    = size(x_noise, 2) 
+    for i = 1:n_vars 
+        # x 
+        y_train = x_noise[:,i] 
+        gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+        optimize!(gp) 
+        x_smooth[:,i], σ²   = predict_y( gp, t_test )    
+        # dx 
+    end 
+
+    return x_smooth 
+end 
+
 
