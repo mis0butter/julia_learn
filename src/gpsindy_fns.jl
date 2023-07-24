@@ -33,10 +33,11 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
 # ----------------------- #
 
     # objective fns 
-    f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
+    f_hp, g, aug_L = obj_fns( t, dx, Θx, λ, ρ )
 
     # hp-update (optimization) 
     hp = opt_hp(t, dx, Θx, ξ) 
+    # hp = post_dist_M52I( t, dx - Θx*ξ ) 
 
     # ξ-update 
     ξ = opt_ξ( aug_L, ξ, z, u, hp ) 
@@ -44,14 +45,7 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
     # z-update (soft thresholding) 
     z_old = z 
     ξ_hat = α*ξ + (1 .- α)*z_old 
-    println( "ξ_hat + u = ", ξ_hat + u ) 
     z     = shrinkage( ξ_hat + u, λ/ρ ) 
-    
-    # HACK !!!!!!!!!!!!!!!!!!!!
-    # small_inds = rows of |Ξ| < λ
-    small_inds = findall( <(λ), abs.(z) ) 
-    # set elements < λ to 0 
-    z[small_inds] .= 0 
 
     # u-update 
     u += (ξ_hat - z) 
@@ -115,7 +109,7 @@ for j = 1 : n_vars
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
-    f_hp, g, aug_L = obj_fns( dx, Θx, λ, ρ )
+    f_hp, g, aug_L = obj_fns( t, dx, Θx, λ, ρ )
     ξ = opt_ξ( aug_L, ξ, z, u, log.( [1.0, 1.0, 0.1] ) ) 
 
     hist = Hist( [], [], [], [], [], [], [], [] )  
@@ -184,10 +178,13 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
     
         # use true data 
         if case == 0 
+
+            x_noise  = x_true 
+            dx_noise = dx_true 
             
-            Ξ_sindy = SINDy_test( x_true, dx_true, λ ) 
-            Θx      = pool_data_test(x_true, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_true, Θx, λ, α, ρ, abstol, reltol )  
+            Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
 
         # use noisy data  
         elseif case == 1 
@@ -199,10 +196,12 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
-            # Θx      = pool_data_test(x_noise, n_vars, poly_order) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            Ξ_gpsindy  = Ξ_sindy 
+            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            # Ξ_gpsindy  = Ξ_sindy 
             hist_nvars = [] 
+
+            plot!( t, Θx * Ξ_sindy[:,2], ls = :dash, label = "SINDy", c = :red ) 
     
         # use standardized true data 
         elseif case == 2 
@@ -211,77 +210,50 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             # dx_stand = fdiff(t, x_stand, 2) 
             dx_stand = stand_data( t, dx_true )
 
-            x_stand_true  = stand_data( t, x_true ) 
-            dx_stand_true = stand_data( t, dx_true ) 
+            x_noise = x_stand 
+            dx_noise = dx_stand 
 
-            Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
-            Ξ_sindy = SINDy_test( x_stand, dx_stand, λ ) 
-            Θx      = pool_data_test(x_stand, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_stand, Θx, λ, α, ρ, abstol, reltol )  
+            Ξ_true  = SINDy_test( x_stand, dx_stand, λ ) 
+            Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
 
         # use standardized noisy data 
         elseif case == 3 
 
             # add noise 
             println( "noise = ", noise ) 
-            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+
+            x_stand  = stand_data( t, x_true ) 
+            dx_stand = stand_data( t, dx_true ) 
+
+            x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) )
             # dx_noise = fdiff(t, x_noise, 2) 
-            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+            dx_noise = dx_stand + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-            # standardize noisy data 
-            x_stand_noise  = stand_data( t, x_noise ) 
-            dx_stand_noise = stand_data( t, dx_noise ) 
-
-            # standardize true dadta 
-            x_stand_true  = stand_data( t, x_true ) 
-            dx_stand_true = stand_data( t, dx_true ) 
+            # standardize true data 
+            x_stand_true  = stand_data( t, x_stand ) 
+            dx_stand_true = stand_data( t, dx_stand ) 
 
             Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
-            Ξ_sindy = SINDy_test( x_stand_noise, dx_stand_noise, λ ) 
-
-            # ----------------------- #
-            # use GP to smooth derivatives 
-            
-            # kernel  
-            mZero     = MeanZero() ;            # zero mean function 
-            kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
-            log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
-
-            # fit GP 
-            # y_train = dx_train - Θx*ξ   
-            x_train   = t 
-            x_smooth  = 0 * x_stand_noise 
-            dx_smooth = 0 * dx_stand_noise 
-            for i = 1:n_vars 
-                # x 
-                y_train = x_stand_noise[:,i] 
-                gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-                optimize!(gp) 
-                x_smooth[:,i], σ²   = predict_y( gp, t )    
-                # dx 
-                y_train = dx_stand_noise[:,i] 
-                gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-                optimize!(gp) 
-                dx_smooth[:,i], σ²   = predict_y( gp, t )    
-            end 
+            Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
 
             i = 1 
             plt = plot( t, x_stand_true[:,i], label = "true", c = :blue )
-            scatter!( plt, t, x_stand_noise[:,i], label = "train (noise)", c = :black, ms = 3 )
-            plot!( plt, t, x_smooth[:,i], label = "GP (smooth)", ls = :dash, c = :red )
-            plot!( plt, legend = :outerright, size = [800 300], title = ( "x true, noise, and smoothed" ), xlabel = "Time (s)" ) 
+            scatter!( plt, t, x_noise[:,i], label = "train (noise)", c = :black, ms = 3 )
+            plot!( plt, legend = :outerright, size = [800 300], title = ( "x true, noise" ), xlabel = "Time (s)" ) 
             display(plt) 
 
             # ----------------------- #
             # gpsindy 
 
-            Θx      = pool_data_test(x_smooth, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_smooth, Θx, λ, α, ρ, abstol, reltol )  
+            Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
             
             n_vars = size(x_true, 2) 
             plt_nvars = [] 
             for i = 1 : n_vars 
-                plt = scatter( t, dx_stand_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
+                plt = scatter( t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
                 plot!( plt, t, Θx * Ξ_sindy[:,i], label = "SINDy" )   
                 plot!( plt, t, Θx * Ξ_gpsindy[:,i], label = "GPSINDy", ls = :dash )   
                 plot!( plt, legend = :outerright, size = [800 300], title = string( "Fitting ξ", i ), xlabel = "Time (s)" ) 
@@ -294,48 +266,42 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             display(plt_nvars) 
 
             # do not standardize - just use GP to smooth states 
-            elseif case == 4 
+        elseif case == 4 
+            
+            # add noise 
+            println( "noise = ", noise ) 
 
-                # add noise 
-                println( "noise = ", noise ) 
-                x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
-                dx_noise = fdiff(t, x_noise, 2) 
-                # dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) ) # true derivatives 
+            x_stand  = stand_data( t, x_true ) 
+            dx_stand = stand_data( t, dx_true ) 
 
-                Ξ_true  = SINDy_test( x_true, dx_true, λ ) 
-                Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
-                
-                # ----------------------- #
-                # use GP to smooth data 
-                
-                # kernel  
-                mZero     = MeanZero() ;            # zero mean function 
-                kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
-                log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+            x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) )
+            # dx_noise = fdiff(t, x_noise, 2) 
+            dx_noise = dx_stand + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-                # fit GP 
-                # y_train = dx_train - Θx*ξ   
-                x_train   = t 
-                x_smooth  = 0 * x_true 
-                for i = 1:n_vars 
-                    # x 
-                    y_train = x_noise[:,i] 
-                    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-                    optimize!(gp) 
-                    x_smooth[:,i], σ²   = predict_y( gp, t )    
-                    # dx 
-                end 
-                dx_smooth = fdiff(t, x_smooth, 2) 
+            # standardize true data 
+            x_stand_true  = stand_data( t, x_stand ) 
+            dx_stand_true = stand_data( t, dx_stand ) 
 
-                # placeholder 
-                Θx = pool_data_test( x_smooth, n_vars, poly_order ) 
-                Ξ_gpsindy, hist_nvars = gpsindy( t, dx_smooth, Θx, 2*λ, α, ρ, abstol, reltol )  
+            Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
+            Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
+
+            # I guess .... let's try this again
+            t_test = collect( t[1] : 0.1 : t[end] )  
+            x_GP  = zeros( length(t_test), size(x_noise, 2) ) 
+            dx_GP = x_GP 
+            x_GP[:,1]  = post_dist_M32A( t, t_test, x_noise[:,2] ) 
+            dx_GP[:,1] = post_dist_M32A( t, t_test, dx_noise[:,2] ) 
+            x_GP[:,2]  = post_dist_M32A( t, t_test, x_noise[:,2] ) 
+            dx_GP[:,2] = post_dist_M32A( t, t_test, dx_noise[:,2] ) 
+
+            Θx      = pool_data_test(x_GP, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, Θx, λ, α, ρ, abstol, reltol )  
 
         end 
 
         # metrics & diagnostics 
         # sindy_err_vec, gpsindy_err_vec = l2_metric( n_vars, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
-        sindy_err_vec, gpsindy_err_vec = l2_metric( n_vars, dx_smooth, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
+        Ξ_sindy_err, Ξ_gpsindy_err = l2_metric( n_vars, dx_noise, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
         push!( sindy_vec, Ξ_sindy ) 
         push!( gpsindy_vec, Ξ_gpsindy ) 
 
@@ -343,8 +309,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
     end 
 
     # make matrices 
-    sindy_err_vec   = mapreduce(permutedims, vcat, sindy_err_vec)
-    gpsindy_err_vec = mapreduce(permutedims, vcat, gpsindy_err_vec)
+    Ξ_sindy_err   = mapreduce(permutedims, vcat, Ξ_sindy_err)
+    Ξ_gpsindy_err = mapreduce(permutedims, vcat, Ξ_gpsindy_err)
 
-    return sindy_err_vec, gpsindy_err_vec, hist_nvars_vec, Ξ_true, sindy_vec, gpsindy_vec 
+    return Ξ_sindy_err, Ξ_gpsindy_err, hist_nvars_vec, Ξ_true, sindy_vec, gpsindy_vec 
 end 

@@ -67,11 +67,12 @@ end
 ## ============================================ ## 
 
 export f_obj 
-function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
+function f_obj( t, (σ_f, l, σ_n), dx, ξ, Θx )
 # ----------------------- #
 # PURPOSE: 
 #       Evaluate objective fn 
 # INPUTS: 
+#       t               : time inputs 
 #       (σ_f, l, σ_n)   : hyperparameters 
 #       dx              : derivative data inputs 
 #       ξ               : dynamics coefficients 
@@ -81,8 +82,7 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
 # ----------------------- #
 
     # training kernel function 
-    y_train = dx 
-    Ky  = k_SE(σ_f, l, y_train, y_train) + σ_n^2 * I 
+    Ky  = k_SE(σ_f, l, t, t) + σ_n^2 * I 
     # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
     # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
 
@@ -91,18 +91,19 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
         Ky += σ_n * I 
     end 
     
-    # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
+    # # let's say x = inv(Ky)*( dx - Θx*ξ ), or x = inv(A)*b 
     # A       = Ky 
     # b       = ( dx - Θx*ξ ) 
     # x       = LU_inv(A, b) 
     # objval  = 1/2*( dx - Θx*ξ )'*x
 
-    objval  = 1/2*( dx - Θx*ξ )'*inv( Ky )*( dx - Θx*ξ ) 
+    y_train = dx - Θx*ξ
+    objval  = 1/2*( y_train )'*inv( Ky )*( y_train ) 
 
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 
-    objval += 1/2*log( tr(Ky) ) 
-    # objval += 1/2*log( det(Ky) ) 
+    # objval += 1/2*log( tr(Ky) ) 
+    objval += 1/2*log( det(Ky) ) 
 
     return objval  
 
@@ -111,7 +112,7 @@ end
 ## ============================================ ##
 
 export obj_fns 
-function obj_fns( dx, Θx, λ, ρ )
+function obj_fns( t, dx, Θx, λ, ρ )
 # ----------------------- # 
 # PURPOSE: 
 #       Produce obj fns for SINDy-GP-ADMM 
@@ -127,7 +128,7 @@ function obj_fns( dx, Θx, λ, ρ )
 # ----------------------- # 
 
     # assign for f_hp_opt 
-    f(ξ, hp) = f_obj( hp, dx, ξ, Θx )
+    f(ξ, hp) = f_obj( t, hp, dx, ξ, Θx )
 
     # l1 norm 
     g(z) = λ * sum(abs.(z)) 

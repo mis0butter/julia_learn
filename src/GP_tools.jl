@@ -197,8 +197,8 @@ end
 
 using GaussianProcesses
 
-export post_dist_GP 
-function post_dist_GP( t_train, t_test, x_noise ) 
+export post_dist_SE 
+function post_dist_SE( x_train, x_test, y_train ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -206,19 +206,175 @@ function post_dist_GP( t_train, t_test, x_noise )
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
     # fit GP 
-    x_train   = t_train 
-    x_smooth  = 0 * x_noise  
-    n_vars    = size(x_noise, 2) 
-    for i = 1:n_vars 
-        # x 
-        y_train = x_noise[:,i] 
-        gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-        optimize!(gp) 
-        x_smooth[:,i], σ²   = predict_y( gp, t_test )    
-        # dx 
-    end 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
 
-    return x_smooth 
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt.( gp.kernel.ℓ2 )  
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+export post_dist_M12A
+function post_dist_M12A( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat12Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt.( gp.kernel.iℓ2[1] )  
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
 end 
 
 
+export post_dist_M32A
+function post_dist_M32A( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat32Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt.( gp.kernel.iℓ2[1] )  
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+
+export post_dist_M52A
+function post_dist_M52A( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat52Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt.( gp.kernel.iℓ2[1] )  
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+
+export post_dist_M12I
+function post_dist_M12I( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat12Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = gp.kernel.ℓ   
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+
+export post_dist_M32I
+function post_dist_M32I( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat32Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = gp.kernel.ℓ   
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+
+export post_dist_M52I
+function post_dist_M52I( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Mat52Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = gp.kernel.ℓ   
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 
+
+
+export post_dist_per
+function post_dist_per( x_train, x_test, y_train ) 
+
+    # kernel  
+    mZero     = MeanZero() ;            # zero mean function 
+    kern      = Periodic( 0.0, 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+    log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+
+    # fit GP 
+    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+    
+    # return HPs 
+    σ_f = sqrt( gp.kernel.σ2 ) 
+    l   = sqrt( gp.kernel.ℓ2 )   
+    σ_n = exp( gp.logNoise.value )  
+    hp  = [σ_f, l, σ_n] 
+
+    return μ, σ², hp 
+end 

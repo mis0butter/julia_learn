@@ -44,7 +44,7 @@ x0, dt, t, x, dx_true, dx_fd = ode_states(fn, plot_option, fd_method)
     dx = dx_fd[:,j] 
 
     # assign for f_hp_opt 
-    f_hp(ξ, σ_f, l, σ_n) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+    f_hp(ξ, σ_f, l, σ_n) = f_obj( t, σ_f, l, σ_n, dx, ξ, Θx )
 
 ## ============================================ ##
 # plot effects 

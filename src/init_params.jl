@@ -22,9 +22,9 @@ function init_params(fn)
     p      = [ 1.1, 0.4, 1, 0.4 ] 
     # p      = [ 1.5, 1, 3, 1 ] 
     n_vars = size(x0, 1) 
-    tf     = 14.3 
+    tf     = 30.0  
     ts     = (0.0, tf) 
-    dt     = 0.1 
+    dt     = 0.5  
 
     # initial plotting stuff 
     plot_font = "Computer Modern" 

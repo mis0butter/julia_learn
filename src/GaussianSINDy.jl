@@ -61,7 +61,7 @@ function sindy_gp_admm( t, x, dx_fd, λ, hist_hp_opt )
         dx = dx_fd[:,j] 
 
         # assign for f_hp_opt 
-        f_hp(ξ, σ_f, l, σ_n) = f_obj( σ_f, l, σ_n, dx, ξ, Θx )
+        f_hp(ξ, σ_f, l, σ_n) = f_obj( t, σ_f, l, σ_n, dx, ξ, Θx )
 
         # l1 norm 
         g(z) = λ * sum(abs.(z)) 
