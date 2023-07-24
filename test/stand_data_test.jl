@@ -7,7 +7,7 @@ using GaussianSINDy
 α = 1.0  ; ρ = 1.0   
 noise = 0.1  
 λ     = 0.1 
-abstol = 1e-2 ; reltol = 1e-2  
+abstol = 1e-4 ; reltol = 1e-4 
 
 # choose ODE, plot states --> measurements 
 fn = predator_prey 
@@ -64,26 +64,31 @@ println( "(stand) true - GPSINDy err  = ", norm( Ξ_stand_true - Ξ_gpsindy )  )
 Ξ_true  = SINDy_test( x_true, dx_true, λ ) 
 Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
 
-x_GP   = post_dist_GP( t, t, x_noise ) 
-dx_GP  = post_dist_GP( t, t, dx_noise ) 
+# x_GP = post_dist_GP( t, t, x_noise )
+# dx_GP  = fdiff( t, x_GP, 2 ) 
 
-Ξ_sindy_GP = SINDy_test( x_GP, dx_GP, λ ) 
+# Ξ_sindy_GP = SINDy_test( x_GP, dx_GP, λ ) 
 
 # ----------------------- #
 # using GPSINDy 
 
-# placeholder 
-Θx = pool_data_test( x_GP, n_vars, poly_order ) 
-Ξ_gpsindy_GP, hist_nvars = gpsindy( t, dx_GP, Θx, 3*λ, α, ρ, abstol, reltol )  
+# # placeholder 
+# Θx = pool_data_test( x_GP, n_vars, poly_order ) 
+# Ξ_gpsindy_GP, hist_nvars = gpsindy( t, dx_GP, Θx, 3*λ, α, ρ, abstol, reltol )  
 
 # placeholder 
 Θx = pool_data_test( x_noise, n_vars, poly_order ) 
-Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, 3*λ, α, ρ, abstol, reltol )  
+Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
 
 println( "true - SINDy err    = ", norm( Ξ_true - Ξ_sindy )  ) 
-println( "true - SINDy_GP err = ", norm( Ξ_true - Ξ_sindy_GP )  ) 
-println( "true - GPSINDy err  = ", norm( Ξ_true - Ξ_gpsindy_GP )  ) 
+# println( "true - SINDy_GP err = ", norm( Ξ_true - Ξ_sindy_GP )  ) 
+# println( "true - GPSINDy err  = ", norm( Ξ_true - Ξ_gpsindy_GP )  ) 
 println( "true - GPSINDy err  = ", norm( Ξ_true - Ξ_gpsindy )  ) 
+
+
+dx_sindy   = Θx * Ξ_sindy 
+dx_gpsindy = Θx * Ξ_gpsindy 
+
 
 ## ============================================ ##
 # use GP to smooth data 
@@ -91,9 +96,9 @@ println( "true - GPSINDy err  = ", norm( Ξ_true - Ξ_gpsindy )  )
 
 p_states = [] 
 for i = 1:n_vars 
-    plt = plot( t, x_stand_true[:,i], label = "true", c = :green )
-    scatter!( plt, t, x_stand_noise[:,i], label = "noise", c = :black, ms = 3 )
-    scatter!( plt, t, x_stand_smooth[:,i], label = "smooth", c = :red, ms = 1, markerstrokewidth = 0 )
+    plt = plot( t, x_true[:,i], label = "true", c = :green )
+    scatter!( plt, t, x_noise[:,i], label = "noise", c = :black, ms = 3 )
+    scatter!( plt, t, x_GP[:,i], label = "smooth", c = :red, ms = 1, markerstrokewidth = 0 )
     plot!( plt, legend = :outerright, title = string( "state ", i ) )    
     push!(p_states, plt)
 end 

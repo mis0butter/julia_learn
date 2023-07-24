@@ -44,7 +44,14 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
     # z-update (soft thresholding) 
     z_old = z 
     ξ_hat = α*ξ + (1 .- α)*z_old 
+    println( "ξ_hat + u = ", ξ_hat + u ) 
     z     = shrinkage( ξ_hat + u, λ/ρ ) 
+    
+    # HACK !!!!!!!!!!!!!!!!!!!!
+    # small_inds = rows of |Ξ| < λ
+    small_inds = findall( <(λ), abs.(z) ) 
+    # set elements < λ to 0 
+    z[small_inds] .= 0 
 
     # u-update 
     u += (ξ_hat - z) 

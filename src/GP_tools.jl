@@ -117,6 +117,11 @@ function log_p( σ_f, l, σ_n, x, y, μ )
     # training kernel function 
     Ky = k_SE(σ_f, l, x, x) 
     Ky += σ_n^2 * I 
+    
+    while det(Ky) == 0 
+        println( "det(Ky) = 0" )
+        Ky += σ_n * I 
+    end 
 
     term  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
     term += 1/2 * log( det( Ky ) ) 

@@ -81,7 +81,8 @@ function f_obj( (σ_f, l, σ_n), dx, ξ, Θx )
 # ----------------------- #
 
     # training kernel function 
-    Ky  = k_SE(σ_f, l, dx, dx) + σ_n^2 * I 
+    y_train = dx 
+    Ky  = k_SE(σ_f, l, y_train, y_train) + σ_n^2 * I 
     # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
     # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
 
@@ -207,8 +208,6 @@ function opt_hp(t_train, dx_train, Θx, ξ)
             hp[i] = 1e-10 
         end 
     end 
-
-    println( "hp opt = ", hp ) 
 
     return hp 
 end 
