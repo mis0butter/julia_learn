@@ -13,7 +13,7 @@ using GaussianSINDy
 noise_vec = 0 
 
 # case: 0 = true, 1 = noise, 2 = standardize true, 3 = standardize noisy, 4 = SMOOTH measurements --> gpsindy 
-case = 0 
+case = 2 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           

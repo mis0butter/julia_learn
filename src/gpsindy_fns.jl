@@ -186,8 +186,6 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            # Ξ_gpsindy  = Ξ_sindy 
-            # hist_nvars = [] 
 
         # use noisy data  
         elseif case == 1 
