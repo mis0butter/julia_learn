@@ -319,18 +319,49 @@ function post_dist_M32I( x_train, x_test, y_train )
     kern      = Mat32Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
+    n_vars = size(y_train, 2) 
     
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = gp.kernel.ℓ   
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    if n_vars > 1 
 
-    return μ, σ², hp 
+        # loop through states 
+        y_smooth = zeros( length(x_test), size(y_train, 2) ) 
+        Σ        = 0 * y_smooth 
+        hps      = [] 
+        for i = 1:n_vars 
+
+            # fit GP 
+            gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+            optimize!(gp) 
+            μ, σ²   = predict_y( gp, x_test )  
+            
+            # return HPs 
+            σ_f = sqrt( gp.kernel.σ2 ) 
+            l   = gp.kernel.ℓ   
+            σ_n = exp( gp.logNoise.value )  
+            hp  = [σ_f, l, σ_n]   
+        
+            y_smooth[:,i] = μ 
+            Σ[:,i]        = σ²
+            push!( hps, hp ) 
+        
+        end 
+
+    else 
+
+        # fit GP 
+        gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+        optimize!(gp) 
+        y_smooth, Σ = predict_y( gp, x_test )    
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) 
+        l   = gp.kernel.ℓ   
+        σ_n = exp( gp.logNoise.value )  
+        hps  = [σ_f, l, σ_n] 
+
+    end 
+
+    return y_smooth, Σ, hps 
 end 
 
 

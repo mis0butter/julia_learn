@@ -72,7 +72,7 @@ function ode_states(fn, plot_option, fd_method)
     # derivatives 
     dx_fd   = fdiff(t, x, fd_method)    # finite difference 
     dx_true = dx_true_fn(t, x, p, fn)   # true derivatives 
-    dx_tv   = dx_tv_fn(x)               # variational derivatives 
+    # dx_tv   = dx_tv_fn(x)               # variational derivatives 
     # dx_gp   = dx_gp_fn(t, dx_fd)        # gaussian process derivatives 
 
     # error 
@@ -83,7 +83,7 @@ function ode_states(fn, plot_option, fd_method)
         plot_deriv(t, dx_true, dx_fd, dx_tv, str) 
     end 
 
-    return x0, dt, t, x, dx_true, dx_fd, dx_tv, p 
+    return x0, dt, t, x, dx_true, dx_fd, p 
 
 end 
 

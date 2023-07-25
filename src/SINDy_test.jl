@@ -108,20 +108,20 @@ function pool_data_test(xmat, n_vars, poly_order)
 
     # # fill out 1st column of Θx with ones (poly order = 0) 
     ind = 1 ; 
-    # Θx  = ones(l, ind) 
+    Θx  = ones(l, ind) 
 
-    # # poly order 1 
-    # for i = 1 : n_vars 
-    #     ind += 1 
-    #     Θx   = [ Θx xmat[:,i] ]
-    # end 
+    # poly order 1 
+    for i = 1 : n_vars 
+        ind += 1 
+        Θx   = [ Θx xmat[:,i] ]
+    end 
     # Θx = xmat[:,1]
     # Θx = Θx[:,:] 
-    Θx = [ xmat[:,1] xmat[:,2] ]
+    # Θx = [ xmat[:,1] xmat[:,2] ]
 
-    ind += 1 
-    vec  = xmat[:,1] .* xmat[:,2]
-    Θx   = [ Θx vec[:,:] ]
+    # ind += 1 
+    # vec  = xmat[:,1] .* xmat[:,2]
+    # Θx   = [ Θx vec[:,:] ]
 
     # poly order 2 
     if poly_order >= 2 
@@ -182,9 +182,9 @@ function pool_data_vecfn_test(n_vars, poly_order)
     # initialize empty vector of functions 
     Θ = Vector{Function}(undef,0) 
 
-    # # fil out 1st column of Θ with ones (poly order = 0) 
-    # ind  = 1 
-    # push!(Θ, x -> 1) 
+    # fil out 1st column of Θ with ones (poly order = 0) 
+    ind  = 1 
+    push!(Θ, x -> 1) 
 
     # poly order 1 
     for i = 1 : n_vars 
@@ -194,8 +194,8 @@ function pool_data_vecfn_test(n_vars, poly_order)
 
     end 
 
-    ind += 1 
-    push!( Θ, x[1] .* x[2] )
+    # ind += 1 
+    # push!( Θ, x[1] .* x[2] )
 
     # poly order 2 
     if poly_order >= 2 

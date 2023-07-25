@@ -90,23 +90,41 @@ display(plt)
 
 ## ============================================ ## 
 
-for i = 1:3 
-    if hp[i] == 0 
-        hp[i] = 1e-5 
-    end 
-end 
+# choose ODE, plot states --> measurements 
+fn = predator_prey 
+x0, dt, t, x, dx_true, dx_fd = ode_states(fn, 0, 2) 
+
+dx_noise = 0.2 
+
+dx_stand = stand_data(t, dx_true) 
+dx_noise = dx_stand + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
+
+x_train = t 
+x_test  = collect( t[1] : 0.1 : t[end] ) 
+# x_test  = x_train 
+y_train = dx_noise
 
 # kernel  
 mZero     = MeanZero() ;            # zero mean function 
-kern      = SE( log(hp[2]), log(hp[1]) ) ;        # squared eponential kernel (hyperparams on log scale) 
-log_noise = log(hp[3]) ;              # (optional) log std dev of obs noise 
+kern      = Mat32Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-# fit GP 
-# y_train = dx_train - Θx*ξ   
-t_train = t 
-y_train = dx_noise[:,1]
-gp      = GP(t_train, y_train, mZero, kern, log_noise) 
+n_vars = size(x, 2) 
+    
+# loop through states 
+y_smooth = zeros( length(x_test), size(y_train, 2) ) 
+Σ        = 0 * y_smooth 
+for i = 1:n_vars 
 
-μ_opt, σ²_opt = predict_y( gp, x_test )
-scatter!( x_test, μ_opt, ms = 2 )
+    # fit GP 
+    gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+    optimize!(gp) 
+    μ, σ²   = predict_y( gp, x_test )    
+
+    y_smooth[:,i] = μ 
+    Σ[:,i]        = σ²
+
+end 
+
+y_test, Σ_test, hp_test = post_dist_M32I( x_train, x_test, y_train ) 
 
