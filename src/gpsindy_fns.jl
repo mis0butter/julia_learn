@@ -180,8 +180,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
         # use true data 
         if case == 0 
 
-            x_noise  = x_true 
-            dx_noise = dx_true 
+            # set noise = true 
+            x_noise  = x_true ; dx_noise = dx_true 
             
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
@@ -198,19 +198,14 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-
-            plot!( t, Θx * Ξ_sindy[:,2], ls = :dash, label = "SINDy", c = :red ) 
     
         # use standardized true data 
         elseif case == 2 
 
-            x_stand  = stand_data( t, x_true ) 
-            dx_stand = dx_true_fn( t, x_stand, p, fn ) 
-            # dx_stand = fdiff(t, x_stand, 2) 
-            # dx_stand = stand_data( t, dx_true )
-
-            x_noise  = x_stand 
-            dx_noise = dx_stand 
+            # set noise = standardized 
+            x_true  = stand_data( t, x_true ) 
+            dx_true = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true ; dx_noise = x_true  
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
@@ -221,140 +216,46 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             # add noise 
             println( "noise = ", noise ) 
+            x_true  = stand_data( t, x_true ) 
+            dx_true = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-            x_stand  = stand_data( t, x_true ) 
-            dx_stand = stand_data( t, dx_true ) 
-
-            x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) )
-            # dx_noise = fdiff(t, x_noise, 2) 
-            dx_noise = dx_stand + noise*randn( size(dx_true, 1), size(dx_true, 2) )
-
-            # standardize true data 
-            x_stand_true  = stand_data( t, x_stand ) 
-            dx_stand_true = stand_data( t, dx_stand ) 
-
-            Ξ_true  = SINDy_test( x_stand_true, dx_stand_true, λ ) 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
-
-            i = 1 
-            plt = plot( t, x_stand_true[:,i], label = "true", c = :blue )
-            scatter!( plt, t, x_noise[:,i], label = "train (noise)", c = :black, ms = 3 )
-            plot!( plt, legend = :outerright, size = [800 300], title = ( "x true, noise" ), xlabel = "Time (s)" ) 
-            display(plt) 
-
-            # ----------------------- #
-            # gpsindy 
-
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            
-            n_vars = size(x_true, 2) 
-            plt_nvars = [] 
-            for i = 1 : n_vars 
-                plt = scatter( t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
-                plot!( plt, t, Θx * Ξ_sindy[:,i], label = "SINDy" )   
-                plot!( plt, t, Θx * Ξ_gpsindy[:,i], label = "GPSINDy", ls = :dash )   
-                plot!( plt, legend = :outerright, size = [800 300], title = string( "Fitting ξ", i ), xlabel = "Time (s)" ) 
-                push!( plt_nvars, plt ) 
-            end 
-            plt_nvars = plot( plt_nvars ... , 
-                layout = (2,1), 
-                size   = [800 600] 
-                ) 
-            display(plt_nvars) 
 
         # standardize and just use GP to smooth states 
         elseif case == 4 
             
             # add noise 
             println( "noise = ", noise ) 
+            x_true  = stand_data( t, x_true ) 
+            dx_true = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-            x_stand  = stand_data( t, x_true ) 
-            dx_stand = stand_data( t, dx_true ) 
-
-            x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) )
-            # dx_noise = fdiff(t, x_noise, 2) 
-            dx_noise = dx_stand + noise*randn( size(dx_true, 1), size(dx_true, 2) )
-
-            # standardize true data 
-            x_stand_true  = stand_data( t, x_stand ) 
-            dx_stand_true = stand_data( t, dx_stand ) 
-
-            Ξ_true   = SINDy_test( x_stand_true, dx_stand_true, λ ) 
             Θx_sindy = pool_data_test(x_noise, n_vars, poly_order) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
 
             # I guess .... let's try this again
-            t_test = collect( t[1] : 0.1 : t[end] )  
+            t_test = collect( t[1] : 0.01 : t[end] )  
+            # t_test = t 
             x_GP,  Σ_test, hp_test = post_dist_M32I( t, t_test, x_noise ) 
             dx_GP, Σ_test, hp_test = post_dist_M32I( t, t_test, dx_noise ) 
 
             Θx      = pool_data_test(x_GP, n_vars, poly_order) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t_test, dx_GP, Θx, λ, α, ρ, abstol, reltol )  
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ )
             hist_nvars = []  
 
-            plt_nvars = [] 
-            for i = 1:n_vars 
-                plt = plot( t, dx_stand_true[:,i], label = "true", legend = :outerright, title = string( "dx", i ), c = :black, xlabel = "Time (s)"  ) 
-                scatter!( plt, t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 )
-                plot!( plt, t, Θx_sindy * Ξ_sindy[:,i], label = "SINDy", c = :red, ls = :dash )  
-                plot!( plt, t_test, Θx * Ξ_gpsindy[:,i], label = "SINDy w/ GP", ls = :dashdot, c = :cyan )  
-                push!( plt_nvars, plt ) 
-            end 
-            plt_nvars = plot( plt_nvars ... , 
-                layout = (2,1), 
-                size   = [800 600]
-            ) 
-            display(plt_nvars) 
+        end 
 
-        # standardize and use GP to smooth states --> GPsindy 
-        elseif case == 5 
-            
-            # add noise 
-            println( "noise = ", noise ) 
-
-            x_stand  = stand_data( t, x_true ) 
-            dx_stand = stand_data( t, dx_true ) 
-
-            x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) )
-            # dx_noise = fdiff(t, x_noise, 2) 
-            dx_noise = dx_stand + noise*randn( size(dx_true, 1), size(dx_true, 2) )
-
-            # standardize true data 
-            x_stand_true  = stand_data( t, x_stand ) 
-            dx_stand_true = stand_data( t, dx_stand ) 
-
-            Ξ_true   = SINDy_test( x_stand_true, dx_stand_true, λ ) 
-            Θx_sindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
-
-            # I guess .... let's try this again
-            t_test = collect( t[1] : 0.1 : t[end] )  
-            x_GP,  Σ_test, hp_test = post_dist_M32I( t, t_test, x_noise ) 
-            dx_GP, Σ_test, hp_test = post_dist_M32I( t, t_test, dx_noise ) 
-
-            Θx      = pool_data_test(x_GP, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t_test, dx_GP, Θx, λ, α, ρ, abstol, reltol )  
-
-            plt_nvars = [] 
-            for i = 1:n_vars 
-                plt = plot( t, dx_stand_true[:,i], label = "true", legend = :outerright, title = string( "dx", i ), c = :black, xlabel = "Time (s)"  ) 
-                scatter!( plt, t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 )
-                plot!( plt, t, Θx_sindy * Ξ_sindy[:,i], label = "SINDy", c = :red, ls = :dash )  
-                plot!( plt, t_test, Θx * Ξ_gpsindy[:,i], label = "GPSINDy w/ GP", ls = :dashdot, c = :cyan )  
-                push!( plt_nvars, plt ) 
-            end 
-            plt_nvars = plot( plt_nvars ... , 
-                layout = (2,1), 
-                size   = [800 600]
-            ) 
-            display(plt_nvars) 
-
+        # plot 
+        if case < 4 
+            plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx, Ξ_sindy, Ξ_gpsindy ) 
         end 
 
         # metrics & diagnostics 
-        # sindy_err_vec, gpsindy_err_vec = l2_metric( n_vars, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
         Ξ_sindy_err, Ξ_gpsindy_err = l2_metric( n_vars, dx_noise, Θx, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
         push!( sindy_vec, Ξ_sindy ) 
         push!( gpsindy_vec, Ξ_gpsindy ) 

@@ -14,13 +14,13 @@ function boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
     for i = 1:2
         ymin, dy, ymax = min_d_max([ sindy_err_vec[:,i] ; gpsindy_err_vec[:,i] ]) 
         p_ξ = scatter( noise_vec, sindy_err_vec[:,i], shape = :circle, ms = 2, c = :blue, label = "SINDy" )
-            boxplot!( p_ξ, noise_vec, sindy_err_vec[:,i], bar_width = 0.08, lw = 1, fillalpha = 0.2, c = :blue, linealpha = 0.5 )
+            boxplot!( p_ξ, noise_vec, sindy_err_vec[:,i], bar_width = 0.04, lw = 1, fillalpha = 0.2, c = :blue, linealpha = 0.5 )
             scatter!( p_ξ, noise_vec, gpsindy_err_vec[:,i], shape = :xcross, c = :red, label = "GPSINDy" )
-            boxplot!( p_ξ, noise_vec, gpsindy_err_vec[:,i], bar_width = 0.04, lw = 1, fillalpha = 0.2, c = :red, linealpha = 0.5 ) 
+            boxplot!( p_ξ, noise_vec, gpsindy_err_vec[:,i], bar_width = 0.02, lw = 1, fillalpha = 0.2, c = :red, linealpha = 0.5 ) 
             scatter!( p_ξ, 
                 legend = false, 
                 xlabel = "noise", 
-                title  = string( "|ξ", i, "_true - ξ", i, "_discovered|" ), 
+                title  = string( "||ξ", i, "_true - ξ", i, "_discovered||" ), 
                 xticks = xmin : dx : xmax, 
                 # yticks = ymin : dy : ymax, 
                 ) 
@@ -282,4 +282,29 @@ function plot_dyn(t, x, str)
 
     return plot_x 
 
+end 
+
+
+## ============================================ ##
+
+export plot_dx_sindy_gpsindy
+function plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx, Ξ_sindy, Ξ_gpsindy ) 
+            
+    n_vars = size(dx_true, 2) 
+    plt_nvars = [] 
+    for i = 1 : n_vars 
+        plt = plot( t, dx_true[:,i], label = "true", c = :black ) 
+        scatter!( plt, t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
+        plot!( plt, t, Θx * Ξ_sindy[:,i], label = "SINDy", c = :red )   
+        plot!( plt, t, Θx * Ξ_gpsindy[:,i], label = "GPSINDy", ls = :dash, c = :cyan )   
+        plot!( plt, legend = :outerright, size = [800 300], title = string( "Fitting ξ", i ), xlabel = "Time (s)" ) 
+        push!( plt_nvars, plt ) 
+    end 
+    plt_nvars = plot( plt_nvars ... , 
+        layout = (2,1), 
+        size   = [800 600] 
+        ) 
+    display(plt_nvars) 
+
+    return plt_nvars 
 end 

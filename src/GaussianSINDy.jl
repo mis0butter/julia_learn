@@ -23,7 +23,8 @@ include("init_params.jl")
 
 include("SINDy_test.jl")
 include("opt_fns.jl") 
-include("gpsindy_fns.jl")
+include("gpsindy_fns.jl") 
+include("plot_fns.jl")
 
 ## ============================================ ##
 

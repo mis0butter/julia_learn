@@ -205,18 +205,29 @@ function post_dist_SE( x_train, x_test, y_train )
     kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
+    
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt.( gp.kernel.ℓ2 )  
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
 
-    return μ, σ², hp 
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps      
 end 
 
 export post_dist_M12A
@@ -227,18 +238,28 @@ function post_dist_M12A( x_train, x_test, y_train )
     kern      = Mat12Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
-    
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt.( gp.kernel.iℓ2[1] )  
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.iℓ2[1] ) ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps  
 end 
 
 
@@ -250,18 +271,28 @@ function post_dist_M32A( x_train, x_test, y_train )
     kern      = Mat32Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
-    
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt.( gp.kernel.iℓ2[1] )  
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.iℓ2[1] ) ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+        
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps  
 end 
 
 
@@ -273,18 +304,28 @@ function post_dist_M52A( x_train, x_test, y_train )
     kern      = Mat52Ard( [0.0], 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
-    
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt.( gp.kernel.iℓ2[1] )  
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.iℓ2[1] ) ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps  
 end 
 
 
@@ -295,19 +336,29 @@ function post_dist_M12I( x_train, x_test, y_train )
     mZero     = MeanZero() ;            # zero mean function 
     kern      = Mat12Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
-
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
     
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = gp.kernel.ℓ   
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = gp.kernel.ℓ ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps 
 end 
 
 
@@ -319,46 +370,25 @@ function post_dist_M32I( x_train, x_test, y_train )
     kern      = Mat32Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    n_vars = size(y_train, 2) 
-    
-    if n_vars > 1 
-
-        # loop through states 
-        y_smooth = zeros( length(x_test), size(y_train, 2) ) 
-        Σ        = 0 * y_smooth 
-        hps      = [] 
-        for i = 1:n_vars 
-
-            # fit GP 
-            gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
-            optimize!(gp) 
-            μ, σ²   = predict_y( gp, x_test )  
-            
-            # return HPs 
-            σ_f = sqrt( gp.kernel.σ2 ) 
-            l   = gp.kernel.ℓ   
-            σ_n = exp( gp.logNoise.value )  
-            hp  = [σ_f, l, σ_n]   
-        
-            y_smooth[:,i] = μ 
-            Σ[:,i]        = σ²
-            push!( hps, hp ) 
-        
-        end 
-
-    else 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
         # fit GP 
-        gp      = GP(x_train, y_train, mZero, kern, log_noise) 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
         optimize!(gp) 
-        y_smooth, Σ = predict_y( gp, x_test )    
+        μ, σ²   = predict_y( gp, x_test )  
         
         # return HPs 
-        σ_f = sqrt( gp.kernel.σ2 ) 
-        l   = gp.kernel.ℓ   
-        σ_n = exp( gp.logNoise.value )  
-        hps  = [σ_f, l, σ_n] 
-
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = gp.kernel.ℓ ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n]   
+    
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
     end 
 
     return y_smooth, Σ, hps 
@@ -373,18 +403,28 @@ function post_dist_M52I( x_train, x_test, y_train )
     kern      = Mat52Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
-    
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = gp.kernel.ℓ   
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = gp.kernel.ℓ ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n]   
+    
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps 
 end 
 
 
@@ -396,16 +436,26 @@ function post_dist_per( x_train, x_test, y_train )
     kern      = Periodic( 0.0, 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
-    # fit GP 
-    gp      = GP(x_train, y_train, mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
-    
-    # return HPs 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt( gp.kernel.ℓ2 )   
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    n_vars   = size(y_train, 2) 
+    y_smooth = zeros( length(x_test), n_vars ) 
+    Σ        = 0 * y_smooth 
+    hps      = [] 
+    for i = 1:n_vars 
 
-    return μ, σ², hp 
+        # fit GP 
+        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        optimize!(gp) 
+        μ, σ²   = predict_y( gp, x_test )  
+        
+        # return HPs 
+        σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
+        hp  = [σ_f, l, σ_n] 
+    
+        y_smooth[:,i] = μ 
+        Σ[:,i]        = σ²
+        push!( hps, hp ) 
+    
+    end 
+
+    return y_smooth, Σ, hps 
 end 

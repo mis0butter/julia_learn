@@ -24,9 +24,9 @@ y_train = dx_noise
 
 function def_plt(t, dx_stand, y_train)   
 
-    plt = plot( t, dx_stand, label = "true", c = :black, title = "Gaussian Process (opt HPs)" ) 
-    scatter!( plt, t, y_train, label = "train (noise)", c = :red, ms = 3 ) 
-    plot!( plt, legend = :outerright, size = [800 300], ylim = ( -5, 5 ) ) 
+    plt  = plot( title = "Gaussian Process (opt HPs)", legend = :outerright, size = [800 300], ylim = ( -5, 5 ) ) 
+    plot!( plt, t, dx_stand, label = "true", c = :black ) 
+    scatter!( plt, t, y_train, label = "train (noise)", c = :black, ms = 3 ) 
 
     return plt 
 end 
@@ -74,10 +74,10 @@ frame(a, plt)
     plot!( plt, x_test, μ_M52I, label = "M52I", ls = :dashdot, ribbon = ( μ_M52I - Σ_M52I, μ_M52I + Σ_M52I )  ) 
 frame(a, plt) 
 
-μ_per, Σ_per, hp = post_dist_per( x_train, x_test, y_train ) 
-    plt = def_plt( t, dx_stand, y_train ) 
-    plot!( plt, x_test, μ_per, label = "Per", ls = :dashdot, ribbon = ( μ_per - Σ_per, μ_per + Σ_per )  ) 
-frame(a, plt) 
+# μ_per, Σ_per, hp = post_dist_per( x_train, x_test, y_train ) 
+#     plt = def_plt( t, dx_stand, y_train ) 
+#     plot!( plt, x_test, μ_per, label = "Per", ls = :dashdot, ribbon = ( μ_per - Σ_per, μ_per + Σ_per )  ) 
+# frame(a, plt) 
 # println( "dx_true - μ_M52I = ", norm( dx_true - μ_M52I ) ) 
 
 # μ_post, Σ_post, hp_post = post_dist_hp_opt( x_train, y_train, x_test )
