@@ -241,8 +241,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             # I guess .... let's try this again
             t_test = collect( t[1] : 0.01 : t[end] )  
             # t_test = t 
-            x_GP,  Σ_test, hp_test = post_dist_M32I( t, t_test, x_noise ) 
-            dx_GP, Σ_test, hp_test = post_dist_M32I( t, t_test, dx_noise ) 
+            x_GP,  Σ_test, hp_test = post_dist_M52I( t, t_test, x_noise ) 
+            dx_GP, Σ_test, hp_test = post_dist_M52I( t, t_test, dx_noise ) 
 
             Θx      = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ )

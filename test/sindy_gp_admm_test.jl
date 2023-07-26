@@ -28,7 +28,7 @@ println( "case = ", case )
 # ----------------------- #
 # plot 
 
-p_Ξ = boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
+boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
 
 
 

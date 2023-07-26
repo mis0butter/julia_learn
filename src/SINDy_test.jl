@@ -24,6 +24,7 @@ export SINDy_c_test
 function SINDy_c_test( x, u, dx, λ )
 
     n_vars = size( [x u], 2 )
+    x_vars = size(x, 2)
     u_vars = size(u, 2) 
     poly_order = n_vars 
 
@@ -31,7 +32,7 @@ function SINDy_c_test( x, u, dx, λ )
     Θx = pool_data_test( [x u], n_vars, poly_order) 
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics_test( Θx, dx, λ, n_vars-u_vars ) 
+    Ξ = sparsify_dynamics_test( Θx, dx, λ, x_vars ) 
 
     return Ξ
 
