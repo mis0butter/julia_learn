@@ -183,11 +183,6 @@ function opt_ξ( aug_L, ξ, z, u, hp )
 # ----------------------- #
 
     # ξ-update 
-    println( "ξ = ", ξ )
-    println( "z = ", z )
-    println( "u = ", u ) 
-    println( "hp = ", hp )  
-    println( "aug_L = ", aug_L(ξ, hp, z, u) ) 
 
     # optimization 
     f_opt(ξ) = aug_L(ξ, hp, z, u) 

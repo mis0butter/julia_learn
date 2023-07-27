@@ -116,13 +116,15 @@ for j = 1 : n_vars
     hp = [1.0, 1.0, 0.1] 
     ξ  = opt_ξ( aug_L, ξ, z, u, hp ) 
     # hp = opt_hp(t, dx, Θx, ξ) 
-    # dx_GP, Σ_dxsmooth, hp = post_dist_SE( x, x, dx )  
-    # println( "hp = ", hp ) 
+    dx_GP, Σ_dxsmooth, hp = post_dist_SE( x, x, dx )  
+    println( "hp = ", hp ) 
 
     hist = Hist( [], [], [], [], [], [], [], [] )  
 
     # loop until convergence or max iter 
     for k = 1 : 1000  
+        
+        println( "ADMM LOOP: size x = ", size(x) ) 
 
         # ADMM LASSO! 
         z_old = z 
@@ -204,7 +206,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # use noisy data  
@@ -218,7 +220,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
     
         # use standardized true data 
@@ -232,7 +234,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # use standardized noisy data 
@@ -248,7 +250,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # standardize true x, finite difference dx 
@@ -263,7 +265,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy   = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy    = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # standardize and just use GP to smooth states (TEMPORAL) 
@@ -286,7 +288,6 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             dx_GP, Σ_test, hp_test = post_dist_SE( t, t_test, dx_noise ) 
 
             Θx_gpsindy = pool_data_test( x_GP, n_vars, poly_order ) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
 
         # standardize --> smooth states into SINDy w/ GP (NON-temporal)  
@@ -327,7 +328,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
             
             Θx_gpsindy          = pool_data_test(x_GP, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, x_GP, λ, α, ρ, abstol, reltol )  
 
         end 
 
