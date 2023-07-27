@@ -2,18 +2,18 @@ using GaussianSINDy
 
 ## ============================================ ##
 
-noise_vec = [] 
-noise_vec_iter = 0.1 : 0.1 : 0.3 
-for i in noise_vec_iter 
-    for j = 1:10 
-        push!(noise_vec, i)
-    end 
-end 
+# noise_vec = [] 
+# noise_vec_iter = 0.1 : 0.1 : 0.3 
+# for i in noise_vec_iter 
+#     for j = 1:10 
+#         push!(noise_vec, i)
+#     end 
+# end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-# noise_vec = 0.3  
+noise_vec = 0.2 
 
 # case: 0 = true, 1 = finite difference, 2 = noise, 3 = standardize true, 4 = standardize noisy, 5 =  standardize and just use GP to smooth states 
-case = 7 
+case = 8 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           

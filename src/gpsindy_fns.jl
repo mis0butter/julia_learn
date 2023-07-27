@@ -209,8 +209,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
     
         # use standardized true data 
         elseif case == 3 
@@ -222,8 +222,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # use standardized noisy data 
         elseif case == 4 
@@ -237,8 +237,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
             Θx      = pool_data_test(x_noise, n_vars, poly_order) 
-            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-            Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
 
         # standardize true x, finite difference dx 
         elseif case == 5 
@@ -278,35 +278,47 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
             Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ ) 
 
-            # new dx 
-            # dx_new = Θx * Ξ_gpsindy 
+        # standardize --> smooth states w/ GP (NON-temporal)  
+        elseif case == 7 
+            
+            # add noise 
+            println( "noise = ", noise ) 
+            x_true  = stand_data( t, x_true ) 
+            dx_true = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-            # combine dx_noise and dx_new 
-            # dx_combine = ... ? 
+            Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
+            Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
 
-            # dx_GP2 = post_dist_M52I( t, t_test, dx_new ) 
-            # Ξ_gpsindy2 = SINDy_test( x_GP, dx_GP2, λ ) 
+            # I guess .... let's try this again
+            x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
+            dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+            
+            Θx      = pool_data_test(x_GP, n_vars, poly_order) 
+            # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ ) 
 
-            # standardize --> smooth states w/ GP (NON-temporal)  
-            elseif case == 7 
-                
-                # add noise 
-                println( "noise = ", noise ) 
-                x_true  = stand_data( t, x_true ) 
-                dx_true = dx_true_fn( t, x_true, p, fn ) 
-                x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
-                dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
-    
-                Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
-                Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
-    
-                # I guess .... let's try this again
-                x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
-                dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
-                
-                Θx      = pool_data_test(x_GP, n_vars, poly_order) 
-                # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
-                Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ ) 
+        # standardize --> smooth states w/ GP (NON-temporal) --> GPSINDy 
+        elseif case == 8 
+            
+            # add noise 
+            println( "noise = ", noise ) 
+            x_true  = stand_data( t, x_true ) 
+            dx_true = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+
+            Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
+            Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
+
+            # I guess .... let's try this again
+            x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
+            dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+            
+            Θx      = pool_data_test(x_GP, n_vars, poly_order) 
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, Θx, λ, α, ρ, abstol, reltol )  
+            # Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ ) 
 
         end 
 

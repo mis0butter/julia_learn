@@ -21,6 +21,15 @@ David: (4)
 - (tangential) try SINDy with soft thresholding 
 - create pull request, merge into main 
 
+            # new dx 
+            # dx_new = Θx * Ξ_gpsindy 
+
+            # combine dx_noise and dx_new 
+            # dx_combine = ... ? 
+
+            # dx_GP2 = post_dist_M52I( t, t_test, dx_new ) 
+            # Ξ_gpsindy2 = SINDy_test( x_GP, dx_GP2, λ ) 
+
 Adam: (1) --> GPs 
 - standardize x, add noise --> GP --> derivative of GP 
 - set up kernel to be function of x 
