@@ -123,8 +123,6 @@ for j = 1 : n_vars
 
     # loop until convergence or max iter 
     for k = 1 : 1000  
-        
-        println( "ADMM LOOP: size x = ", size(x) ) 
 
         # ADMM LASSO! 
         z_old = z 
@@ -333,9 +331,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
         end 
 
         # plot 
-        # if case < 6 
         plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx_sindy, Ξ_sindy, Θx_gpsindy, Ξ_gpsindy ) 
-        # end 
 
         # metrics & diagnostics 
         Ξ_sindy_err, Ξ_gpsindy_err = l2_metric( n_vars, dx_noise, Θx_gpsindy, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )

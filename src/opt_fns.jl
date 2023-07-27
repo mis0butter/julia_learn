@@ -106,25 +106,11 @@ function f_obj( t, (σ_f, l, σ_n), dx, ξ, x )
     # x       = LU_inv(A, b) 
     # objval  = 1/2*( dx - Θx*ξ )'*x
 
-    println( "size x = ", size(x) ) 
     n_vars = size(x, 2) ; poly_order = n_vars 
-
-    println( "n_vars = ", n_vars ) 
-    println( "poly_order = ", poly_order ) 
-
     Θx     = pool_data_test( x, n_vars, poly_order ) 
-
-    println( "Θx = ", size(Θx) ) 
-    println( "size x = ", size(x) ) 
-
     y_train = dx - Θx*ξ
     # objval  = 1/2*( y_train )'*inv( Ky )*( y_train ) 
     objval  = 1/2*( y_train )' * ( Ky \ y_train ) 
-
-    println( "size y_train = ", size(y_train) ) 
-    println( "size dx = ", size(dx) ) 
-    println( "size x = ", size(x) ) 
-    println( "size(Ky) = ", size(Ky) ) 
 
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 
@@ -183,12 +169,7 @@ function opt_ξ( aug_L, ξ, z, u, hp )
 # ----------------------- #
 
     # ξ-update 
-
-    # optimization 
     f_opt(ξ) = aug_L(ξ, hp, z, u) 
-
-    println( "f_opt(0) = ", f_opt( zeros(8) ) )
-
     od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
     result   = optimize( od, ξ, LBFGS() ) 
     ξ        = result.minimizer 
