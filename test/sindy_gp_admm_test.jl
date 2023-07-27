@@ -10,10 +10,20 @@ using GaussianSINDy
 #     end 
 # end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-noise_vec = 0.2 
+noise_vec = 0.1 
 
-# case: 0 = true, 1 = finite difference, 2 = noise, 3 = standardize true, 4 = standardize noisy, 5 =  standardize and just use GP to smooth states 
-case = 1 
+# ----------------------- #
+# cases: 
+# 0 = true, 
+# 1 = finite difference, 
+# 2 = noise, 
+# 3 = stand x_true --> dx_true, 
+# 4 = stand x_true --> dx_true, add noise, 
+# 5 = stand x_true, dx_fd, 
+# 6 = stand x_true --> dx_true, add noise, GP temporal smooth into SINDy, 
+# 7 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into SINDy, 
+# 8 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into GPSINDy
+case = 0 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           

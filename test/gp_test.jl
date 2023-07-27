@@ -5,7 +5,7 @@ using Optim
 
 # choose ODE, plot states --> measurements 
 fn = predator_prey 
-x0, dt, t, x_true, dx_true, dx_fd = ode_states(fn, 0, 2) 
+x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
 
 noise = 0.2 
 

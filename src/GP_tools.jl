@@ -205,6 +205,10 @@ function post_dist_SE( x_train, x_test, y_train )
     
     end 
 
+    if n_vars == 1 
+        hps = hps[1] 
+    end 
+
     return y_smooth, Σ, hps      
 end 
 

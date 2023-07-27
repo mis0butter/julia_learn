@@ -7,15 +7,16 @@ using Plots
 ## ============================================ ##
 
 export admm_lasso 
-function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist ) 
+function admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist ) 
 # ----------------------- #
 # PURPOSE: 
 #       Run one iteration of ADMM LASSO 
 # INPUTS: 
-#       t           : training data ordinates ( x ) 
+#       t           : training data ordinates time  
 #       dx          : training data ( f(x) )
-#       Θx          : function library (candidate dynamics) 
+#       x           : training data ( x ) 
 #       (ξ, z, u)   : dynamics coefficients primary and dual vars 
+#       hp          : hyperparameters 
 #       λ           : L1 norm threshold  
 #       α           : relaxation parameter 
 #       ρ           : idk what this does, but Boyd sets it to 1 
@@ -32,11 +33,14 @@ function admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )
 #       plt         : plot for checking performance of coefficients 
 # ----------------------- #
 
+    n_vars = size(x, 2) ; poly_order = n_vars 
+    Θx     = pool_data_test( x, n_vars, poly_order ) 
+
     # objective fns 
-    f_hp, g, aug_L = obj_fns( t, dx, Θx, λ, ρ )
+    f_hp, g, aug_L = obj_fns( t, dx, x, λ, ρ )
 
     # hp-update (optimization) 
-    hp = opt_hp(t, dx, Θx, ξ) 
+    # hp = opt_hp(t, dx, Θx, ξ) 
     # hp = post_dist_M52I( t, dx - Θx*ξ ) 
 
     # ξ-update 
@@ -73,14 +77,14 @@ end
 ## ============================================ ##
 
 export gpsindy 
-function gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol ) 
+function gpsindy( t, dx_train, x, λ, α, ρ, abstol, reltol ) 
 # ----------------------- # 
 # PURPOSE: 
 #       Main gpsindy function (iterate j = 1 : n_vars) 
 # INPUTS: 
 #       t       : training data ordinates ( x ) 
 #       dx      : training data ( f(x) )
-#       Θx      : function library (candidate dynamics) 
+#       x       : training data ( x )  
 #       λ       : L1 norm threshold  
 #       α       : relaxation parameter 
 #       ρ       : idk what this does, but Boyd sets it to 1 
@@ -92,14 +96,13 @@ function gpsindy( t, dx_fd, Θx, λ, α, ρ, abstol, reltol )
 # ----------------------- # 
 
 # set up 
-Ξ = zeros( size(Θx, 2), size(dx_fd, 2) ) 
+n_vars = size(dx_train, 2) ; poly_order = n_vars 
+Θx     = pool_data_test( x, n_vars, poly_order ) 
+Ξ      = zeros( size(Θx, 2), size(dx_train, 2) ) 
 hist_nvars = [] 
-
-# loop with state j
-n_vars = size(dx_fd, 2) 
 for j = 1 : n_vars 
 
-    dx = dx_fd[:,j] 
+    dx = dx_train[:,j] 
     
     # start animation 
     a = Animation() 
@@ -109,9 +112,12 @@ for j = 1 : n_vars
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
-    f_hp, g, aug_L = obj_fns( t, dx, Θx, λ, ρ )
-    ξ  = opt_ξ( aug_L, ξ, z, u, log.( [1.0, 1.0, 0.1] ) ) 
+    f_hp, g, aug_L = obj_fns( t, dx, x, λ, ρ )
+    hp = [1.0, 1.0, 0.1] 
+    ξ  = opt_ξ( aug_L, ξ, z, u, hp ) 
     # hp = opt_hp(t, dx, Θx, ξ) 
+    # dx_GP, Σ_dxsmooth, hp = post_dist_SE( x, x, dx )  
+    # println( "hp = ", hp ) 
 
     hist = Hist( [], [], [], [], [], [], [], [] )  
 
@@ -120,7 +126,7 @@ for j = 1 : n_vars
 
         # ADMM LASSO! 
         z_old = z 
-        ξ, z, u, hp, hist, plt = admm_lasso( t, dx, Θx, (ξ, z, u), λ, α, ρ, abstol, reltol, hist )    
+        ξ, z, u, hp, hist, plt = admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist )    
         plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
         frame(a, plt) 
 
@@ -186,7 +192,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
             Θx_gpsindy = pool_data_test(x_noise, n_vars, poly_order) 
-            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx_gpsindy, λ, α, ρ, abstol, reltol )  
+            Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, x_noise, λ, α, ρ, abstol, reltol )  
             # Ξ_gpsindy = Ξ_sindy ; hist_nvars = [] 
     
         # use true x, finite difference dx 
@@ -297,8 +303,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
 
             # smooth measurements 
-            x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
-            dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+            x_GP, Σ_xsmooth, hp   = post_dist_SE( t, t, x_noise )  
+            dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
             
             Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 

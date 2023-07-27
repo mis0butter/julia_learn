@@ -158,6 +158,8 @@ function pool_data_test(xmat, n_vars, poly_order)
         vec   = sin.(xmat[:,i]) 
         Θx    = [Θx vec] 
     end 
+
+    println( "ind = ", ind ) 
     
     return Θx  
 

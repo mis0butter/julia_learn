@@ -67,7 +67,7 @@ end
 ## ============================================ ## 
 
 export f_obj 
-function f_obj( t, (σ_f, l, σ_n), dx, ξ, Θx )
+function f_obj( t, (σ_f, l, σ_n), dx, ξ, x )
 # ----------------------- #
 # PURPOSE: 
 #       Evaluate objective fn 
@@ -76,18 +76,27 @@ function f_obj( t, (σ_f, l, σ_n), dx, ξ, Θx )
 #       (σ_f, l, σ_n)   : hyperparameters 
 #       dx              : derivative data inputs 
 #       ξ               : dynamics coefficients 
-#       Θx              : function library of dynamics 
+#       x               : state data inputs  
 # OUTPUTS: 
 #       objval          : objective fn value 
 # ----------------------- #
 
+    # kernel is based off of STATES 
+    x_vec = [] 
+    for i = 1:size(x, 1) 
+            x_ind = [] 
+            for j = 1:size(x, 2) 
+                push!( x_ind, x[i,j] ) 
+            end 
+        push!( x_vec, [ x[i,1], x[i,2] ] ) 
+    end 
     # training kernel function 
-    Ky  = k_SE(σ_f, l, t, t) + σ_n^2 * I 
+    Ky  = k_SE(σ_f, l, x_vec, x_vec) + σ_n^2 * I 
     # Ky  = k_SE(σ_f, l, dx, dx) + (0.1 + σ_n^2) * I 
     # Ky  = k_periodic(σ_f, l, 1.0, dx, dx) + (0.1 + σ_n^2) * I 
 
     while det(Ky) == 0 
-        println( "det(Ky) = 0" )
+        # println( "det(Ky) = 0" )
         Ky += σ_n * I 
     end 
     
@@ -97,9 +106,25 @@ function f_obj( t, (σ_f, l, σ_n), dx, ξ, Θx )
     # x       = LU_inv(A, b) 
     # objval  = 1/2*( dx - Θx*ξ )'*x
 
+    println( "size x = ", size(x) ) 
+    n_vars = size(x, 2) ; poly_order = n_vars 
+
+    println( "n_vars = ", n_vars ) 
+    println( "poly_order = ", poly_order ) 
+
+    Θx     = pool_data_test( x, n_vars, poly_order ) 
+
+    println( "Θx = ", size(Θx) ) 
+    println( "size x = ", size(x) ) 
+
     y_train = dx - Θx*ξ
     # objval  = 1/2*( y_train )'*inv( Ky )*( y_train ) 
     objval  = 1/2*( y_train )' * ( Ky \ y_train ) 
+
+    println( "size y_train = ", size(y_train) ) 
+    println( "size dx = ", size(dx) ) 
+    println( "size x = ", size(x) ) 
+    println( "size(Ky) = ", size(Ky) ) 
 
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 
@@ -113,7 +138,7 @@ end
 ## ============================================ ##
 
 export obj_fns 
-function obj_fns( t, dx, Θx, λ, ρ )
+function obj_fns( t, dx, x, λ, ρ )
 # ----------------------- # 
 # PURPOSE: 
 #       Produce obj fns for SINDy-GP-ADMM 
@@ -129,7 +154,7 @@ function obj_fns( t, dx, Θx, λ, ρ )
 # ----------------------- # 
 
     # assign for f_hp_opt 
-    f(ξ, hp) = f_obj( t, hp, dx, ξ, Θx )
+    f(ξ, hp) = f_obj( t, hp, dx, ξ, x ) 
 
     # l1 norm 
     g(z) = λ * sum(abs.(z)) 
@@ -157,8 +182,18 @@ function opt_ξ( aug_L, ξ, z, u, hp )
 #       ξ       : output dynamics coefficient (ADMM primary variable x) 
 # ----------------------- #
 
+    # ξ-update 
+    println( "ξ = ", ξ )
+    println( "z = ", z )
+    println( "u = ", u ) 
+    println( "hp = ", hp )  
+    println( "aug_L = ", aug_L(ξ, hp, z, u) ) 
+
     # optimization 
     f_opt(ξ) = aug_L(ξ, hp, z, u) 
+
+    println( "f_opt(0) = ", f_opt( zeros(8) ) )
+
     od       = OnceDifferentiable( f_opt, ξ ; autodiff = :forward ) 
     result   = optimize( od, ξ, LBFGS() ) 
     ξ        = result.minimizer 
