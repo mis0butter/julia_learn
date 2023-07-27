@@ -139,15 +139,15 @@ x_smooth, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )
 # y_train = x_noise 
 y_train = x_smooth 
 
-μ_man, Σ_man = post_dist_SE( x_noise', x_noise', dx_noise[:,1] )  
+μ, Σ = post_dist_SE( x_smooth, x_smooth, dx_noise )  
 μ_man, Σ_man = post_dist( y_vec, dx_noise, y_vec, σ_f, l, σ_n ) 
 # μ_man, Σ_man, hp = post_dist_hp_opt( y_vec, dx_noise[:,1], y_vec )  
 
-
+i = 2 
 plot( legend = :outerright, xlabel = "Time (s)", title = "dx = f(x)" ) 
-plot!( t, dx_true[:,1], label = "true", legend = :outerright )
-plot!( t, dx_noise[:,1], ls = :dash, label = "noise" )
-plot!( t, μ[:,1], ls = :dashdot, label = "GP" )   
+plot!( t, dx_true[:,i], label = "true", legend = :outerright )
+plot!( t, dx_noise[:,i], ls = :dash, label = "noise" )
+plot!( t, μ[:,i], ls = :dashdot, label = "GP" )   
 
 
 ## ============================================ ##

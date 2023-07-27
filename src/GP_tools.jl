@@ -185,15 +185,15 @@ function post_dist_SE( x_train, x_test, y_train )
 
     
     n_vars   = size(y_train, 2) 
-    y_smooth = zeros( size(x_test, 2), n_vars ) 
+    y_smooth = zeros( size(x_test, 1), n_vars ) 
     Σ        = 0 * y_smooth 
     hps      = [] 
     for i = 1:n_vars 
 
         # fit GP 
-        gp      = GP( x_train, y_train[:,i], mZero, kern, log_noise ) 
+        gp      = GP( x_train', y_train[:,i], mZero, kern, log_noise ) 
         optimize!(gp) 
-        μ, σ²   = predict_y( gp, x_test )  
+        μ, σ²   = predict_y( gp, x_test' )  
 
         # return HPs 
         σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
