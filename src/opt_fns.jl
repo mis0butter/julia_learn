@@ -98,7 +98,8 @@ function f_obj( t, (σ_f, l, σ_n), dx, ξ, Θx )
     # objval  = 1/2*( dx - Θx*ξ )'*x
 
     y_train = dx - Θx*ξ
-    objval  = 1/2*( y_train )'*inv( Ky )*( y_train ) 
+    # objval  = 1/2*( y_train )'*inv( Ky )*( y_train ) 
+    objval  = 1/2*( y_train )' * ( Ky \ y_train ) 
 
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 

@@ -289,15 +289,15 @@ end
 ## ============================================ ##
 
 export plot_dx_sindy_gpsindy
-function plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx, Ξ_sindy, Ξ_gpsindy ) 
+function plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx_sindy, Ξ_sindy, Θx_gpsindy, Ξ_gpsindy ) 
             
     n_vars = size(dx_true, 2) 
     plt_nvars = [] 
     for i = 1 : n_vars 
         plt = plot( t, dx_true[:,i], label = "true", c = :black ) 
         scatter!( plt, t, dx_noise[:,i], label = "train (noise)", c = :black, ms = 3 ) 
-        plot!( plt, t, Θx * Ξ_sindy[:,i], label = "SINDy", c = :red )   
-        plot!( plt, t, Θx * Ξ_gpsindy[:,i], label = "GPSINDy", ls = :dash, c = :cyan )   
+        plot!( plt, t, Θx_sindy * Ξ_sindy[:,i], label = "SINDy", c = :red )   
+        plot!( plt, t, Θx_gpsindy * Ξ_gpsindy[:,i], label = "GPSINDy", ls = :dash, c = :cyan )   
         plot!( plt, legend = :outerright, size = [800 300], title = string( "Fitting ξ", i ), xlabel = "Time (s)" ) 
         push!( plt_nvars, plt ) 
     end 
