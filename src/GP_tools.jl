@@ -76,34 +76,11 @@ function sq_dist(a, b)
     C = zeros(r,p) 
     for i = 1:r 
         for j = 1:p 
-            C[i,j] = ( a[i] - b[j] )^2 
+            C[i,j] = norm( a[i] - b[j] )^2 
         end 
     end 
 
     return C 
-
-end 
-
-
-## ============================================ ##
-# marginal log-likelihood for Gaussian Processes  
-
-export mlog_like 
-function mlog_like( σ_f, l, σ_n, x, y, μ )
-# from algorithm 2.1 of Rasmussen GP textbook  
-    
-    # training kernel function 
-    K = k_SE(σ_f, l, x, x) 
-
-    C = cholesky( K + σ_n^2 * I  )
-    α = C.U \ ( C.L \ y ) 
-
-    # NEGATIVE log-likelihood 
-    n = length(y) 
-    log_p = 1/2 * y' * α + sum( log.( diag(C.L) ) ) + n/2 * log( 2π )
-    # log_p = 1/2 * y' * α + log( det(K + σ_n^2) )
-    
-    return log_p 
 
 end 
 
@@ -123,7 +100,8 @@ function log_p( σ_f, l, σ_n, x, y, μ )
         Ky += σ_n * I 
     end 
 
-    term  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
+    # term  = 1/2 * ( y - μ )' * inv( Ky ) * ( y - μ ) 
+    term  = 1/2 * ( y - μ )' * ( Ky \ ( y - μ ) ) 
     term += 1/2 * log( det( Ky ) ) 
 
     return term 
@@ -207,13 +185,13 @@ function post_dist_SE( x_train, x_test, y_train )
 
     
     n_vars   = size(y_train, 2) 
-    y_smooth = zeros( length(x_test), n_vars ) 
+    y_smooth = zeros( size(x_test, 2), n_vars ) 
     Σ        = 0 * y_smooth 
     hps      = [] 
     for i = 1:n_vars 
 
         # fit GP 
-        gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
+        gp      = GP( x_train, y_train[:,i], mZero, kern, log_noise ) 
         optimize!(gp) 
         μ, σ²   = predict_y( gp, x_test )  
 

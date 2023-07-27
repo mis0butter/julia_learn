@@ -1,0 +1,49 @@
+# Last week (July 17-21): 
+
+- look into sparsity: increase lambda, compare gpsindy and sindy 
+- decrease samples and increase noise, gpsindy works better? 
+- use GP to smooth data and use as input into sindy 
+
+fixed kernel?  
+- input should be time, not x or dx as previously specified in the paper? 
+
+
+# This week (July 24-28): 
+
+Somi: (2)  
+- try Matern52 kernel within SINDy-GP-ADMM (and maybe Matern32 kernel) 
+
+David: (4) 
+- table it for now: figure right way to do sparsity, soft thresholding? hard thresholding?
+- iterate: GP --> SINDy --> GP --> SINDy --> repeat  
+    - GP takes in (t,x) as input, outputs smoothed x 
+    - Coefficients * function library to generate dx ? 
+- (tangential) try SINDy with soft thresholding 
+- create pull request, merge into main 
+
+Adam: (1) --> GPs 
+- standardize x, add noise --> GP --> derivative of GP 
+- set up kernel to be function of x 
+
+Yue: (3) --> l1 norm min, ADMM 
+- remove relative tolerances for ADMM 
+- SINDy, keep it the way it is  
+- don't change hyperparameters every step for ADMM (do not change objective function at every iteration), maybe let ADMM run for 1000 iterations and then update hyperparameters 
+
+Junette: 
+- just do Jake's car data 
+
+# July 26 
+
+Somi: 
+1. smooth dx_noise with x_noise as training inputs --> dx_GP
+    - try diff kernel? SE 
+    - set up kernel to be function of x 
+2. plug in dx_GP and x_noise into SINDy, good plots? 
+3. fix ADMM stuff, only update hyperparameters at the start 
+4. compare SINDy and GPSINDy 
+
+
+
+
+

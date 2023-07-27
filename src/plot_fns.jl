@@ -20,7 +20,7 @@ function boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
             scatter!( p_ξ, 
                 legend = false, 
                 xlabel = "noise", 
-                title  = string( "||ξ", i, "_true - ξ", i, "_discovered||" ), 
+                title  = string( "\n ||ξ", i, "_true - ξ", i, "_discovered||" ), 
                 xticks = xmin : dx : xmax, 
                 # yticks = ymin : dy : ymax, 
                 ) 
@@ -36,6 +36,7 @@ function boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
     p_Ξ = plot(p_Ξ ... , 
         layout = grid( 1, 3, widths = [0.45, 0.45, 0.45] ) , 
         size   = [ 800 300 ], 
+        margin = 8Plots.mm,
         ) 
     display(p_Ξ)
 

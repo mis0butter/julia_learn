@@ -278,6 +278,37 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
             Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ ) 
 
+            # new dx 
+            # dx_new = Θx * Ξ_gpsindy 
+
+            # combine dx_noise and dx_new 
+            # dx_combine = ... ? 
+
+            # dx_GP2 = post_dist_M52I( t, t_test, dx_new ) 
+            # Ξ_gpsindy2 = SINDy_test( x_GP, dx_GP2, λ ) 
+
+            # standardize --> smooth states w/ GP (NON-temporal)  
+            elseif case == 7 
+                
+                # add noise 
+                println( "noise = ", noise ) 
+                x_true  = stand_data( t, x_true ) 
+                dx_true = dx_true_fn( t, x_true, p, fn ) 
+                x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+                dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+    
+                Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
+                Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
+    
+                # I guess .... let's try this again
+                t_test = collect( t[1] : 0.01 : t[end] )  
+                # t_test = t 
+                dx_GP, Σ_test, hp_test = post_dist_M52I( x_noise, x_noise, dx_noise ) 
+    
+                Θx      = pool_data_test(x_noise, n_vars, poly_order) 
+                # Ξ_gpsindy, hist_nvars = gpsindy( t, dx_noise, Θx, λ, α, ρ, abstol, reltol )  
+                Ξ_gpsindy = SINDy_test( x_noise, dx_GP, λ ) 
+
         end 
 
         # plot 

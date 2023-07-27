@@ -17,7 +17,7 @@ data = Matrix(df)
 # extract variables 
 t = data[:,1] 
 x = data[:,2:end-2]
-u = data[:,end-2:end]
+u = data[:,end-1:end]
 
 dx_fd = fdiff(t, x, 2) 
 # dx_true = dx_true_fn
