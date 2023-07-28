@@ -40,8 +40,7 @@ function admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist 
     f_hp, g, aug_L = obj_fns( t, dx, x, λ, ρ )
 
     # hp-update (optimization) 
-    # hp = opt_hp(t, dx, Θx, ξ) 
-    # hp = post_dist_M52I( t, dx - Θx*ξ ) 
+    # hp = opt_hp(t, dx, x, ξ) 
 
     # ξ-update 
     ξ = opt_ξ( aug_L, ξ, z, u, hp ) 
@@ -115,27 +114,69 @@ for j = 1 : n_vars
     f_hp, g, aug_L = obj_fns( t, dx, x, λ, ρ )
     hp = [1.0, 1.0, 0.1] 
     ξ  = opt_ξ( aug_L, ξ, z, u, hp ) 
-    # hp = opt_hp(t, dx, Θx, ξ) 
-    dx_GP, Σ_dxsmooth, hp = post_dist_SE( x, x, dx )  
+    # dx_GP, Σ_dxsmooth, hp = post_dist_SE( x, x, dx )  
     println( "hp = ", hp ) 
 
     hist = Hist( [], [], [], [], [], [], [], [] )  
 
+    # ----------------------- #
+    # hp = opt_hp(t, dx, x, ξ) 
     # loop until convergence or max iter 
     for k = 1 : 1000  
 
         # ADMM LASSO! 
         z_old = z 
         ξ, z, u, hp, hist, plt = admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist )    
-        plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
-        frame(a, plt) 
 
         # end condition 
-        if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
+        # if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
+        if hist.r_norm[end] < abstol[end] && hist.s_norm[end] < abstol[end] 
             break 
         end 
 
     end 
+    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    frame(a, plt) 
+
+    # ----------------------- #
+    # optimize HPs 
+    hp = opt_hp( t, dx, x, ξ ) 
+    # loop until convergence or max iter 
+    for k = 1 : 1000  
+
+        # ADMM LASSO! 
+        z_old = z 
+        ξ, z, u, hp, hist, plt = admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist )    
+
+        # end condition 
+        # if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
+        if hist.r_norm[end] < abstol[end] && hist.s_norm[end] < abstol[end] 
+            break 
+        end 
+
+    end 
+    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    frame(a, plt) 
+
+    # ----------------------- #
+    # optimize HPs 
+    hp = opt_hp(t, dx, x, ξ) 
+    # loop until convergence or max iter 
+    for k = 1 : 1000  
+
+        # ADMM LASSO! 
+        z_old = z 
+        ξ, z, u, hp, hist, plt = admm_lasso( t, dx, x, (ξ, z, u), hp, λ, α, ρ, abstol, reltol, hist )    
+
+        # end condition 
+        # if hist.r_norm[end] < hist.eps_pri[end] && hist.s_norm[end] < hist.eps_dual[end] 
+        if hist.r_norm[end] < abstol[end] && hist.s_norm[end] < abstol[end] 
+            break 
+        end 
+
+    end 
+    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    frame(a, plt) 
 
     # push diagnostics 
     push!( hist_nvars, hist ) 

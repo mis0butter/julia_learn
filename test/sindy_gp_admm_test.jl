@@ -2,15 +2,15 @@ using GaussianSINDy
 
 ## ============================================ ##
 
-# noise_vec = [] 
-# noise_vec_iter = 0.1 : 0.1 : 0.3 
-# for i in noise_vec_iter 
-#     for j = 1:10 
-#         push!(noise_vec, i)
-#     end 
-# end 
+noise_vec = [] 
+noise_vec_iter = 0.05 : 0.05 : 0.3 
+for i in noise_vec_iter 
+    for j = 1:20 
+        push!(noise_vec, i)
+    end 
+end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-noise_vec = 0.1 
+# noise_vec = 0.1 
 
 # ----------------------- #
 # cases: 
@@ -23,7 +23,7 @@ noise_vec = 0.1
 # 6 = stand x_true --> dx_true, add noise, GP temporal smooth into SINDy, 
 # 7 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into SINDy, 
 # 8 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into GPSINDy
-case = 1 
+case = 7 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           

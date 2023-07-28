@@ -38,6 +38,7 @@ Yue: (3) --> l1 norm min, ADMM
 - remove relative tolerances for ADMM 
 - SINDy, keep it the way it is  
 - don't change hyperparameters every step for ADMM (do not change objective function at every iteration), maybe let ADMM run for 1000 iterations and then update hyperparameters 
+- try taking out log(det(Ky)) of obj fn 
 
 Junette: 
 - just do Jake's car data 
@@ -46,11 +47,11 @@ Junette:
 
 Somi: 
 1. smooth dx_noise with x_noise as training inputs --> dx_GP
-    - try diff kernel? SE 
-    - set up kernel to be function of x 
-2. plug in dx_GP and x_noise into SINDy, good plots? 
-3. fix ADMM stuff, only update hyperparameters at the start 
-4. compare SINDy and GPSINDy 
+    - try diff kernel? SE *DONE 
+    - set up kernel to be function of x *DONE 
+2. plug in dx_GP and x_noise into SINDy, good plots? *DONE 
+3. fix ADMM stuff, only update hyperparameters at the start *DONE 
+4. compare SINDy and GPSINDy *DONE 
 
 
 

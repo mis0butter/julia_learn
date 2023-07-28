@@ -115,7 +115,7 @@ function f_obj( t, (σ_f, l, σ_n), dx, ξ, x )
     # scale? 
     # objval += 1/2*sum(log.( Ky )) 
     # objval += 1/2*log( tr(Ky) ) 
-    objval += 1/2*log( det(Ky) ) 
+    # objval += 1/2*log( det(Ky) ) 
 
     return objval  
 
@@ -180,18 +180,21 @@ end
 ## ============================================ ##
 
 export opt_hp 
-function opt_hp(t_train, dx_train, Θx, ξ) 
+function opt_hp(t_train, dx_train, x, ξ) 
 # ----------------------- #
 # PURPPOSE: 
 #       Optimize hyperparameters for marginal likelihood of data  
 # INPUTS: 
-#       t_train     : training data ordinates ( x ) 
+#       t_train     : training data ordinates ( t ) 
 #       dx_train    : training data ( f(x) )
-#       Θx          : function library (candidate dynamics) 
+#       x           : training data ( x ) 
 #       ξ           : dynamics coefficients 
 # OUTPUTS: 
 #       hp          : log-scaled hyperparameters 
 # ----------------------- #
+
+    n_vars = size(x, 2) ; poly_order = n_vars 
+    Θx     = pool_data_test( x, n_vars, poly_order ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -202,18 +205,19 @@ function opt_hp(t_train, dx_train, Θx, ξ)
     # y_train = dx_train 
     y_train = dx_train - Θx*ξ   
     # y_train = Θx*ξ
-    gp      = GP(t_train, y_train, mZero, kern, log_noise) 
+    # gp      = GP(t_train, y_train, mZero, kern, log_noise) 
     # gp  = GP(t_train, dx_train, Θx*ξ, kern, log_noise) 
+    y_smooth, Σ, hp = post_dist_SE( x, x, y_train ) 
 
     # ----------------------- #
     # optimize 
 
-    optimize!(gp) 
+    # optimize!(gp) 
 
-    σ_f = sqrt( gp.kernel.σ2 ) 
-    l   = sqrt( gp.kernel.ℓ2 )  
-    σ_n = exp( gp.logNoise.value )  
-    hp  = [σ_f, l, σ_n] 
+    # σ_f = sqrt( gp.kernel.σ2 ) 
+    # l   = sqrt( gp.kernel.ℓ2 )  
+    # σ_n = exp( gp.logNoise.value )  
+    # hp  = [σ_f, l, σ_n] 
 
     # check for 0 
     for i = 1:3 
