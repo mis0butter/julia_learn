@@ -6,7 +6,7 @@ using Statistics
 noise_vec = [] 
 noise_vec_iter = 0.05 : 0.05 : 0.3 
 for i in noise_vec_iter 
-    for j = 1:10 
+    for j = 1:20 
         push!(noise_vec, i)
     end 
 end 
@@ -65,13 +65,24 @@ sindy_med   = vv2m(sindy_med)   ; sindy_q13   = vv2m(sindy_q13)
 gpsindy_med = vv2m(gpsindy_med) ; gpsindy_q13 = vv2m(gpsindy_q13)
 
 using Plots 
-i = 1 
-plt = plot( legend = :outerright, size = [800 300] )
-    ymed = sindy_med[:,i] ; yq13 = vv2m(sindy_q13[:,i])
-    plot!( plt, noise_vec_iter, ymed, c = :orange, label = "SINDy", ribbon = (yq13[:,1], yq13[:,2]) ) 
-    ymed = gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_q13[:,i])
-    plot!( plt, noise_vec_iter, ymed, c = :cyan, label = "GPSINDy", ribbon = (yq13[:,1], yq13[:,2]) ) 
-    
+
+p_nvars = [] 
+for i = 1 : n_vars 
+    plt = plot( legend = :outerright, size = [800 300], title = string("|| ξ", i, "_true - ξ", i, "_discovered ||") )
+        ymed = sindy_med[:,i] ; yq13 = vv2m(sindy_q13[:,i])
+        plot!( plt, noise_vec_iter, ymed, c = :orange, label = "SINDy", ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed) ) 
+        scatter!( plt, noise_vec, sindy_err_vec[:,i], c = :orange ) 
+        ymed = gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_q13[:,i])
+        plot!( plt, noise_vec_iter, ymed, c = :cyan, label = "GPSINDy", ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed) ) 
+        scatter!( plt, noise_vec, gpsindy_err_vec[:,i], c = :cyan ) 
+    push!( p_nvars, plt ) 
+end 
+p_nvars = plot( p_nvars ... ,  
+    layout = (2,1), 
+    size   = [800 600], 
+    plot_title = "1/4, 1/2, and 3/4 Quartiles"
+) 
+
 
 
 ## ============================================ ##
