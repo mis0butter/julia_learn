@@ -1,3 +1,5 @@
+using DifferentialEquations
+
 
 ## ============================================ ##
 # ODE functions 
@@ -59,8 +61,6 @@ end
 
 ## ============================================ ##
 # solve ODE problem, compute derivatives and plot states 
-
-using DifferentialEquations
 
 export ode_states 
 function ode_states(fn, plot_option, fd_method)

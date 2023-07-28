@@ -1,17 +1,20 @@
 using GaussianSINDy
 using Statistics 
+using Random 
 
 ## ============================================ ##
 
 noise_vec = [] 
-noise_vec_iter = 0.05 : 0.05 : 0.3 
+noise_vec_iter = 0.05 : 0.01 : 0.3 
 for i in noise_vec_iter 
     for j = 1:10 
         push!(noise_vec, i)
     end 
 end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-# noise_vec = 0.3 
+# noise_vec = 0.07 
+
+# Random.seed!(1)
 
 # ----------------------- #
 # cases: 
@@ -24,7 +27,7 @@ end
 # 6 = stand x_true --> dx_true, add noise, GP temporal smooth into SINDy, 
 # 7 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into SINDy, 
 # 8 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into GPSINDy
-case = 9 
+case = 7 
 
 λ = 0.1 
 abstol = 1e-2 ; reltol = 1e-2           
@@ -36,10 +39,10 @@ println( "noise_vec = ", noise_vec )
 println( "case = ", case )  
 
 
-## ============================================ ##
+# ----------------------- #
 
+# plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec ) 
 
-plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec ) 
 
 ## ============================================ ##
 # boxplot plot 

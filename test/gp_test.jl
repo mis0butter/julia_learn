@@ -38,45 +38,45 @@ a = Animation()
 plt = def_plt( t, x_stand, y_train ) 
 frame(a, plt) 
 
-μ_SE, Σ_SE, hp = post_dist_SE( x_train, x_test, y_train ) 
+μ_SE, Σ_SE, hp = post_dist_SE( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_SE, label = "SE", ribbon = Σ_SE ) 
 frame(a, plt) 
 
-μ_M12A, Σ_M12A, hp = post_dist_M12A( x_train, x_test, y_train ) 
+μ_M12A, Σ_M12A, hp = post_dist_M12A( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M12A, label = "M12A", ribbon = Σ_M12A ) 
 frame(a, plt) 
 
-μ_M32A, Σ_M32A, hp = post_dist_M32A( x_train, x_test, y_train ) 
+μ_M32A, Σ_M32A, hp = post_dist_M32A( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M32A, label = "M32A", ribbon = Σ_M32A ) 
 frame(a, plt) 
 
-μ_M52A, Σ_M52A, hp = post_dist_M52A( x_train, x_test, y_train ) 
+μ_M52A, Σ_M52A, hp = post_dist_M52A( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M52A, label = "M52A", ribbon = Σ_M52A ) 
 frame(a, plt) 
 # println( "dx_true - μ_M52A = ", norm( dx_true - μ_M52A ) ) 
 
-μ_M12I, Σ_M12I, hp = post_dist_M12I( x_train, x_test, y_train ) 
+μ_M12I, Σ_M12I, hp = post_dist_M12I( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M12I, label = "M12I", ribbon = Σ_M12I ) 
 frame(a, plt) 
 # println( "dx_true - μ_M12I = ", norm( dx_true - μ_M12I ) ) 
 
-μ_M32I, Σ_M32I, hp = post_dist_M32I( x_train, x_test, y_train ) 
+μ_M32I, Σ_M32I, hp = post_dist_M32I( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M32I, label = "M32I", ribbon = Σ_M32I ) 
 frame(a, plt) 
 # println( "dx_true - μ_M32I = ", norm( dx_true - μ_M32I ) ) 
 
-μ_M52I, Σ_M52I, hp = post_dist_M52I( x_train, x_test, y_train ) 
+μ_M52I, Σ_M52I, hp = post_dist_M52I( x_train, y_train, x_test ) 
     plt = def_plt( t, x_stand, y_train ) 
     plot!( plt, x_test, μ_M52I, label = "M52I", ribbon = Σ_M52I ) 
 frame(a, plt) 
 
-# μ_per, Σ_per, hp = post_dist_per( x_train, x_test, y_train ) 
+# μ_per, Σ_per, hp = post_dist_per( x_train, y_train, x_test ) 
 #     plt = def_plt( t, dx_stand, y_train ) 
 #     plot!( plt, x_test, μ_per, label = "Per", ls = :dashdot, ribbon = ( μ_per - Σ_per, μ_per + Σ_per )  ) 
 # frame(a, plt) 
@@ -104,11 +104,11 @@ dx_noise = dx_stand + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) )
 x_train = t 
 x_test  = collect( t[1] : 0.1 : t[end] ) 
 # x_test  = x_train 
-y_train = dx_noise
+y_train = x_noise
 
 # kernel  
 mZero     = MeanZero() ;            # zero mean function 
-kern      = Mat32Iso( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
 log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
 
 n_vars = size(x, 2) 
@@ -128,12 +128,12 @@ for i = 1:n_vars
 
 end 
 
-y_test, Σ_test, hp_test = post_dist_M32I( x_train, x_test, y_train ) 
+y_test, Σ_test, hp_test = post_dist_M32I( x_train, y_train, x_test ) 
 
 
 ## ============================================ ##
 
-x_smooth, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
+x_smooth, Σ_xsmooth, hp = post_dist_SE( t, x_noise, t )  
 
 # y_train = x_stand 
 # y_train = x_noise 

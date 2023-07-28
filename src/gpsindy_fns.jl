@@ -323,8 +323,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             # smooth measurements 
             # t_test = collect( t[1] : 0.01 : t[end] )  
             t_test = t 
-            x_GP,  Σ_test, hp_test = post_dist_SE( t, t_test, x_noise ) 
-            dx_GP, Σ_test, hp_test = post_dist_SE( t, t_test, dx_noise ) 
+            x_GP,  Σ_test, hp_test = post_dist_SE( t, x_noise, t_test ) 
+            dx_GP, Σ_test, hp_test = post_dist_SE( t, dx_noise, t_test ) 
 
             Θx_gpsindy = pool_data_test( x_GP, n_vars, poly_order ) 
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
@@ -343,8 +343,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
 
             # smooth measurements 
-            x_GP, Σ_xsmooth, hp   = post_dist_SE( t, t, x_noise )  
-            dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
+            x_GP, Σ_xsmooth, hp   = post_dist_SE( t, x_noise, t )  
+            dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_noise, x_GP )  
             
             Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
@@ -363,8 +363,8 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
 
             # I guess .... let's try this again
-            x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
-            dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+            x_GP, Σ_xsmooth, hp = post_dist_SE( t, x_noise, t )  
+            dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, dx_noise, x_GP )  
             
             Θx_gpsindy          = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, x_GP, λ, α, ρ, abstol, reltol )  
@@ -383,21 +383,23 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
                 Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
     
                 # I guess .... let's try this again
-                x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
-                dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+                x_GP, Σ_xGP, hp = post_dist_SE( t, x_noise, t )  
+                dx_GP, Σ_dxGP   = post_dist_SE( x_GP, dx_noise, x_GP )  
                 
                 # smooth measurements 
-                x_GP, Σ_xsmooth, hp   = post_dist_SE( t, t, x_noise )  
-                dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
+                x_GP, Σ_xGP, hp   = post_dist_SE( t, x_noise, t )  
+                dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_noise, x_GP )  
                 
                 Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
                 Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
 
-                dx_GP = Θx_gpsindy * Ξ_gpsindy 
-                dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
-                
-                Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
+                dx_mean = Θx_gpsindy * Ξ_gpsindy 
+                y_train = dx_noise  
+                dx_post, Σ_post, hp = post_dist_SE( dx_mean, y_train, dx_mean )  
 
+                Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
+                Ξ_gpsindy  = SINDy_test( x_GP, dx_post, λ ) 
+                
         end 
 
         # plot 

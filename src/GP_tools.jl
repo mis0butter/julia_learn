@@ -148,13 +148,13 @@ end
 # hp optimization (June) --> post mean  
 
 export post_dist_hp_opt 
-function post_dist_hp_opt( x_train, y_train, x_test, plot_option = false )
+function post_dist_hp_opt( x_train, y_train, y_mean, x_test, plot_option = false )
 
     # IC 
     hp = [ 1.0, 1.0, 0.1 ] 
 
     # optimization 
-    hp_opt(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, 0*y_train )
+    hp_opt(( σ_f, l, σ_n )) = log_p( σ_f, l, σ_n, x_train, y_train, y_mean )
     od       = OnceDifferentiable( hp_opt, hp ; autodiff = :forward ) 
     result   = optimize( od, hp, LBFGS() ) 
     hp       = result.minimizer 
@@ -174,15 +174,16 @@ end
 # posterior mean with GP toolbox 
 
 using GaussianProcesses
+using Optim 
+using LineSearches 
 
 export post_dist_SE 
-function post_dist_SE( x_train, x_test, y_train ) 
+function post_dist_SE( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
     kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
     log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
-
     
     n_vars   = size(y_train, 2) 
     y_smooth = zeros( size(x_test, 1), n_vars ) 
@@ -192,12 +193,14 @@ function post_dist_SE( x_train, x_test, y_train )
 
         # fit GP 
         gp      = GP( x_train', y_train[:,i], mZero, kern, log_noise ) 
-        optimize!(gp) 
-        μ, σ²   = predict_y( gp, x_test' )  
+
+        optimize!( gp, method = LBFGS(linesearch=LineSearches.BackTracking()) ) 
 
         # return HPs 
         σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
         hp  = [σ_f, l, σ_n] 
+
+        μ, σ²   = predict_y( gp, x_test' )  
 
         y_smooth[:,i] = μ 
         Σ[:,i]        = σ²
@@ -213,7 +216,7 @@ function post_dist_SE( x_train, x_test, y_train )
 end 
 
 export post_dist_M12A
-function post_dist_M12A( x_train, x_test, y_train ) 
+function post_dist_M12A( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -246,7 +249,7 @@ end
 
 
 export post_dist_M32A
-function post_dist_M32A( x_train, x_test, y_train ) 
+function post_dist_M32A( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -279,7 +282,7 @@ end
 
 
 export post_dist_M52A
-function post_dist_M52A( x_train, x_test, y_train ) 
+function post_dist_M52A( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -312,7 +315,7 @@ end
 
 
 export post_dist_M12I
-function post_dist_M12I( x_train, x_test, y_train ) 
+function post_dist_M12I( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -345,7 +348,7 @@ end
 
 
 export post_dist_M32I
-function post_dist_M32I( x_train, x_test, y_train ) 
+function post_dist_M32I( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -378,7 +381,7 @@ end
 
 
 export post_dist_M52I
-function post_dist_M52I( x_train, x_test, y_train ) 
+function post_dist_M52I( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 
@@ -411,7 +414,7 @@ end
 
 
 export post_dist_per
-function post_dist_per( x_train, x_test, y_train ) 
+function post_dist_per( x_train, y_train, x_test ) 
 
     # kernel  
     mZero     = MeanZero() ;            # zero mean function 

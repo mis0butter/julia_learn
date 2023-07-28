@@ -62,7 +62,7 @@ println( "(stand) true - GPSINDy_GP err  = ", norm( Ξ_stand_true - Ξ_gpsindy_G
 Ξ_true  = SINDy_test( x_true, dx_true, λ ) 
 Ξ_sindy = SINDy_test( x_noise, dx_noise, λ ) 
 
-# x_GP = post_dist_SE( t, t, x_noise )
+# x_GP = post_dist_SE( t, x_noise, t )
 # dx_GP  = fdiff( t, x_GP, 2 ) 
 
 # Ξ_sindy_GP = SINDy_test( x_GP, dx_GP, λ ) 
@@ -96,7 +96,7 @@ plot!( t, dx_sindy[:,2], ls = :dash, label = "SINDy", c = :red )
 p_states = [] 
 for i = 1:n_vars 
     plt = plot( t, x_true[:,i], label = "true", c = :green )
-    scatter!( plt, t, x_noise[:,i], label = "noise", c = :black, ms = 3 )
+    scatter!( plt, x_noise, t[:,i], label = "noise", c = :black, ms = 3 )
     scatter!( plt, t, x_GP[:,i], label = "smooth", c = :red, ms = 1, markerstrokewidth = 0 )
     plot!( plt, legend = :outerright, title = string( "state ", i ) )    
     push!(p_states, plt)

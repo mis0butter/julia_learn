@@ -31,27 +31,56 @@ David: (4)
             # Ξ_gpsindy2 = SINDy_test( x_GP, dx_GP2, λ ) 
 
 Adam: (1) --> GPs 
-- standardize x, add noise --> GP --> derivative of GP 
-- set up kernel to be function of x 
+- standardize x, add noise --> GP --> derivative of GP *set up GP dx = f(x)
+- set up kernel to be function of x *DONE 
 
 Yue: (3) --> l1 norm min, ADMM 
-- remove relative tolerances for ADMM 
+- remove relative tolerances for ADMM *DONE 
 - SINDy, keep it the way it is  
-- don't change hyperparameters every step for ADMM (do not change objective function at every iteration), maybe let ADMM run for 1000 iterations and then update hyperparameters 
-- try taking out log(det(Ky)) of obj fn 
+- don't change hyperparameters every step for ADMM (do not change objective function at every iteration), maybe let ADMM run for 1000 iterations and then update hyperparameters *DONE 
+- try taking out log(det(Ky)) of obj fn *DONE 
 
 Junette: 
-- just do Jake's car data 
+- just do Jake's car data *DONE SET UP SANDBOX 
 
 # July 26 
 
 Somi: 
 1. smooth dx_noise with x_noise as training inputs --> dx_GP
+    - smooth x with t first --> x_GP (SE kernel)  
+    - smooth dx with x --> dx_GP (SE kernel) 
     - try diff kernel? SE *DONE 
     - set up kernel to be function of x *DONE 
 2. plug in dx_GP and x_noise into SINDy, good plots? *DONE 
 3. fix ADMM stuff, only update hyperparameters at the start *DONE 
 4. compare SINDy and GPSINDy *DONE 
+
+# July 27 
+
+David: 
+- implement the picture you took with your phone (GP-SINDy-GP-SINDy etc) 
+- create nice plot from Lasse (fig 3) 
+- actually implement LASSO 
+- write problem in a way to say that we used coordinate descent (with separate primal variables) 
+- say that we stacked unknown variables (xi coefficients and sigma hyperparameters) into 1 unknown vector 
+- and then say we used coordinate descent to split unknown into 2 split variables 
+- and then do that thing that we wrote on the white board 
+- try on Jake's data, just see how it looks 
+
+deadline: 
+- nicer to have journal 
+- decide later 
+
+email Chante about work ending Aug 4 
+email her again about lunch reimbursement 
+she is responsive 
+
+
+
+
+
+
+
 
 
 
