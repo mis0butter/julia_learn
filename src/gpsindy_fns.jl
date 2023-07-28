@@ -104,10 +104,10 @@ for j = 1 : n_vars
     dx = dx_train[:,j] 
     
     # start animation 
-    a = Animation() 
-    plt = scatter( t, dx, label = "train (noise)", c = :black, ms = 3 ) 
-    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" ) 
-    frame(a, plt) 
+    # a = Animation() 
+    # plt = scatter( t, dx, label = "train (noise)", c = :black, ms = 3 ) 
+    # plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" ) 
+    # frame(a, plt) 
 
     # ξ-update 
     n = size(Θx, 2); ξ = z = u = zeros(n) 
@@ -135,8 +135,8 @@ for j = 1 : n_vars
         end 
 
     end 
-    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
-    frame(a, plt) 
+    # plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    # frame(a, plt) 
 
     # ----------------------- #
     # optimize HPs 
@@ -155,8 +155,8 @@ for j = 1 : n_vars
         end 
 
     end 
-    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
-    frame(a, plt) 
+    # plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    # frame(a, plt) 
 
     # ----------------------- #
     # optimize HPs 
@@ -175,16 +175,16 @@ for j = 1 : n_vars
         end 
 
     end 
-    plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
-    frame(a, plt) 
+    # plot!( plt, legend = :outerright, size = [800 300], title = string("Fitting ξ", j), xlabel = "Time (s)" )  
+    # frame(a, plt) 
 
     # push diagnostics 
     push!( hist_nvars, hist ) 
     Ξ[:,j] = z 
 
-    g = gif(a, fps = 2) 
-    display(g) 
-    display(plt) 
+    # g = gif(a, fps = 2) 
+    # display(g) 
+    # display(plt) 
     
     end 
 
@@ -372,7 +372,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
         end 
 
         # plot 
-        plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx_sindy, Ξ_sindy, Θx_gpsindy, Ξ_gpsindy ) 
+        # plot_dx_sindy_gpsindy( t, dx_true, dx_noise, Θx_sindy, Ξ_sindy, Θx_gpsindy, Ξ_gpsindy ) 
 
         # metrics & diagnostics 
         Ξ_sindy_err, Ξ_gpsindy_err = l2_metric( n_vars, dx_noise, Θx_gpsindy, Ξ_true, Ξ_sindy, Ξ_gpsindy, sindy_err_vec, gpsindy_err_vec )
