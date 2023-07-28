@@ -369,6 +369,35 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
             Θx_gpsindy          = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy, hist_nvars = gpsindy( t, dx_GP, x_GP, λ, α, ρ, abstol, reltol )  
 
+            # same as 7, but GP --> SINDy --> GP --> SINDy 
+            elseif case == 9 
+                
+                # add noise 
+                println( "noise = ", noise ) 
+                x_true  = stand_data( t, x_true ) 
+                dx_true = dx_true_fn( t, x_true, p, fn ) 
+                x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+                dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+    
+                Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
+                Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
+    
+                # I guess .... let's try this again
+                x_GP, Σ_xsmooth, hp = post_dist_SE( t, t, x_noise )  
+                dx_GP, Σ_dxsmooth   = post_dist_SE( x_GP, x_GP, dx_noise )  
+                
+                # smooth measurements 
+                x_GP, Σ_xsmooth, hp   = post_dist_SE( t, t, x_noise )  
+                dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
+                
+                Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
+                Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
+
+                dx_GP = Θx_gpsindy * Ξ_gpsindy 
+                dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, x_GP, dx_noise )  
+                
+                Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
+
         end 
 
         # plot 

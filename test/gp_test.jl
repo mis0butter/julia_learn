@@ -13,7 +13,7 @@ x_stand  = stand_data( t, x_true )
 dx_stand = dx_true_fn( t, x_true, p, fn ) 
 x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) ) 
 dx_noise = dx_stand + noise*randn( size(x_true, 1), size(x_true, 2) ) 
-# x_stand = x_stand[:,1] ; x_noise = x_noise[:,1] ; x_true = x_true[:,1] 
+x_stand = x_stand[:,1] ; x_noise = x_noise[:,1] ; x_true = x_true[:,1] 
 
 x_train = t 
 x_test  = collect( t[1] : 0.1 : t[end] ) 
