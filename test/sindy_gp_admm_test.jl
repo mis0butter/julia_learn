@@ -1,11 +1,12 @@
 using GaussianSINDy
+using Statistics 
 
 ## ============================================ ##
 
 noise_vec = [] 
 noise_vec_iter = 0.05 : 0.05 : 0.3 
 for i in noise_vec_iter 
-    for j = 1:20 
+    for j = 1:10 
         push!(noise_vec, i)
     end 
 end 
@@ -36,7 +37,45 @@ println( "case = ", case )
 
 
 ## ============================================ ##
-# plot 
+
+n_vars   = size( sindy_err_vec, 2 ) 
+unique_i = unique( i -> noise_vec[i], 1:length( noise_vec ) ) 
+push!( unique_i, length(noise_vec)+1 ) 
+
+sindy_med   = [] ; sindy_q13   = [] 
+gpsindy_med = [] ; gpsindy_q13 = [] 
+for i = 1 : length(unique_i)-1 
+
+    ji = unique_i[i] 
+    jf = unique_i[i+1]-1
+
+    smed = [] ; gpsmed = [] ; sq13 = [] ; gpsq13 = [] 
+    for j = 1 : n_vars 
+        push!( smed,   median( sindy_err_vec[ji:jf, j] ) ) 
+        push!( gpsmed, median( gpsindy_err_vec[ji:jf, j] ) ) 
+        push!( sq13,   [ quantile( sindy_err_vec[ji:jf, j], 0.25 ), quantile( sindy_err_vec[ji:jf, j], 0.75 ) ] ) 
+        push!( gpsq13,   [ quantile( gpsindy_err_vec[ji:jf, j], 0.25 ), quantile( gpsindy_err_vec[ji:jf, j], 0.75 ) ] ) 
+    end 
+
+    push!( sindy_med, smed )     ; push!( sindy_q13, sq13 ) 
+    push!( gpsindy_med, gpsmed ) ; push!( gpsindy_q13, gpsq13 )  
+
+end 
+sindy_med   = vv2m(sindy_med)   ; sindy_q13   = vv2m(sindy_q13) 
+gpsindy_med = vv2m(gpsindy_med) ; gpsindy_q13 = vv2m(gpsindy_q13)
+
+using Plots 
+i = 1 
+plt = plot( legend = :outerright, size = [800 300] )
+    ymed = sindy_med[:,i] ; yq13 = vv2m(sindy_q13[:,i])
+    plot!( plt, noise_vec_iter, ymed, c = :orange, label = "SINDy", ribbon = (yq13[:,1], yq13[:,2]) ) 
+    ymed = gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_q13[:,i])
+    plot!( plt, noise_vec_iter, ymed, c = :cyan, label = "GPSINDy", ribbon = (yq13[:,1], yq13[:,2]) ) 
+    
+
+
+## ============================================ ##
+# boxplot plot 
 
 boxplot_err( noise_vec, sindy_err_vec, gpsindy_err_vec )
 
