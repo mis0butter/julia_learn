@@ -8,7 +8,7 @@ using PrettyTables
 # load data 
 
 
-csv_file = "test/jake_robot_data.csv" 
+csv_file = "test/data/jake_robot_data.csv" 
 
 # wrap in data frame --> Matrix 
 df = CSV.read(csv_file, DataFrame) 
