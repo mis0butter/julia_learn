@@ -59,13 +59,13 @@ Somi:
 
 David: 
 - implement the picture you took with your phone (GP-SINDy-GP-SINDy etc) 
-- create nice plot from Lasse (fig 3) 
-- actually implement LASSO 
+- create nice plot from Lasse (fig 3) *DONE 
+- table it: actually implement LASSO 
 - write problem in a way to say that we used coordinate descent (with separate primal variables) 
 - say that we stacked unknown variables (xi coefficients and sigma hyperparameters) into 1 unknown vector 
 - and then say we used coordinate descent to split unknown into 2 split variables 
 - and then do that thing that we wrote on the white board 
-- try on Jake's data, just see how it looks 
+- try on Jake's data, just see how it looks *DONE (it looks terrible with SINDy alone) 
 
 deadline: 
 - nicer to have journal 
@@ -75,6 +75,21 @@ email Chante about work ending Aug 4
 email her again about lunch reimbursement 
 she is responsive 
 
+# July 28 
+- (suggestion) For step 2: implement the mean function from Adam's white board as the mean function 
+    - subtract Theta(x)*xi from training points dx_noise 
+
+submit paper: 
+- learned models have uncertainty 
+- can take learned models with uncertainties into parametric form 
+- experiments, learn dynamics 
+- treat uncertainty of the learned system as disturbance on data 
+
+this weekend: 
+- try on real data 
+
+my idea: 
+- kalman filter GP-SINDy? condition learned model on new data? 
 
 
 

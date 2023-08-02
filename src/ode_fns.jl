@@ -23,6 +23,15 @@ function predator_prey(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
     return dx 
 end 
 
+export predator_prey_forcing
+function predator_prey_forcing(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
+
+    dx[1] = a*x1 - b*x1*x2 + u^2 
+    dx[2] = -c*x2 + d*x1*x2  
+
+    return dx 
+end 
+
 export ode_sine 
 function ode_sine(dx, x, p, t)
     dx[1] = 1/2*sin(x[1])  

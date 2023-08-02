@@ -94,41 +94,34 @@ display(plt)
 
 # choose ODE, plot states --> measurements 
 fn = predator_prey 
-x0, dt, t, x, dx_true, dx_fd = ode_states(fn, 0, 2) 
+x0, dt, t, x_true, dx_true, dx_fd = ode_states(fn, 0, 2) 
 
-dx_noise = 0.2 
+noise = 0.2 
 
-dx_stand = stand_data(t, dx_true) 
-dx_noise = dx_stand + dx_noise*randn( size(dx_true, 1), size(dx_true, 2) ) 
+x_stand = stand_data(t, x_true) 
+dx_true = dx_true_fn( t, dx_true, p, fn ) 
+x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
-x_train = t 
-x_test  = collect( t[1] : 0.1 : t[end] ) 
-# x_test  = x_train 
-y_train = x_noise
+# first iteration 
+y_test, Σ_test, hp_test = post_dist_SE( x_train, y_train, x_test ) 
+dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_noise, x_GP )  
 
-# kernel  
-mZero     = MeanZero() ;            # zero mean function 
-kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
-log_noise = log(0.1) ;              # (optional) log std dev of obs noise 
+# smooth measurements 
+x_GP, Σ_xGP, hp   = post_dist_SE( t, x_noise, t )  
+dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_noise, x_GP )  
 
-n_vars = size(x, 2) 
-    
-# loop through states 
-y_smooth = zeros( length(x_test), size(y_train, 2) ) 
-Σ        = 0 * y_smooth 
-for i = 1:n_vars 
+Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
+Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
 
-    # fit GP 
-    gp      = GP(x_train, y_train[:,i], mZero, kern, log_noise) 
-    optimize!(gp) 
-    μ, σ²   = predict_y( gp, x_test )    
+dx_mean = Θx_gpsindy * Ξ_gpsindy
 
-    y_smooth[:,i] = μ 
-    Σ[:,i]        = σ²
 
-end 
 
-y_test, Σ_test, hp_test = post_dist_M32I( x_train, y_train, x_test ) 
+
+
+
+
 
 
 ## ============================================ ##
@@ -139,14 +132,14 @@ x_smooth, Σ_xsmooth, hp = post_dist_SE( t, x_noise, t )
 # y_train = x_noise 
 y_train = x_smooth 
 
-μ, Σ = post_dist_SE( x_smooth, x_smooth, dx_noise )  
-μ_man, Σ_man = post_dist( y_vec, dx_noise, y_vec, σ_f, l, σ_n ) 
+μ, Σ = post_dist_SE( x_smooth, x_smooth, x_noise )  
+μ_man, Σ_man = post_dist( y_vec, x_noise, y_vec, σ_f, l, σ_n ) 
 # μ_man, Σ_man, hp = post_dist_hp_opt( y_vec, dx_noise[:,1], y_vec )  
 
 i = 2 
 plot( legend = :outerright, xlabel = "Time (s)", title = "dx = f(x)" ) 
 plot!( t, dx_true[:,i], label = "true", legend = :outerright )
-plot!( t, dx_noise[:,i], ls = :dash, label = "noise" )
+plot!( t, x_noise[:,i], ls = :dash, label = "noise" )
 plot!( t, μ[:,i], ls = :dashdot, label = "GP" )   
 
 

@@ -39,9 +39,9 @@ println( "noise_vec = ", noise_vec )
 println( "case = ", case )  
 
 
-# ----------------------- #
+## ============================================ ##
 
-# plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec ) 
+plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec ) 
 
 
 ## ============================================ ##

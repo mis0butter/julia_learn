@@ -22,8 +22,12 @@ u = data[:,end-1:end]
 dx_fd = fdiff(t, x, 2) 
 # dx_true = dx_true_fn
 
+x_GP, Σ_xGP, hp   = post_dist_SE( t, x, t )              # step -1 
+dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_fd, x_GP )    # step 0 
+
+
 ## ============================================ ##
-# SINDy alone 
+# SINDy vs. GPSINDy 
 
 λ = 0.01 
 
@@ -32,15 +36,19 @@ x_vars = size(x, 2)
 u_vars = size(u, 2) 
 poly_order = n_vars 
 
-# construct data library 
+# SINDy alone 
 Θx = pool_data_test( [x u], n_vars, poly_order) 
+Ξ_sindy = sparsify_dynamics_test( Θx, dx_fd, λ, x_vars ) 
+dx_sindy = Θx * Ξ_sindy 
 
-# first cut - SINDy 
-Ξ = sparsify_dynamics_test( Θx, dx_fd, λ, x_vars ) 
+# GPSINDy 
+Θx = pool_data_test( [x_GP u], n_vars, poly_order) 
+Ξ_gpsindy = sparsify_dynamics_test( Θx, dx_GP, λ, x_vars ) 
+dx_gpsindy = Θx * Ξ_gpsindy 
 
-x_sindy = Θx * Ξ 
-
-plt = plot( title = "meas vs. sindy", legend = :outerright )
-plot!( plt, t, x[:,1], c = :blue, label = "meas" )
-plot!( plt, t, x_sindy[:,1], c = :red, label = "sindy" )   
+plt = plot( title = "dx: meas vs. sindy", legend = :outerright )
+scatter!( plt, t, dx_fd[:,1], c = :black, ms = 3, label = "meas (finite diff)" )
+plot!( plt, t, dx_GP[:,1], c = :blue, label = "GP" )
+plot!( plt, t, dx_sindy[:,1], c = :red, ls = :dash, label = "SINDy" )   
+plot!( plt, t, dx_gpsindy[:,1], c = :green, ls = :dashdot, label = "GPSINDy" )   
 
