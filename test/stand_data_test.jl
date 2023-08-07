@@ -10,7 +10,7 @@ noise = 0.2
 abstol = 1e-3 ; reltol = 1e-3 
 
 # choose ODE, plot states --> measurements 
-fn = predator_prey 
+fn = pendulum 
 x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
 
 # noise 
@@ -23,12 +23,12 @@ n_vars = size(x_true, 2) ; poly_order = n_vars
 Ξ_true = SINDy_test( x_true, dx_true, λ ) 
 
 # standardize true data 
-x_stand_true  = stand_data( t, x_true )    
-# dx_stand_true = dx_true_fn( t, x_stand_true, p, fn )  
-dx_stand_true = stand_data( t, dx_true ) 
+x_stand_true   = stand_data( t, x_true )    
+# dx_stand_true  = dx_true_fn( t, x_stand_true, p, fn )  
+dx_stand_true  = stand_data( t, dx_true ) 
 
 # add noise to standardized data 
-x_stand_noise = x_stand_true + noise*randn( size(x_true, 1), size(x_true, 2) ) 
+x_stand_noise  = x_stand_true + noise*randn( size(x_true, 1), size(x_true, 2) ) 
 dx_stand_noise = dx_stand_true + noise*randn( size(x_true, 1), size(x_true, 2) ) 
 
 ## ============================================ ##

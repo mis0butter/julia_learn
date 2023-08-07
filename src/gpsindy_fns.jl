@@ -194,11 +194,12 @@ end
 ## ============================================ ##
 
 export monte_carlo_gpsindy 
-function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case ) 
+function monte_carlo_gpsindy( fn, noise_vec, λ, abstol, reltol, case ) 
 # ----------------------- #
 # PURPOSE:  
 #       Run GPSINDy monte carlo 
 # INPUTS: 
+#       fn              : ODE function 
 #       noise_vec       : dx noise vector for iterations 
 #       λ               : L1 norm threshold 
 #       abstol          : abs tol 
@@ -210,7 +211,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 # ----------------------- # 
     
     # choose ODE, plot states --> measurements 
-    fn = pendulum
+    # fn = predator_prey 
     x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
     
     # truth coeffs 
@@ -391,10 +392,58 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 
             # step 2 
             dx_mean = Θx_gpsindy * Ξ_gpsindy 
-            dx_post = dx_mean + (  ) * ( dx_noise - dx_mean )  
+
+            # optimize hyperparameters 
+            i = 1 
+            # for i = 1 : size(x_true, 2) 
+                # kernel  
+                mZero     = MeanZero() ;            # zero mean function 
+                kern      = SE( 0.0, 0.0 ) ;        # squared eponential kernel (hyperparams on log scale) 
+                log_noise = log(0.1) ;              # (optional) log std dev of obs 
+                
+                y_train = dx_noise[:,i] - dx_mean[:,i]
+                gp      = GP( x_GP, y_train, mZero, kern, log_noise ) 
+                
+                optimize!( gp, method = LBFGS(linesearch=LineSearches.BackTracking()) ) 
+
+                # return HPs 
+                σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
+                hp  = [σ_f, l, σ_n] 
+
+            # end 
+
+            # compute posterior mean 
+            # x --> vector 
+            x_vec = [] 
+            for i = 1 : size(x_noise, 1) 
+                push!( x_vec, x_noise[i,:] ) 
+            end 
+            K = k_SE( σ_f, l, x_vec, x_vec ) 
+            dx_post = dx_mean + ( K ) * ( K + σ_n^2 * I ) \ ( dx_noise - dx_mean )  
 
             Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
             Ξ_gpsindy  = SINDy_test( x_GP, dx_post, λ ) 
+            
+
+        # standardize --> smooth states into SINDy w/ GP (NON-temporal) --> get accelerations (derivatives of derivatives) 
+        elseif case == 10 
+            
+            # add noise 
+            println( "noise = ", noise ) 
+            x_true   = stand_data( t, x_true ) 
+            dx_true  = dx_true_fn( t, x_true, p, fn ) 
+            x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+            dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
+
+            Θx_sindy = pool_data_test( x_noise, n_vars, poly_order ) 
+            Ξ_sindy  = SINDy_test( x_noise, dx_noise, λ ) 
+
+            # smooth measurements 
+            x_GP, Σ_xsmooth, hp   = post_dist_SE( t, x_noise, t )  
+            dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_noise, x_GP )  
+            
+            Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
+            Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
                 
         end 
 
