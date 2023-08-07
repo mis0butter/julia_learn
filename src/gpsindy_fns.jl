@@ -210,7 +210,7 @@ function monte_carlo_gpsindy( noise_vec, λ, abstol, reltol, case )
 # ----------------------- # 
     
     # choose ODE, plot states --> measurements 
-    fn = predator_prey 
+    fn = pendulum
     x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
     
     # truth coeffs 

@@ -40,9 +40,31 @@ function ode_sine(dx, x, p, t)
 end 
 
 
+
+# Constants, I do like that I do not have to parse them manually to ode78
+g           = 9.81   # Acceleration due to gravity in m/s^2
+l           = 1.0     # Length of pendulum 1 in metres
+
+export pendulum
+function pendulum(dx, x, p, t)
+
+    θ  = x[1] 
+    dθ = x[2] 
+
+	# The double pendulum equations
+    # dx = [ 0.0; 0.0]
+    dx[1] = dθ 
+    dx[2] = -( g / l ) * cos(θ)
+
+    # Return the derivatives as a vector
+	return dx
+end
+
+
 ## ============================================ ##
 # solve ODE problem 
 
+export solve_ode 
 function solve_ode(fn, x0, str, p, ts, dt, plot_option)
 
     # x0, str, p, ts, dt = init_params(fn) 

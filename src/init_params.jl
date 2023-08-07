@@ -17,14 +17,17 @@ function init_params(fn)
         # x0  = 0.5 .+ 0.25*rand(2) 
         # println("x0 = ", x0)
         str = "predator_prey" 
+    elseif fn == pendulum 
+        x0  = [ 0.0 ; 0.0 ]
+        str = "pendulum"
     end 
     # p      = [ 10.0, 28.0, 8/3, 2.0 ] 
     p      = [ 1.1, 0.4, 1, 0.4 ] 
     # p      = [ 1.5, 1, 3, 1 ] 
     n_vars = size(x0, 1) 
-    tf     = 30.0  
+    tf     = 10.0  
     ts     = (0.0, tf) 
-    dt     = 0.1 
+    dt     = 0.01 
 
     # initial plotting stuff 
     plot_font = "Computer Modern" 
