@@ -42,8 +42,8 @@ end
 
 
 # Constants, I do like that I do not have to parse them manually to ode78
-g           = 9.81   # Acceleration due to gravity in m/s^2
-l           = 1.0     # Length of pendulum 1 in metres
+g = 9.81   # Acceleration due to gravity in m/s^2
+l = 1.0     # Length of pendulum 1 in metres
 
 export pendulum
 function pendulum(dx, x, p, t)
