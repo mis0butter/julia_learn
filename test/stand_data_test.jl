@@ -3,16 +3,40 @@ using LineSearches
 
 
 ## ============================================ ##
-# create data 
-
-# constants 
-α      = 1.0  ; ρ = 1.0   
-noise  = 0.1 
-λ      = 0.1 
-abstol = 1e-3 ; reltol = 1e-3 
 
 # choose ODE, plot states --> measurements 
 fn = pendulum 
+# constants 
+λ  = 0.1 
+
+# set up noise vec 
+noise_vec = [] 
+noise_vec_iter = 0.05 : 0.01 : 0.3 
+for i in noise_vec_iter 
+    for j = 1:10 
+        push!(noise_vec, i)
+    end 
+end 
+noise_vec = collect( 0 : 0.05 : 0.2 ) 
+noise_vec = 0.1  
+
+## ============================================ ##
+
+# start MC loop 
+Ξ_true_vec = [] ; Ξ_sindy_vec = [] ; Ξ_gpsindy_vec = [] ; Ξ_gpsindy_gpsindy_vec = [] 
+for noise = noise_vec 
+    Ξ_true, Ξ_sindy, Ξ_gpsindy, Ξ_gpsindy_gpsindy = sindy_gpsindy_gpsindygpsindy( fn, noise, λ ) 
+    push!( Ξ_true_vec, Ξ_true )
+    push!( Ξ_sindy_vec, Ξ_sindy )
+    push!( Ξ_gpsindy_vec, Ξ_gpsindy )
+    push!( Ξ_gpsindy_gpsindy_vec, Ξ_gpsindy_gpsindy )
+end 
+
+
+## ============================================ ##
+
+
+
 x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
     
 # truth coeffs 
