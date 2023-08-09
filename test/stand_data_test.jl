@@ -28,7 +28,6 @@ x_true   = stand_data( t, x_true )
 dx_true  = dx_true_fn( t, x_true, p, fn ) 
 Ξ_true = SINDy_test( x_true, dx_true, λ ) 
 
-
 x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
 dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
@@ -42,8 +41,7 @@ dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_noise, x_GP )
 Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
 Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
 
-
-## ============================================ ##
+# ----------------------- #
 
 # step 2 
 dx_mean = Θx_gpsindy * Ξ_gpsindy 
@@ -78,7 +76,12 @@ for i = 1 : size(x_true, 2)
 end 
 
 Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
-Ξ_gpsindy_post  = SINDy_test( x_GP, dx_post, λ ) 
+Ξ_gpsindy_gpsindy  = SINDy_test( x_GP, dx_post, λ ) 
+
+println( "Ξ_true - Ξ_sindy = ", norm( Ξ_true - Ξ_sindy ) ) 
+println( "Ξ_true - Ξ_gpsindy = ", norm( Ξ_true - Ξ_gpsindy ) ) 
+println( "Ξ_true - Ξ_gpsindy_gpsindy = ", norm( Ξ_true - Ξ_gpsindy_gpsindy ) ) 
+
 
 ## ============================================ ##
 # plot 
