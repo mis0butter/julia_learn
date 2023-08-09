@@ -41,13 +41,14 @@ end
 
 # Constants, I do like that I do not have to parse them manually to ode78
 g = 9.81   # Acceleration due to gravity in m/s^2
-l = 1.0     # Length of pendulum 1 in metres
 
 export pendulum
 function pendulum(dx, x, p, t)
 
     θ  = x[1] 
     dθ = x[2] 
+
+    l = p[1] 
 
 	# The double pendulum equations
     # dx = [ 0.0; 0.0]
@@ -60,11 +61,15 @@ end
 
 
 # constants 
-# l1 = 1 ; l2 = 2 ; m1 = 2 ; m2 = 1 ; g = 9.81 
-l1 = 1 ; l2 = 1 ; m1 = 1 ; m2 = 1; g = 9.81 
+g = 9.81 
 
 export double_pendulum 
 function double_pendulum( dx, x, p, t ) 
+
+    l1 = p[1] 
+    l2 = p[2] 
+    m1 = p[3] 
+    m2 = p[4] 
 
     θ₁  = x[1] 
     dθ₁ = x[2] 
