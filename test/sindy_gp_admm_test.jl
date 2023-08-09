@@ -26,7 +26,7 @@ fn = pendulum
 # 6 = stand x_true --> dx_true, add noise, GP temporal smooth into SINDy, 
 # 7 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into SINDy, 
 # 8 = stand x_true --> dx_true, add noise, GP NON-temporal smooth into GPSINDy
-case = 7 
+case = 9 
 
 Random.seed!(1) 
 λ = 0.1 
