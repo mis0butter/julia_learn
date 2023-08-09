@@ -20,6 +20,16 @@ function init_params(fn)
     elseif fn == pendulum 
         x0  = [ 0.0 ; 0.0 ]
         str = "pendulum"
+    elseif fn == double_pendulum
+
+        θ₁  = 1.6 
+        dθ₁ = 0.0   
+        θ₂  = 2.2  
+        dθ₂ = 0.0    
+
+        x0 = [ θ₁, dθ₁, θ₂, dθ₂ ] 
+        str = "double_pendulum"
+
     end 
     # p      = [ 10.0, 28.0, 8/3, 2.0 ] 
     p      = [ 1.1, 0.4, 1, 0.4 ] 

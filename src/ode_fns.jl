@@ -39,8 +39,6 @@ function ode_sine(dx, x, p, t)
     return dx 
 end 
 
-
-
 # Constants, I do like that I do not have to parse them manually to ode78
 g = 9.81   # Acceleration due to gravity in m/s^2
 l = 1.0     # Length of pendulum 1 in metres
@@ -59,6 +57,37 @@ function pendulum(dx, x, p, t)
     # Return the derivatives as a vector
 	return dx
 end
+
+
+# constants 
+# l1 = 1 ; l2 = 2 ; m1 = 2 ; m2 = 1 ; g = 9.81 
+l1 = 1 ; l2 = 1 ; m1 = 1 ; m2 = 1; g = 9.81 
+
+export double_pendulum 
+function double_pendulum( dx, x, p, t ) 
+
+    θ₁  = x[1] 
+    dθ₁ = x[2] 
+    θ₂  = x[3] 
+    dθ₂ = x[4] 
+
+    # function [yprime] = pend(t, y)
+    # yprime = zeros(4,1) 
+    a = (m1 + m2) * l1 
+    b = m2 * l2 * cos(θ₁ - θ₂) 
+    c = m2 * l1 * cos(θ₁ - θ₂) 
+    d = m2 * l2 
+    e = -m2 * l2 * dθ₂ * dθ₂ * sin(θ₁ - θ₂) - g * (m1 + m2) * sin(θ₁) 
+    f = m2 * l1 * dθ₁ * dθ₁ * sin(θ₁ - θ₂) - m2 * g * sin(θ₂) 
+    
+    dx[1] = dθ₁
+    dx[2] = (e*d - b*f) / (a*d - c*b) 
+    dx[3] = dθ₂ 
+    dx[4] = (a*f - c*e) / (a*d - c*b) 
+    # yprime = yprime' 
+    # end
+
+end 
 
 
 ## ============================================ ##
