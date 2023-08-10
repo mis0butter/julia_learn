@@ -195,7 +195,7 @@ end
 # compare sindy, gpsindy, and gpsindy_gpsindy 
 
 export gpsindy_x2
-function gpsindy_x2( fn, noise, λ, Ξ_hist ) 
+function gpsindy_x2( fn, noise, λ, Ξ_hist, Ξ_err_hist ) 
 
     x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
     
@@ -262,13 +262,18 @@ function gpsindy_x2( fn, noise, λ, Ξ_hist )
     Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
     Ξ_gpsindy_x2 = SINDy_test( x_GP, dx_post, λ ) 
 
-    # save Ξ
+    # save Ξ_hist 
     push!( Ξ_hist.truth,      Ξ_true ) 
     push!( Ξ_hist.sindy,      Ξ_sindy ) 
     push!( Ξ_hist.gpsindy,    Ξ_gpsindy ) 
     push!( Ξ_hist.gpsindy_x2, Ξ_gpsindy_x2 ) 
 
-    return Ξ_hist 
+    # save Ξ_err_hist 
+    push!( Ξ_err_hist.sindy,      norm( Ξ_true - Ξ_sindy ) ) 
+    push!( Ξ_err_hist.gpsindy,    norm( Ξ_true - Ξ_gpsindy ) ) 
+    push!( Ξ_err_hist.gpsindy_x2, norm( Ξ_true - Ξ_gpsindy_x2 ) ) 
+
+    return Ξ_hist, Ξ_err_hist 
 
 end 
 

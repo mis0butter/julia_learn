@@ -25,8 +25,9 @@ noise_vec = 0.1
 
 Ξ_vec = [] 
 Ξ_hist = Ξ_struct( [], [], [], [] ) 
+Ξ_err_hist = Ξ_err_struct( [], [], [] ) 
 for noise = noise_vec 
-    Ξ_hist = gpsindy_x2( fn, noise, λ, Ξ_hist ) 
+    Ξ_hist, Ξ_err_hist = gpsindy_x2( fn, noise, λ, Ξ_hist, Ξ_err_hist ) 
     # push!( Ξ_true_vec, Ξ_true )
     # push!( Ξ_sindy_err, norm( Ξ_true - Ξ_sindy ) )
     # push!( Ξ_gpsindy_err, norm( Ξ_true - Ξ_gpsindy ) )

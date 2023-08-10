@@ -18,5 +18,11 @@ struct Ξ_struct
     gpsindy_x2 
 end
 
-export Hist, Ξ_struct 
+struct Ξ_err_struct 
+    sindy 
+    gpsindy 
+    gpsindy_x2 
+end
+
+export Hist, Ξ_struct, Ξ_err_struct 
 
