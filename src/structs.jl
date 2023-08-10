@@ -1,5 +1,4 @@
-# =====================================================================
-# === Dynamics Basis
+## structs 
 
 struct Hist 
     objval 
@@ -12,12 +11,12 @@ struct Hist
     eps_dual 
 end 
 
-struct Ξ_hist
+struct Ξ_struct 
     truth 
     sindy 
     gpsindy 
     gpsindy_x2 
 end
 
-export Hist, Ξ_hist 
+export Hist, Ξ_struct 
 
