@@ -1,16 +1,6 @@
-module GaussianSINDy
+module GaussianSINDy 
 
-struct Hist 
-    objval 
-    fval 
-    gval 
-    hp 
-    r_norm 
-    s_norm 
-    eps_pri 
-    eps_dual 
-end 
-
+include("structs.jl")
 include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
