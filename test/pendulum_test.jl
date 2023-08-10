@@ -28,7 +28,7 @@ y_max = ceil(maximum( [ maximum(y1), maximum(y2) ] ))
 for i = 1 : size(x, 1)
 
     p = plot( 
-        title = "Double Pendulum", 
+        title = "Chaotic Double Pendulum", 
         xlim  = ( x_min, x_max ), 
         ylim  = ( y_min, y_max ),  
      ) 
@@ -47,7 +47,7 @@ for i = 1 : size(x, 1)
 
 end 
 
-g = gif(a, fps = 10.0)
+g = gif(a, fps = 20.0)
 display(g)  
 
 
