@@ -238,6 +238,14 @@ function pool_data_vecfn_test(n_vars, poly_order)
         push!(Θ, x -> sin.( x[i] ) )
 
     end 
+
+    # sine functions 
+    for i = 1 : n_vars 
+
+        ind  += 1
+        push!(Θ, x -> cos.( x[i] ) )
+
+    end 
     
     return Θ 
 

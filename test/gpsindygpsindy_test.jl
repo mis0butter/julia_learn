@@ -25,7 +25,7 @@ end
 
 Ξ_true_vec = [] ; Ξ_sindy_err = [] ; Ξ_gpsindy_err = [] ; Ξ_gpsindy_gpsindy_err = [] 
 for noise = noise_vec 
-    Ξ_true, Ξ_sindy, Ξ_gpsindy, Ξ_gpsindy_gpsindy = sindy_gpsindy_gpsindygpsindy( fn, noise, λ ) 
+    Ξ_true, Ξ_sindy, Ξ_gpsindy, Ξ_gpsindy_gpsindy = gpsindy_x2( fn, noise, λ ) 
     push!( Ξ_true_vec, Ξ_true )
     push!( Ξ_sindy_err, norm( Ξ_true - Ξ_sindy ) )
     push!( Ξ_gpsindy_err, norm( Ξ_true - Ξ_gpsindy ) )
