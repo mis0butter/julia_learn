@@ -18,7 +18,7 @@ fn = predator_prey
 #     end 
 # end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-noise_vec = 0.1  
+noise_vec = [ 0.1 ]   
 
 # ----------------------- #
 # start MC loop 
@@ -28,27 +28,13 @@ noise_vec = 0.1
 Ξ_err_hist = Ξ_err_struct( [], [], [] ) 
 for noise = noise_vec 
     Ξ_hist, Ξ_err_hist = gpsindy_x2( fn, noise, λ, Ξ_hist, Ξ_err_hist ) 
-    # push!( Ξ_true_vec, Ξ_true )
-    # push!( Ξ_sindy_err, norm( Ξ_true - Ξ_sindy ) )
-    # push!( Ξ_gpsindy_err, norm( Ξ_true - Ξ_gpsindy ) )
-    # push!( Ξ_gpsindy_gpsindy_err, norm( Ξ_true - Ξ_gpsindy_gpsindy ) )
-    # push!( Ξ_true_vec, Ξ_true )
-    # push!( Ξ_sindy_err, norm( Ξ_true[:,2] - Ξ_sindy[:,2] ) )
-    # push!( Ξ_gpsindy_err, norm( Ξ_true[:,2] - Ξ_gpsindy[:,2] ) )
-    # push!( Ξ_gpsindy_gpsindy_err, norm( Ξ_true[:,2] - Ξ_gpsindy_gpsindy[:,2] ) )
 end 
+
 
 ## ============================================ ##
 # plot 
 
 plot_med_quarts_gpsindy_gpsindy( Ξ_sindy_err, Ξ_gpsindy_err, Ξ_gpsindy_gpsindy_err, noise_vec ) 
-
-
-
-
-
-
-
 
 
 
