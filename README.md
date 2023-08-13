@@ -1,10 +1,10 @@
-# GaussianSINDy
+# GaussianSINDy (GPSINDy)
 
 Discovering Equations of Motion from Data 
 
-## Research Notes
+# Research Notes
 
-### Aug 11, 2023 
+## Aug 11, 2023 
 
 - use double pendulum hardware data 
 - fix validation script and plotting 
@@ -18,14 +18,14 @@ paper:
 - save data, figure out best plot later 
 
 
-### Aug 6, 2023 
+## Aug 6, 2023 
 
 Double Pendulum Chaotic dataset: 
   - https://ibm.github.io/double-pendulum-chaotic-dataset/ 
   - Extract and save data to folder test/double-pendulum-chaotic/
 
 
-### July 28 
+## July 28 
 - (suggestion) For step 2: implement the mean function from Adam's white board as the mean function 
     - subtract Theta(x)*xi from training points dx_noise 
 
@@ -42,7 +42,7 @@ my idea:
 - kalman filter GP-SINDy? condition learned model on new data? 
 
 
-### July 27 
+## July 27 
 
 David: 
 - implement the picture you took with your phone (GP-SINDy-GP-SINDy etc) 
@@ -63,8 +63,7 @@ email her again about lunch reimbursement
 she is responsive 
 
 
-
-### July 26 
+## July 26 
 
 Somi: 
 1. smooth dx_noise with x_noise as training inputs --> dx_GP
@@ -77,8 +76,7 @@ Somi:
 4. compare SINDy and GPSINDy *DONE 
 
 
-
-### July 24-28  
+## July 24-28  
 
 Somi: (2)  
 - try Matern52 kernel within SINDy-GP-ADMM (and maybe Matern32 kernel) 
@@ -114,7 +112,7 @@ Junette:
 - just do Jake's car data *DONE SET UP SANDBOX 
 
 
-### July 17-21 
+## July 17-21 
 
 - look into sparsity: increase lambda, compare gpsindy and sindy 
 - decrease samples and increase noise, gpsindy works better? 
@@ -124,7 +122,7 @@ fixed kernel?
 - input should be time, not x or dx as previously specified in the paper? 
 - 
 
-### June 19, 2023 
+## June 19, 2023 
 - put predator_prey plot into function in utils.jl 
 - added metrics to end of predator_prey_test.jl (just opnorm) for truth vs. sindy vs. gpsindy 
 - also tried just turning off one small coefficient for sindy per David's suggestion - it makes trajectory propagate much differently 

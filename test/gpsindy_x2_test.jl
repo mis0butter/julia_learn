@@ -1,5 +1,5 @@
 using GaussianSINDy
-using LineSearches 
+# using LineSearches 
 
 
 ## ============================================ ##
