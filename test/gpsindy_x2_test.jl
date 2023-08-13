@@ -43,39 +43,42 @@ n_vars = size(x_true, 2) ; poly_order = n_vars
 
 # add noise 
 println( "noise = ", noise ) 
-x_noise  = x_true + noise*randn( size(x_stand, 1), size(x_true, 2) )
-dx_noise = dx_true + noise*randn( size(dx_stand, 1), size(dx_true, 2) )
-
-# standardize  
-x_stand  = stand_data( t, x_noise ) 
-dx_stand = fdiff( t, x_stand, 2 ) 
-# dx_stand = stand_data( t, dx_true ) 
-# dx_stand = dx_true_fn( t, x_stand, p, fn ) 
-
-## ============================================ ##
+x_noise  = x_true + noise*randn( size(x_true, 1), size(x_true, 2) )
+dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 
 # split into training and test data 
 test_fraction = 0.2 
 portion       = 5 
 t_train, t_test   = split_train_test(t, test_fraction, portion) 
-x_train, x_test   = split_train_test(x_stand, test_fraction, portion) 
-dx_train, dx_test = split_train_test(dx_stand, test_fraction, portion) 
+x_train, x_test   = split_train_test(x_noise, test_fraction, portion) 
+dx_train, dx_test = split_train_test(dx_noise, test_fraction, portion) 
 dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
+
+# ----------------------- #
+# standardize  
+x_train_stand  = stand_data( t_train, x_train ) 
+dx_train_stand = fdiff( t_train, x_train_stand, 2 ) 
+# dx_stand = stand_data( t, dx_true ) 
+# dx_stand = dx_true_fn( t, x_stand, p, fn ) 
+
+## ============================================ ##
+
+
 
 # ----------------------- #
 # SINDy by itself 
 
-Θx_sindy = pool_data_test( x_train, n_vars, poly_order ) 
-Ξ_sindy  = SINDy_test( x_train, dx_train, λ ) 
+Θx_sindy = pool_data_test( x_train_stand, n_vars, poly_order ) 
+Ξ_sindy  = SINDy_test( x_train_stand, dx_train_stand, λ ) 
 
 # ----------------------- #
 # GPSINDy (first) 
 
 # step -1 : smooth x measurements with t (temporal)  
-x_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )  
+x_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train_stand, t_train )  
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
-dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_train, x_GP )  
+dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_train_stand, x_GP )  
 
 # SINDy 
 Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
@@ -86,7 +89,7 @@ dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_train, x_GP )
 
 # step 2: GP 
 dx_mean = Θx_gpsindy * Ξ_gpsindy 
-dx_post = gp_post( x_GP, dx_mean, x_GP, dx_train, dx_mean ) 
+dx_post = gp_post( x_GP, dx_mean, x_GP, dx_train_stand, dx_mean ) 
 
 # step 3: SINDy 
 Θx_gpsindy   = pool_data_test( x_GP, n_vars, poly_order ) 
@@ -98,7 +101,7 @@ dx_post = gp_post( x_GP, dx_mean, x_GP, dx_train, dx_mean )
 
 using DifferentialEquations
 
-dx_sindy_fn      = build_dx_fn(poly_order, Ξ_true) 
+dx_sindy_fn      = build_dx_fn(poly_order, Ξ_sindy) 
 dx_gpsindy_fn    = build_dx_fn(poly_order, Ξ_gpsindy) 
 dx_gpsindy_x2_fn = build_dx_fn(poly_order, Ξ_gpsindy_x2) 
 
