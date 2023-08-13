@@ -4,6 +4,10 @@ Discovering Equations of Motion from Data
 
 ## Research Notes 
 
+Double Pendulum Chaotic dataset: 
+  - https://ibm.github.io/double-pendulum-chaotic-dataset/ 
+  - Extract and save data to folder test/double-pendulum-chaotic/
+
 ### June 19, 2023 
 - put predator_prey plot into function in utils.jl 
 - added metrics to end of predator_prey_test.jl (just opnorm) for truth vs. sindy vs. gpsindy 

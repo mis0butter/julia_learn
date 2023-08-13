@@ -39,10 +39,66 @@ function ode_sine(dx, x, p, t)
     return dx 
 end 
 
+# Constants, I do like that I do not have to parse them manually to ode78
+g = 9.81   # Acceleration due to gravity in m/s^2
+
+export pendulum
+function pendulum(dx, x, p, t)
+
+    θ  = x[1] 
+    dθ = x[2] 
+
+    l = p[1] 
+
+	# The double pendulum equations
+    # dx = [ 0.0; 0.0]
+    dx[1] = dθ 
+    dx[2] = -( g / l ) * cos(θ)
+
+    # Return the derivatives as a vector
+	return dx
+end
+
+
+# constants 
+g = 9.81 
+
+export double_pendulum 
+function double_pendulum( dx, x, p, t ) 
+
+    l1 = p[1] 
+    l2 = p[2] 
+    m1 = p[3] 
+    m2 = p[4] 
+
+    θ₁  = x[1] 
+    dθ₁ = x[2] 
+    θ₂  = x[3] 
+    dθ₂ = x[4] 
+
+    # function [yprime] = pend(t, y)
+    # yprime = zeros(4,1) 
+    a = (m1 + m2) * l1 
+    b = m2 * l2 * cos(θ₁ - θ₂) 
+    c = m2 * l1 * cos(θ₁ - θ₂) 
+    d = m2 * l2 
+    e = -m2 * l2 * dθ₂ * dθ₂ * sin(θ₁ - θ₂) - g * (m1 + m2) * sin(θ₁) 
+    f = m2 * l1 * dθ₁ * dθ₁ * sin(θ₁ - θ₂) - m2 * g * sin(θ₂) 
+    
+    dx[1] = dθ₁
+    dx[2] = (e*d - b*f) / (a*d - c*b) 
+    dx[3] = dθ₂ 
+    dx[4] = (a*f - c*e) / (a*d - c*b) 
+    # yprime = yprime' 
+    # end
+
+end 
+
 
 ## ============================================ ##
 # solve ODE problem 
 
+export solve_ode 
 function solve_ode(fn, x0, str, p, ts, dt, plot_option)
 
     # x0, str, p, ts, dt = init_params(fn) 
@@ -115,7 +171,7 @@ function validate_data(t_test, x_test, dx_fn, dt)
     prob  = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
-    sol = solve(prob, saveat = dt)
+    sol   = solve(prob, saveat = dt)
     # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
     x_validate = sol.u ; 
     x_validate = mapreduce(permutedims, vcat, x_validate) 
@@ -265,7 +321,7 @@ function build_dx_fn(poly_order, z_fd)
     n_vars = size( z_fd, 2 ) 
 
     # define pool_data functions 
-    fn_vector = pool_data_vecfn(n_vars, poly_order) 
+    fn_vector = pool_data_vecfn_test(n_vars, poly_order) 
 
     # numerically evaluate each function at x and return a vector of numbers
     𝚽( x, fn_vector ) = [ f(x) for f in fn_vector ]

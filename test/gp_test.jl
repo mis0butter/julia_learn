@@ -140,7 +140,7 @@ i = 2
 plot( legend = :outerright, xlabel = "Time (s)", title = "dx = f(x)" ) 
 plot!( t, dx_true[:,i], label = "true", legend = :outerright )
 plot!( t, x_noise[:,i], ls = :dash, label = "noise" )
-plot!( t, μ[:,i], ls = :dashdot, label = "GP" )   
+plot!( t, μ[:,i], ls = :dashdot, label = "GP" ) 
 
 
 ## ============================================ ##
@@ -151,4 +151,49 @@ plot!( t, μ[:,i], ls = :dashdot, label = "GP" )
     plot!( plt, x_test, μ_SE, label = "SE", ribbon = ( μ_SE - Σ_SE, μ_SE + Σ_SE )  ) 
 
 
+## ============================================ ##
+
+
+
+# choose ODE, plot states --> measurements 
+fn = predator_prey 
+x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
+
+noise = 0.2 
+
+x_stand  = stand_data( t, x_true ) 
+dx_stand = dx_true_fn( t, x_true, p, fn ) 
+x_noise  = x_stand + noise*randn( size(x_true, 1), size(x_true, 2) ) 
+dx_noise = dx_stand + noise*randn( size(x_true, 1), size(x_true, 2) ) 
+x_stand = x_stand[:,1] ; x_noise = x_noise[:,1] ; x_true = x_true[:,1] 
+
+x_train = t 
+x_test  = collect( t[1] : 0.1 : t[end] ) 
+# x_test  = x_train 
+y_train = x_noise
+
+# kernel  
+# β_hat = StatsBase.coef(mod1.model)[2:1:(p+1)]
+
+β_hat = 0 * t 
+mean = MeanLin(β_hat) 
+kern = SE( 0.0, 0.0 )         # squared eponential kernel (hyperparams on log scale) 
+
+log_noise = log(0.1)               # (optional) log std dev of obs noise 
+
+n_vars   = size(y_train, 2) 
+y_smooth = zeros( size(x_test, 1), n_vars ) 
+
+gp       = GP( x_train', y_train, mean', kern, log_noise ) 
+
+
+## ============================================ ##
+
+xtrain = [-4.0, -3.0, -1.0, 0.0, 2.0] 
+ytrain = 2.0 * xtrain + 0.5 * rand(5) 
+xpred  = collect( -5.0 : 0.1 : 5.0 )
+# mLin   = MeanLin( 0 * xtrain ) # linear mean function
+mLin   = MeanLin( (0 * xpred)' ) # linear mean function
+kern   = SE( 0.0, 0.0 )                         # squared exponential kernel function
+gp     = GP( x, y, mLin, kern )                 # fit the GP 
 

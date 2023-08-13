@@ -22,7 +22,7 @@ u = data[:,end-1:end]
 dx_fd = fdiff(t, x, 2) 
 # dx_true = dx_true_fn
 
-x_GP, Σ_xGP, hp   = post_dist_SE( t, x, t )              # step -1 
+x_GP,  Σ_xGP,  hp = post_dist_SE( t, x, t )              # step -1 
 dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_fd, x_GP )    # step 0 
 
 

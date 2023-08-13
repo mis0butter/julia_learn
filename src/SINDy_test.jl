@@ -158,6 +158,13 @@ function pool_data_test(xmat, n_vars, poly_order)
         vec   = sin.(xmat[:,i]) 
         Θx    = [Θx vec] 
     end 
+
+    # cos functions 
+    for i = 1 : n_vars 
+        ind  += 1 
+        vec   = cos.(xmat[:,i]) 
+        Θx    = [Θx vec] 
+    end 
     
     return Θx  
 
@@ -229,6 +236,14 @@ function pool_data_vecfn_test(n_vars, poly_order)
 
         ind  += 1
         push!(Θ, x -> sin.( x[i] ) )
+
+    end 
+
+    # sine functions 
+    for i = 1 : n_vars 
+
+        ind  += 1
+        push!(Θ, x -> cos.( x[i] ) )
 
     end 
     

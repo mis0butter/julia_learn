@@ -50,10 +50,8 @@ using Plots
 using Latexify 
 
 export plot_test_data 
-function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val )
+function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val )
 
-    # scalefontsizes(1.1)
-    ptitles = ["Prey", "Predator"]
     
     # determine xtick range 
     xmin, dx, xmax = min_d_max( t_test )
@@ -75,7 +73,7 @@ function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val
             xticks = xmin : dx : xmax , 
             yticks = ymin : dy : ymax , 
             xlabel = "Time (s)", 
-            title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
+            title  = string( latexify( "x_$(i)" ) ), 
             ) 
         plot!(t_sindy_val, x_sindy_val[:,i], 
             ls    = :dash , 
@@ -88,9 +86,14 @@ function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val
             ls    = :dashdot , 
             c     = RGB(0, 0.75, 0) , 
             lw    = 2 , 
-            label = "GP SINDy" ,  
+            label = "GPSINDy" ,  
             )
-    
+        plot!(t_gpsindy_x2_val, x_gpsindy_x2_val[:,i], 
+            ls    = :dot , 
+            c     = RGB(0, 0, 0.75) , 
+            lw    = 1 , 
+            label = "GPSINDy x2" ,  
+            )
         push!( plot_vec, p ) 
     
     end 
@@ -106,7 +109,7 @@ function plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val
     
     p_train_val = plot(plot_vec ... , 
         # layout = (1, n_vars+1), 
-        layout = grid( 1, n_vars+1, widths=[0.45, 0.45, 0.45] ) , 
+        layout = grid( 1, n_vars+1, widths=[0.4, 0.4, 0.45] ) , 
         size   = [ n_vars*400 250 ], 
         margin = 5Plots.mm,
         bottom_margin = 7Plots.mm,  
@@ -123,14 +126,14 @@ end
 using Plots 
 using Latexify 
 
-export plot_prey_predator 
-function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val )
+export plot_states 
+function plot_states( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val )
 
     # scalefontsizes(1.1)
-    ptitles = ["Prey", "Predator"]
+    # ptitles = ["Prey", "Predator"]
     
     # determine xtick range 
-    t   = [t_train; t_test] 
+    t   = [t_train ; t_test] 
     x   = [x_train ; x_test]
     xmin, dx, xmax = min_d_max( t )
     
@@ -163,7 +166,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
                 xticks = xmin : dx : xmax , 
                 yticks = ymin : dy : ymax , 
                 xlabel = "Time (s)", 
-                title  = string( ptitles[i], ", ", latexify( "x_$(i)" ) ), 
+                title  = string( latexify( "x_$(i)" ) ), 
                 ) 
         # display training data 
         if portion_mid 
@@ -190,7 +193,13 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
             ls    = :dashdot , 
             c     = RGB(0, 0.75, 0) , 
             lw    = 2 , 
-            label = "GP SINDy" ,  
+            label = "GPSINDy" ,  
+            )
+        plot!(t_gpsindy_x2_val, x_gpsindy_x2_val[:,i], 
+            ls    = :dot , 
+            c     = RGB(0, 0, 0.75) , 
+            lw    = 1 , 
+            label = "GPSINDy x2" ,  
             )
     
         push!( plot_vec, p ) 
@@ -208,7 +217,7 @@ function plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_si
     
     p_train_val = plot(plot_vec ... , 
         # layout = (1, n_vars+1), 
-        layout = grid( 1, n_vars+1, widths=[0.45, 0.45, 0.45] ) , 
+        layout = grid( 1, n_vars+1, widths=[0.4, 0.4, 0.45] ) , 
         size   = [ n_vars*400 250 ], 
         margin = 5Plots.mm,
         bottom_margin = 7Plots.mm,  
@@ -352,6 +361,75 @@ function plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec )
             ymed = gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_q13[:,i])
             plot!( plt, noise_vec_iter, ymed, c = :cyan, label = "GPSINDy", ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed), fillalpha = 0.35 ) 
             scatter!( plt, noise_vec, gpsindy_err_vec[:,i], c = :cyan, markerstrokewidth = 0, ms = 3, markeralpha = 0.35 ) 
+        push!( p_nvars, plt ) 
+    end 
+    p_nvars = plot( p_nvars ... ,  
+        layout = (2,1), 
+        size   = [800 600], 
+        plot_title = "1/4 Quartile, Median, and 3/4 Quartile "
+    ) 
+    display(p_nvars) 
+
+end 
+
+
+## ============================================ ##
+
+
+export plot_med_quarts_gpsindy_x2
+function plot_med_quarts_gpsindy_x2( sindy_err_vec, gpsindy_err_vec, gpsindy_gpsindy_err_vec, noise_vec ) 
+
+    n_vars   = size( sindy_err_vec, 2 ) 
+    unique_i = unique( i -> noise_vec[i], 1:length( noise_vec ) ) 
+    push!( unique_i, length(noise_vec)+1 ) 
+
+    sindy_med   = [] ; sindy_q13   = [] 
+    gpsindy_med = [] ; gpsindy_q13 = [] 
+    gpsindy_gpsindy_med = [] ; gpsindy_gpsindy_q13 = [] 
+    for i = 1 : length(unique_i)-1 
+
+        ji = unique_i[i] 
+        jf = unique_i[i+1]-1
+
+        smed = [] ; gpsmed = [] ; gpsgpsmed = [] ; sq13 = [] ; gpsq13 = [] ; gpsgpsq13 = [] 
+        for j = 1 : n_vars 
+            push!( smed,   median( sindy_err_vec[ji:jf, j] ) ) 
+            push!( gpsmed, median( gpsindy_err_vec[ji:jf, j] ) ) 
+            push!( gpsgpsmed, median( gpsindy_gpsindy_err_vec[ji:jf, j] ) ) 
+            push!( sq13,   [ quantile( sindy_err_vec[ji:jf, j], 0.25 ), quantile( sindy_err_vec[ji:jf, j], 0.75 ) ] ) 
+            push!( gpsq13, [ quantile( gpsindy_err_vec[ji:jf, j], 0.25 ), quantile( gpsindy_err_vec[ji:jf, j], 0.75 ) ] ) 
+            push!( gpsgpsq13, [ quantile( gpsindy_gpsindy_err_vec[ji:jf, j], 0.25 ), quantile( gpsindy_gpsindy_err_vec[ji:jf, j], 0.75 ) ] ) 
+        end 
+
+        push!( sindy_med, smed )     ; push!( sindy_q13, sq13 ) 
+        push!( gpsindy_med, gpsmed ) ; push!( gpsindy_q13, gpsq13 )  
+        push!( gpsindy_gpsindy_med, gpsgpsmed ) ; push!( gpsindy_gpsindy_q13, gpsgpsq13 )  
+
+    end 
+    sindy_med   = vv2m(sindy_med)   ; sindy_q13   = vv2m(sindy_q13) 
+    gpsindy_med = vv2m(gpsindy_med) ; gpsindy_q13 = vv2m(gpsindy_q13)
+    gpsindy_gpsindy_med = vv2m(gpsindy_gpsindy_med) ; gpsindy_gpsindy_q13 = vv2m(gpsindy_gpsindy_q13)
+
+    noise_vec_iter = unique(noise_vec) 
+    p_nvars = [] 
+    for i = 1 : n_vars 
+        plt = plot( legend = :outerright, size = [800 300], ylabel = string("|| ξ", i, "_true - ξ", i, "_discovered ||"), xlabel = "noise" )
+
+            # sindy 
+            ymed = sindy_med[:,i] ; yq13 = vv2m(sindy_q13[:,i])
+            plot!( plt, noise_vec_iter, ymed, c = :green, ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed), fillalpha = 0.35 ) 
+            scatter!( plt, noise_vec, sindy_err_vec[:,i], c = :green, markerstrokewidth = 0, ms = 3, markeralpha = 0.35, label = "SINDy" ) 
+
+            # gpsindy 
+            ymed = gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_q13[:,i])
+            plot!( plt, noise_vec_iter, ymed, c = :orange, ls = :dash, ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed), fillalpha = 0.3 ) 
+            scatter!( plt, noise_vec, gpsindy_err_vec[:,i], c = :orange, markerstrokewidth = 0, ms = 3, markeralpha = 0.35, label = "GPSINDy" ) 
+
+            # gpsindy_gpsindy
+            ymed = gpsindy_gpsindy_med[:,i] ; yq13 = vv2m(gpsindy_gpsindy_q13[:,i])
+            plot!( plt, noise_vec_iter, ymed, c = :cyan, ls = :dashdot, ribbon = (ymed - yq13[:,1], yq13[:,2] - ymed), fillalpha = 0.25 ) 
+            scatter!( plt, noise_vec, gpsindy_gpsindy_err_vec[:,i], c = :cyan, markerstrokewidth = 0, ms = 3, markeralpha = 0.35, label = "GPSINDy x2" ) 
+
         push!( p_nvars, plt ) 
     end 
     p_nvars = plot( p_nvars ... ,  
