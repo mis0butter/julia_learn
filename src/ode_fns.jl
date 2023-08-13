@@ -171,7 +171,7 @@ function validate_data(t_test, x_test, dx_fn, dt)
     prob  = ODEProblem(dx_fn, x0, tspan) 
 
     # solve the ODE
-    sol = solve(prob, saveat = dt)
+    sol   = solve(prob, saveat = dt)
     # sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
     x_validate = sol.u ; 
     x_validate = mapreduce(permutedims, vcat, x_validate) 
@@ -321,7 +321,7 @@ function build_dx_fn(poly_order, z_fd)
     n_vars = size( z_fd, 2 ) 
 
     # define pool_data functions 
-    fn_vector = pool_data_vecfn(n_vars, poly_order) 
+    fn_vector = pool_data_vecfn_test(n_vars, poly_order) 
 
     # numerically evaluate each function at x and return a vector of numbers
     𝚽( x, fn_vector ) = [ f(x) for f in fn_vector ]

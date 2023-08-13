@@ -161,7 +161,7 @@ function gp_post( x_test, μ_prior, x_train, y_train, μ_train )
 #       μ_train : mean function m(x) for the TRAINING data 
 # OUTPUTS: 
 #       y_post  : 
-# ----------------------- #
+# ----------------------- # 
 
     # transform x inputs matrices --> vectors for kernel computations 
     x_test_vec = [] 

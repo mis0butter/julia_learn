@@ -179,26 +179,21 @@ y_train = x_noise
 mean = MeanLin(β_hat) 
 kern = SE( 0.0, 0.0 )         # squared eponential kernel (hyperparams on log scale) 
 
-p = length(t) 
-# kern = Matern(3/2,zeros(p),0.0) 
-
 log_noise = log(0.1)               # (optional) log std dev of obs noise 
 
 n_vars   = size(y_train, 2) 
 y_smooth = zeros( size(x_test, 1), n_vars ) 
 
-gp       = GP( x_train', y_train, mean, kern, log_noise ) 
+gp       = GP( x_train', y_train, mean', kern, log_noise ) 
 
 
 ## ============================================ ##
 
-
 xtrain = [-4.0, -3.0, -1.0, 0.0, 2.0] 
-ytrain = 2.0 * x + 0.5 * rand(5) 
+ytrain = 2.0 * xtrain + 0.5 * rand(5) 
 xpred  = collect( -5.0 : 0.1 : 5.0 )
-mLin   = MeanLin( 0 * xtrain ) # linear mean function
-# mLin   = MeanLin( 0 * xpred ) # linear mean function
+# mLin   = MeanLin( 0 * xtrain ) # linear mean function
+mLin   = MeanLin( (0 * xpred)' ) # linear mean function
 kern   = SE( 0.0, 0.0 )                         # squared exponential kernel function
 gp     = GP( x, y, mLin, kern )                 # fit the GP 
-
 

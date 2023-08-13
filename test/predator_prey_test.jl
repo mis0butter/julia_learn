@@ -57,6 +57,7 @@ hist_fd = Hist( [], [], [], [], [] )
 plot_admm(hist_fd, 1)
 plot_admm(hist_fd, 2)
 
+
 ## ============================================ ## 
 # generate + validate TEST data 
 
@@ -69,6 +70,7 @@ t_sindy_val,   x_sindy_val   = validate_data(t_test, x_test, dx_sindy_fn, dt)
 # plot!! 
 plot_prey_predator( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
 plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val ) 
+
 
 ## ============================================ ##
 # print stats 
