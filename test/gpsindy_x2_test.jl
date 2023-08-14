@@ -5,7 +5,7 @@ using GaussianSINDy
 ## ============================================ ##
 
 # choose ODE, plot states --> measurements 
-fn = pendulum 
+fn = predator_prey 
 # constants 
 λ  = 0.1 
 
@@ -66,8 +66,8 @@ dx_stand_noise = dx_stand_true + noise * randn( size(dx_stand_true, 1), size(dx_
 # dx_train_stand = dx_true_fn( t_train, x_train_stand, p, fn ) 
 
 # set training data for GPSINDy 
-x_train = x_stand_noise 
-dx_train = dx_stand_noise 
+x_train  = x_stand_noise
+dx_train = dx_stand_noise  
 
 ## ============================================ ##
 # SINDy vs. GPSINDy vs. GPSINDy_x2 
@@ -84,6 +84,7 @@ x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
 dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )  
+dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_mean ) 
 
 # SINDy 
 Θx_gpsindy = pool_data_test(x_train_GP, n_vars, poly_order) 

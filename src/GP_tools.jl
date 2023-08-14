@@ -259,7 +259,8 @@ function post_dist_SE( x_train, y_train, x_test )
         # fit GP 
         gp      = GP( x_train', y_train[:,i], mZero, kern, log_noise ) 
 
-        optimize!( gp, method = LBFGS(linesearch=LineSearches.BackTracking()) ) 
+        # optimize!( gp, method = LBFGS(linesearch=LineSearches.BackTracking()) ) 
+        optimize!( gp, method = BFGS(linesearch=LineSearches.BackTracking()) ) 
 
         # return HPs 
         σ_f = sqrt( gp.kernel.σ2 ) ; l = sqrt.( gp.kernel.ℓ2 ) ; σ_n = exp( gp.logNoise.value )  
