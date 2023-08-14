@@ -5,7 +5,7 @@ using GaussianSINDy
 ## ============================================ ##
 
 # choose ODE, plot states --> measurements 
-fn = predator_prey 
+fn = pendulum 
 # constants 
 λ  = 0.1 
 
@@ -19,7 +19,7 @@ fn = predator_prey
 # end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
 # noise_vec = [ 0.1 ]   
-noise = 0.1 
+noise = 0.2 
 
 # ----------------------- #
 # start MC loop 
@@ -32,7 +32,7 @@ noise = 0.1
 # end 
 
 
-# ----------------------- #
+# ----------------------- # 
 
 # generate true states 
 x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
@@ -55,7 +55,7 @@ dx_train_noise, dx_test_noise = split_train_test(dx_noise, test_fraction, portio
 x_train_true,  x_test_true    = split_train_test(x_true, test_fraction, portion) 
 dx_train_true, dx_test_true   = split_train_test(dx_true, test_fraction, portion) 
 
-# ----------------------- #
+# ----------------------- # 
 # standardize  
 x_stand_noise  = stand_data( t_train, x_train_noise ) 
 x_stand_true   = stand_data( t_train, x_train_true ) 
@@ -66,7 +66,7 @@ dx_stand_noise = dx_stand_true + noise * randn( size(dx_stand_true, 1), size(dx_
 # dx_train_stand = dx_true_fn( t_train, x_train_stand, p, fn ) 
 
 # set training data for GPSINDy 
-x_train  = x_stand_noise
+x_train  = x_stand_noise 
 dx_train = dx_stand_noise  
 
 ## ============================================ ##
@@ -84,7 +84,7 @@ x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
 dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )  
-dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_mean ) 
+dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_train ) 
 
 # SINDy 
 Θx_gpsindy = pool_data_test(x_train_GP, n_vars, poly_order) 
@@ -95,7 +95,13 @@ dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_mean )
 
 # step 2: GP 
 dx_mean = Θx_gpsindy * Ξ_gpsindy 
-dx_post = gp_post( x_train_GP, dx_mean, x_train_GP, dx_train, dx_mean ) 
+
+# x_stand_noise  = x_stand_true + noise * randn( size(x_stand_true, 1), size(x_stand_true, 2) )  
+# x_train = x_stand_noise 
+# x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )  
+dx_stand_noise = dx_stand_true + noise * randn( size(dx_stand_true, 1), size(dx_stand_true, 2) )  
+dx_train = dx_stand_noise  
+dx_post  = gp_post( x_train_GP, dx_mean, x_train_GP, dx_mean, dx_train ) 
 
 # step 3: SINDy 
 Θx_gpsindy   = pool_data_test( x_train_GP, n_vars, poly_order ) 

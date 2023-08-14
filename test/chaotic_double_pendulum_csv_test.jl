@@ -56,7 +56,7 @@ x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
 dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )  
-# dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_mean ) 
+# dx_test = gp_post( x_train_GP, 0*dx_train, x_train_GP, 0*dx_train, dx_train ) 
 
 # SINDy 
 Θx_gpsindy = pool_data_test(x_train_GP, n_vars, poly_order) 
@@ -67,7 +67,7 @@ dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )
 
 # step 2: GP 
 dx_mean = Θx_gpsindy * Ξ_gpsindy 
-dx_post = gp_post( x_train_GP, dx_mean, x_train_GP, dx_train, dx_mean ) 
+dx_post = gp_post( x_train_GP, dx_mean, x_train_GP, dx_mean, dx_train ) 
 
 # step 3: SINDy 
 Θx_gpsindy   = pool_data_test( x_train_GP, n_vars, poly_order ) 
