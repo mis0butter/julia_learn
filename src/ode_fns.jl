@@ -91,7 +91,8 @@ function double_pendulum( dx, x, p, t )
     dx[4] = (a*f - c*e) / (a*d - c*b) 
     # yprime = yprime' 
     # end
-
+    
+    return dx 
 end 
 
 

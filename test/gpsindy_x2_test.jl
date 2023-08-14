@@ -5,7 +5,7 @@ using GaussianSINDy
 ## ============================================ ##
 
 # choose ODE, plot states --> measurements 
-fn = predator_prey 
+fn = pendulum 
 # constants 
 λ  = 0.1 
 
@@ -19,7 +19,7 @@ fn = predator_prey
 # end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
 # noise_vec = [ 0.1 ]   
-noise = 0.0 
+noise = 0.1 
 
 # ----------------------- #
 # start MC loop 
@@ -50,90 +50,78 @@ dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 test_fraction = 0.2 
 portion       = 5 
 t_train, t_test   = split_train_test(t, test_fraction, portion) 
-x_train, x_test   = split_train_test(x_noise, test_fraction, portion) 
-dx_train, dx_test = split_train_test(dx_noise, test_fraction, portion) 
-dx_true_train, dx_true_test = split_train_test(dx_true, test_fraction, portion) 
+x_train_noise,  x_test_noise  = split_train_test(x_noise, test_fraction, portion) 
+dx_train_noise, dx_test_noise = split_train_test(dx_noise, test_fraction, portion) 
+x_train_true,  x_test_true    = split_train_test(x_true, test_fraction, portion) 
+dx_train_true, dx_test_true   = split_train_test(dx_true, test_fraction, portion) 
 
 # ----------------------- #
 # standardize  
-x_train_stand  = stand_data( t_train, x_train ) 
-dx_train_stand = fdiff( t_train, x_train_stand, 2 ) 
+x_stand_noise  = stand_data( t_train, x_train_noise ) 
+x_stand_true   = stand_data( t_train, x_train_true ) 
+# dx_stand_noise = fdiff( t_train, x_stand_noise, 2 ) 
+dx_stand_true  = dx_true_fn( t_train, x_stand_true, p, fn ) 
+dx_stand_noise = dx_stand_true + noise * randn( size(dx_stand_true, 1), size(dx_stand_true, 2) )  
 # dx_stand = stand_data( t, dx_true ) 
-# dx_stand = dx_true_fn( t, x_stand, p, fn ) 
+# dx_train_stand = dx_true_fn( t_train, x_train_stand, p, fn ) 
+
+# set training data for GPSINDy 
+x_train = x_stand_noise 
+dx_train = dx_stand_noise 
 
 ## ============================================ ##
+# SINDy vs. GPSINDy vs. GPSINDy_x2 
 
-
-
-# ----------------------- #
 # SINDy by itself 
-
-Θx_sindy = pool_data_test( x_train_stand, n_vars, poly_order ) 
-Ξ_sindy  = SINDy_test( x_train_stand, dx_train_stand, λ ) 
+Θx_sindy = pool_data_test( x_train, n_vars, poly_order ) 
+Ξ_sindy  = SINDy_test( x_train, dx_train, λ ) 
 
 # ----------------------- #
 # GPSINDy (first) 
 
 # step -1 : smooth x measurements with t (temporal)  
-x_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train_stand, t_train )  
+x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )  
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
-dx_GP, Σ_dxsmooth, hp = post_dist_SE( x_GP, dx_train_stand, x_GP )  
+dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )  
 
 # SINDy 
-Θx_gpsindy = pool_data_test(x_GP, n_vars, poly_order) 
-Ξ_gpsindy  = SINDy_test( x_GP, dx_GP, λ ) 
+Θx_gpsindy = pool_data_test(x_train_GP, n_vars, poly_order) 
+Ξ_gpsindy  = SINDy_test( x_train_GP, dx_train_GP, λ ) 
 
 # ----------------------- #
 # GPSINDy (second) 
 
 # step 2: GP 
 dx_mean = Θx_gpsindy * Ξ_gpsindy 
-dx_post = gp_post( x_GP, dx_mean, x_GP, dx_train_stand, dx_mean ) 
+dx_post = gp_post( x_train_GP, dx_mean, x_train_GP, dx_train, dx_mean ) 
 
 # step 3: SINDy 
-Θx_gpsindy   = pool_data_test( x_GP, n_vars, poly_order ) 
-Ξ_gpsindy_x2 = SINDy_test( x_GP, dx_post, λ ) 
+Θx_gpsindy   = pool_data_test( x_train_GP, n_vars, poly_order ) 
+Ξ_gpsindy_x2 = SINDy_test( x_train_GP, dx_post, λ ) 
 
 
 ## ============================================ ##
 # validate data 
 
-using DifferentialEquations
-
 dx_sindy_fn      = build_dx_fn(poly_order, Ξ_sindy) 
 dx_gpsindy_fn    = build_dx_fn(poly_order, Ξ_gpsindy) 
 dx_gpsindy_x2_fn = build_dx_fn(poly_order, Ξ_gpsindy_x2) 
 
-
-n_vars = size(x_test, 2) 
-x0     = [ x_test[1] ] 
-if n_vars > 1 
-    x0 = x_test[1,:] 
-end 
-
-# dt    = t_test[2] - t_test[1] 
-tspan = (t_test[1], t_test[end]) 
-prob  = ODEProblem(fn, x0, tspan, p) 
-
-# solve the ODE
-sol   = solve(prob, saveat = dt)
-
-x_validate = sol.u ; 
-x_validate = mapreduce(permutedims, vcat, x_validate) 
-t_validate = sol.t 
-
-## ============================================ ##
-
-
-t_sindy_val,      x_sindy_val      = validate_data(t_test, x_test, dx_sindy_fn, dt) 
+t_sindy_val,      x_sindy_val      = validate_data(t_test, x_test_noise, dx_sindy_fn, dt) 
 # t_sindy_val,      x_sindy_val      = validate_data(t_test, x_test, fn, dt) 
-t_gpsindy_val,    x_gpsindy_val    = validate_data(t_test, x_test, dx_gpsindy_fn, dt) 
-t_gpsindy_x2_val, x_gpsindy_x2_val = validate_data(t_test, x_test, dx_gpsindy_x2_fn, dt) 
+t_gpsindy_val,    x_gpsindy_val    = validate_data(t_test, x_test_noise, dx_gpsindy_fn, dt) 
+t_gpsindy_x2_val, x_gpsindy_x2_val = validate_data(t_test, x_test_noise, dx_gpsindy_x2_fn, dt) 
 
 # plot!! 
-plot_states( t_train, x_train, t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
-plot_test_data( t_test, x_test, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
+plot_states( t_train, x_train_noise, t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
+plot_test_data( t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
+
+
+
+
+
+
 
 
 ## ============================================ ##

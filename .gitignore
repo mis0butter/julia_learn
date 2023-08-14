@@ -1,3 +1,4 @@
 /Manifest.toml
 test/outputs/
-test/double-pendulum-chaotic/
+test/double-pendulum-chaotic/ 
+test/data/double-pendulum-chaotic/
