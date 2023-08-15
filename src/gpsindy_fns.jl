@@ -247,7 +247,7 @@ function gpsindy_x2( fn, noise, λ, Ξ_hist, Ξ_err_hist )
     
     # step 2: GP 
     dx_mean = Θx_gpsindy * Ξ_gpsindy 
-    dx_post = gp_post( x_GP, dx_mean, x_GP, dx_train, dx_mean ) 
+    dx_post = gp_post( x_GP, dx_mean, x_GP, dx_mean, dx_train ) 
     
     # step 3: SINDy 
     Θx_gpsindy   = pool_data_test( x_GP, n_vars, poly_order ) 

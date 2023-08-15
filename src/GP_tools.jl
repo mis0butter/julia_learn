@@ -149,7 +149,7 @@ end
 # posterior GP and optimize hps 
 
 export gp_post 
-function gp_post( x_test, μ_prior, x_train, y_train, μ_train ) 
+function gp_post( x_test, μ_prior, x_train, μ_train, y_train ) 
 # ----------------------- #
 # PURPOSE: 
 #       Compute posterior of Gaussian process and optimize hyperparameters 
