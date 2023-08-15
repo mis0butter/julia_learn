@@ -2,18 +2,18 @@ using GaussianSINDy
 using Statistics 
 using Random 
 
-## ============================================ ##
+# ----------------------- #
 
-# noise_vec = [] 
-# noise_vec_iter = 0.05 : 0.01 : 0.3 
-# for i in noise_vec_iter 
-#     for j = 1:10 
-#         push!(noise_vec, i)
-#     end 
-# end 
+noise_vec = [] 
+noise_vec_iter = 0.0 : 0.01 : 0.3 
+for i in noise_vec_iter 
+    for j = 1:10 
+        push!(noise_vec, i)
+    end 
+end 
 # noise_vec = collect( 0 : 0.05 : 0.2 ) 
-noise_vec = 0.1  
-fn = pendulum 
+# noise_vec = 0.1  
+fn = predator_prey 
 
 # ----------------------- #
 # cases: 
@@ -39,7 +39,7 @@ println( "noise_vec = ", noise_vec )
 println( "case = ", case )  
 
 
-## ============================================ ##
+# ----------------------- #
 # plot monte carlo 
 
 plot_med_quarts( sindy_err_vec, gpsindy_err_vec, noise_vec ) 

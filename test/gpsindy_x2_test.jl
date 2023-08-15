@@ -118,15 +118,8 @@ t_gpsindy_x2_val, x_gpsindy_x2_val = validate_data(t_test, x_test_noise, dx_gpsi
 plot_states( t_train, x_train_noise, t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
 plot_test_data( t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
 
-
-
-
-
-
-
-
 ## ============================================ ##
-# plot 
+# plot quartiles 
 
 Ξ_sindy_err = Ξ_err_hist.sindy ; 
 Ξ_gpsindy_err = Ξ_err_hist.gpsindy ; 
