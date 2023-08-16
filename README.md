@@ -2,14 +2,23 @@
 
 Discovering Equations of Motion from Data 
 
-# Research Notes
+# Research Notes 
+
+## Aug 16, 2023 
+
+Adam: 
+- said same thing as Somi: motivating example 
+  - give persuasive argument why SINDy is bad and we want to use GPSINDy instead 
+  - why having a good/better model is **important** 
+  - application areas: dynamics fudginess causes issues 
+  - safety applications    
 
 ## Aug 11, 2023 
 
-- use double pendulum hardware data 
-- fix validation script and plotting 
-- start writing: update the methods section 
-- try MeanLin with beta transpose 
+- use double pendulum hardware data *ONGOING 
+- fix validation script and plotting *DONE 
+- start writing: update the methods section *ONGOING 
+- try MeanLin with beta transpose *DONE (still doesn't work?)
 
 paper: 
 - motivate the problem diagram: have a robot or satellite where we want to learn the dynamics, think about where modeling is useful 
