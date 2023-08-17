@@ -66,6 +66,21 @@ end
     end 
 end 
 
+## ============================================ ##
+
+header = [ "term" ] 
+for i = 1 : n_vars 
+    push!( header, string( "x", i, "dot" ) ) 
+end 
+
+sz = size(Ξ_true) 
+
+Ξ_terms = Array{Any}( undef, sz .+ (0,1) )
+
+Ξ_terms[:, 1] = terms 
+Ξ_terms[:, 2:end] = Ξ_true  
+
+pretty_table( Ξ_terms; header = header ) 
  
 
 
