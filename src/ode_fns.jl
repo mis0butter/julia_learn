@@ -95,7 +95,7 @@ function double_pendulum( dx, x, p, t )
 end 
 
 export unicycle 
-function unicycle( dx, x, p, t; u = [1, 1] ) 
+function unicycle( dx, x, p, t; u = [-2, -1] ) 
 
     v = x[3] 
     θ = x[4] 

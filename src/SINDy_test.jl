@@ -265,3 +265,84 @@ function pool_data_vecfn_test(n_vars, poly_order)
     return Θx 
 
 end 
+
+
+## ============================================ ##
+# export terms (with control)
+
+export nonlinear_terms 
+function nonlinear_terms( x_data, u_data = false ) 
+
+    terms = [] 
+    x_vars = size(x_data, 2) 
+    u_vars = size(u_data, 2) 
+
+    var_string = [] 
+    for i = 1 : x_vars 
+        push!( var_string, string("x", i) )
+    end  
+    if isequal(u_data, false)      # if u_data = false 
+        n_vars = x_vars 
+    else            # there are u_data inputs 
+        n_vars = x_vars + u_vars 
+        for i = 1 : u_vars 
+            push!( var_string, string("u", i) ) 
+        end 
+    end 
+    
+    # first one 
+    ind = 1  
+    push!( terms, 1 )
+    
+     # poly order 1 
+    for i = 1 : n_vars 
+        ind += 1 
+        push!( terms, var_string[i] ) 
+    end 
+    
+    # poly order 2 
+    for i = 1 : n_vars 
+        for j = i : n_vars 
+            ind += 1 
+            push!( terms, string( var_string[i], var_string[j] ) ) 
+        end 
+    end 
+    
+     # poly order 3 
+    for i = 1 : n_vars 
+        for j = i : n_vars 
+            for k = j : n_vars 
+                ind += 1 
+                push!( terms, string( var_string[i], var_string[j], var_string[k] ) )     
+            end 
+        end 
+    end 
+    
+     # sine functions 
+    for i = 1 : n_vars 
+        ind += 1 
+        push!( terms, string( "sin(", var_string[i], ")" ) ) 
+    end 
+    
+     for i = 1 : n_vars 
+        ind += 1 
+        push!( terms, string( "cos(", var_string[i], ")" ) ) 
+    end 
+    
+     # cosine functions 
+    for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind += 1 
+            push!( terms, string( var_string[i], "sin(", var_string[j], ")") ) 
+        end 
+    end 
+    
+     for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind += 1 
+            push!( terms, string( var_string[i], "cos(", var_string[j], ")") ) 
+        end 
+    end 
+
+    return terms 
+end 

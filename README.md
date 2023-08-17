@@ -7,7 +7,7 @@ Discovering Equations of Motion from Data
 ## Aug 17, 2023 
 
 My own thoughts: 
-- Create PrettyTables 
+- Added headers to Xi matrix, easy to tell what is what now 
 - Try unicycle dynamics again, but in simulation. Then try Jake's car data again 
 - motivating examples? Use homework problems from Estimation, read more papers on robotics and use same style 
 
