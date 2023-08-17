@@ -110,7 +110,7 @@ function pool_data_test(xmat, n_vars, poly_order)
     # # fill out 1st column of Θx with ones (poly order = 0) 
     ind = 1 ; 
     Θx  = ones(l, ind) 
-
+    
     # poly order 1 
     for i = 1 : n_vars 
         ind += 1 
@@ -120,12 +120,10 @@ function pool_data_test(xmat, n_vars, poly_order)
     # poly order 2 
     if poly_order >= 2 
         for i = 1 : n_vars 
-            for j = i:n_vars 
-
+            for j = i : n_vars 
                 ind += 1 ; 
                 vec  = xmat[:,i] .* xmat[:,j] 
                 Θx   = [Θx vec] 
-
             end 
         end 
     end 
@@ -135,11 +133,9 @@ function pool_data_test(xmat, n_vars, poly_order)
         for i = 1 : n_vars 
             for j = i : n_vars 
                 for k = j : n_vars 
-                    
                     ind += 1 ;                     
                     vec  = xmat[:,i] .* xmat[:,j] .* xmat[:,k] 
                     Θx   = [Θx vec] 
-
                 end 
             end 
         end 
@@ -163,20 +159,20 @@ function pool_data_test(xmat, n_vars, poly_order)
     for i = 1 : n_vars 
         for j = 1 : n_vars 
             ind  += 1 
-            vec   = xmat[:,i] * sin.(xmat[:,j]) 
+            vec   = xmat[:,i] .* sin.(xmat[:,j]) 
             Θx    = [Θx vec]     
         end 
     end 
 
-    # nonlinear combination with sine functions 
+    # nonlinear combination with cosine functions 
     for i = 1 : n_vars 
         for j = 1 : n_vars 
             ind  += 1 
-            vec   = xmat[:,i] * cos.(xmat[:,j]) 
+            vec   = xmat[:,i] .* cos.(xmat[:,j]) 
             Θx    = [Θx vec]     
         end 
     end 
-    
+
     return Θx  
 
 end 
@@ -248,6 +244,7 @@ function pool_data_vecfn_test(n_vars, poly_order)
         push!(Θx, x -> cos.( x[i] ) )
     end 
 
+    # nonlinear combinations with sine functions 
     for i = 1 : n_vars 
         for j = 1 : n_vars 
             ind += 1 
@@ -255,12 +252,15 @@ function pool_data_vecfn_test(n_vars, poly_order)
         end 
     end 
 
+    # nonlinear combinations with cosine functions 
     for i = 1 : n_vars 
         for j = 1 : n_vars 
             ind += 1 
             push!( Θx, x -> x[i] .* cos.( x[j] ) ) 
         end 
     end 
+
+    println("ind = ", ind)
     
     return Θx 
 
