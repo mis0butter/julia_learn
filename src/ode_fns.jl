@@ -91,8 +91,20 @@ function double_pendulum( dx, x, p, t )
     dx[4] = (a*f - c*e) / (a*d - c*b) 
     # yprime = yprime' 
     # end
+
+end 
+
+export unicycle 
+function unicycle( dx, x, p, t; u = [1, 1] ) 
+
+    v = x[3] 
+    θ = x[4] 
+
+    dx[1] = v * cos(θ)
+    dx[2] = v * sin(θ)
+    dx[3] = u[1] 
+    dx[4] = u[2] 
     
-    return dx 
 end 
 
 
@@ -161,7 +173,7 @@ export validate_data
 function validate_data(t_test, x_test, dx_fn, dt)
 
 
-    n_vars = size(x_test,2) 
+    n_vars = size(x_test, 2) 
     x0     = [ x_test[1] ] 
     if n_vars > 1 
         x0 = x_test[1,:] 
