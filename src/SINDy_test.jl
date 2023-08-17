@@ -116,13 +116,6 @@ function pool_data_test(xmat, n_vars, poly_order)
         ind += 1 
         Θx   = [ Θx xmat[:,i] ]
     end 
-    # Θx = xmat[:,1]
-    # Θx = Θx[:,:] 
-    # Θx = [ xmat[:,1] xmat[:,2] ]
-
-    # ind += 1 
-    # vec  = xmat[:,1] .* xmat[:,2]
-    # Θx   = [ Θx vec[:,:] ]
 
     # poly order 2 
     if poly_order >= 2 
@@ -165,6 +158,24 @@ function pool_data_test(xmat, n_vars, poly_order)
         vec   = cos.(xmat[:,i]) 
         Θx    = [Θx vec] 
     end 
+
+    # nonlinear combination with sine functions 
+    for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind  += 1 
+            vec   = xmat[:,i] * sin.(xmat[:,j]) 
+            Θx    = [Θx vec]     
+        end 
+    end 
+
+    # nonlinear combination with sine functions 
+    for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind  += 1 
+            vec   = xmat[:,i] * cos.(xmat[:,j]) 
+            Θx    = [Θx vec]     
+        end 
+    end 
     
     return Θx  
 
@@ -188,18 +199,16 @@ function pool_data_vecfn_test(n_vars, poly_order)
     # ----------------------- #
     
     # initialize empty vector of functions 
-    Θ = Vector{Function}(undef,0) 
+    Θx = Vector{Function}(undef,0) 
 
     # fil out 1st column of Θ with ones (poly order = 0) 
     ind  = 1 
-    push!(Θ, x -> 1) 
+    push!(Θx, x -> 1) 
 
     # poly order 1 
     for i = 1 : n_vars 
-
         ind  += 1 
-        push!( Θ, x -> x[i] ) 
-
+        push!( Θx, x -> x[i] ) 
     end 
 
     # ind += 1 
@@ -209,10 +218,8 @@ function pool_data_vecfn_test(n_vars, poly_order)
     if poly_order >= 2 
         for i = 1 : n_vars 
             for j = i:n_vars 
-
                 ind += 1 ; 
-                push!( Θ, x -> x[i] .* x[j] ) 
-
+                push!( Θx, x -> x[i] .* x[j] ) 
             end 
         end 
     end 
@@ -222,10 +229,8 @@ function pool_data_vecfn_test(n_vars, poly_order)
         for i = 1 : n_vars 
             for j = i : n_vars 
                 for k = j : n_vars 
-                    
                     ind += 1 ;                     
-                    push!( Θ, x -> x[i] .* x[j] .* x[k] )
-
+                    push!( Θx, x -> x[i] .* x[j] .* x[k] )
                 end 
             end 
         end 
@@ -233,20 +238,30 @@ function pool_data_vecfn_test(n_vars, poly_order)
 
     # sine functions 
     for i = 1 : n_vars 
-
         ind  += 1
-        push!(Θ, x -> sin.( x[i] ) )
-
+        push!(Θx, x -> sin.( x[i] ) )
     end 
 
     # sine functions 
     for i = 1 : n_vars 
-
         ind  += 1
-        push!(Θ, x -> cos.( x[i] ) )
+        push!(Θx, x -> cos.( x[i] ) )
+    end 
 
+    for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind += 1 
+            push!( Θx, x -> x[i] .* sin.( x[j] ) ) 
+        end 
+    end 
+
+    for i = 1 : n_vars 
+        for j = 1 : n_vars 
+            ind += 1 
+            push!( Θx, x -> x[i] .* cos.( x[j] ) ) 
+        end 
     end 
     
-    return Θ 
+    return Θx 
 
 end 
