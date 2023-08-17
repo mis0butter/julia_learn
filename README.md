@@ -4,6 +4,12 @@ Discovering Equations of Motion from Data
 
 # Research Notes 
 
+## Aug 17, 2023 
+
+My own thoughts: 
+- Try unicycle dynamics again, but in simulation. Then try Jake's car data again 
+- motivating examples? Use homework problems from Estimation, read more papers on robotics and use same style 
+
 ## Aug 16, 2023 
 
 Adam: 

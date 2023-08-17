@@ -100,11 +100,12 @@ function unicycle( dx, x, p, t; u = [1, 1] )
     v = x[3] 
     θ = x[4] 
 
-    dx[1] = v * cos(θ)
-    dx[2] = v * sin(θ)
+    dx[1] = 1 * cos(θ)
+    dx[2] = 1 * sin(θ)
     dx[3] = u[1] 
     dx[4] = u[2] 
     
+    return dx 
 end 
 
 
