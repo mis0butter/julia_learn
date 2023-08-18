@@ -2,20 +2,30 @@
 # putting it together (no control) 
 
 export SINDy_test 
-function SINDy_test( x, dx, λ )
+function SINDy_test( x, dx, λ, u = false )
 
-    n_vars = size(x, 2) 
-    poly_order = n_vars 
+    x_vars = size(x, 2)
+    u_vars = size(u, 2) 
+    poly_order = x_vars 
+    
+    if isequal(u, false)      # if u_data = false 
+        n_vars = x_vars 
+        data   = x 
+    else            # there are u_data inputs 
+        n_vars = x_vars + u_vars 
+        data   = [ x u ]
+    end 
 
     # construct data library 
-    Θx = pool_data_test(x, n_vars, poly_order) 
+    Θx = pool_data_test(data, n_vars, poly_order) 
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics_test(Θx, dx, λ, n_vars) 
+    Ξ = sparsify_dynamics_test(Θx, dx, λ, x_vars) 
 
     return Ξ
 
 end 
+
 
 ## ============================================ ##
 # putting it together (with control) 
@@ -23,13 +33,13 @@ end
 export SINDy_c_test 
 function SINDy_c_test( x, u, dx, λ )
 
-    n_vars = size( [x u], 2 )
     x_vars = size(x, 2)
     u_vars = size(u, 2) 
-    poly_order = n_vars 
+    n_vars = x_vars + u_vars 
+    poly_order = x_vars 
 
     # construct data library 
-    Θx = pool_data_test( [x u], n_vars, poly_order) 
+    Θx = pool_data_test( [x u], n_vars, poly_order ) 
 
     # first cut - SINDy 
     Ξ = sparsify_dynamics_test( Θx, dx, λ, x_vars ) 

@@ -2,15 +2,21 @@ fn = unicycle
 
 x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
 
+u = [] 
+for i = 1 : length(t) 
+    push!( u, [ 1/2*sin(t[i]), sin(t[i]/10) ] ) 
+end 
+u = vv2m(u) 
+
 λ = 0.1 
-Ξ_true = SINDy_test( x_true, dx_true, λ ) 
+Ξ_true = SINDy_test( x_true, dx_true, λ, u ) 
 
 
 ## ============================================ ##
 # pretty-ify coefficients table 
 
-z = zeros(length(x_true), 2)
-terms = nonlinear_terms( x_true, z ) 
+# z = zeros(length(x_true), 2)
+terms = nonlinear_terms( x_true, u ) 
 
 ## ============================================ ##
 

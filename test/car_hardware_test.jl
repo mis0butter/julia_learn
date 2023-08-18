@@ -1,12 +1,10 @@
 using GaussianSINDy
 using CSV 
 using DataFrames 
-using PrettyTables 
 
 
-## ============================================ ##
+# ----------------------- #
 # load data 
-
 
 csv_file = "test/data/jake_robot_data.csv" 
 
@@ -22,19 +20,23 @@ u = data[:,end-1:end]
 dx_fd = fdiff(t, x, 2) 
 # dx_true = dx_true_fn
 
-x_GP,  Σ_xGP,  hp = post_dist_SE( t, x, t )              # step -1 
-dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_fd, x_GP )    # step 0 
+# x_GP,  Σ_xGP,  hp = post_dist_SE( t, x, t )              # step -1 
+# dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_fd, x_GP )    # step 0 
 
 
 ## ============================================ ##
 # SINDy vs. GPSINDy 
 
-λ = 0.01 
-
 n_vars = size( [x u], 2 )
 x_vars = size(x, 2)
 u_vars = size(u, 2) 
 poly_order = n_vars 
+
+λ = 0.1 
+Ξ = SINDy_c_test( x, u, dx_fd, λ ) 
+
+
+## ============================================ ##
 
 # SINDy alone 
 Θx = pool_data_test( [x u], n_vars, poly_order) 

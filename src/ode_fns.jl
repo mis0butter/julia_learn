@@ -57,8 +57,7 @@ function pendulum(dx, x, p, t)
 
     # Return the derivatives as a vector
 	return dx
-end
-
+end 
 
 # constants 
 g = 9.81 
@@ -95,7 +94,7 @@ function double_pendulum( dx, x, p, t )
 end 
 
 export unicycle 
-function unicycle( dx, x, p, t; u = [-2, -1] ) 
+function unicycle( dx, x, p, t; u = [ 1/2*sin(t), sin(t/10) ] ) 
 
     v = x[3] 
     θ = x[4] 
