@@ -4,6 +4,12 @@ Discovering Equations of Motion from Data
 
 # Research Notes 
 
+## Aug 18, 2023 
+
+Somi: 
+- try planar car dynamics
+  - can use box car dynamics (driven by rear wheel axle from Estimation) 
+
 ## Aug 17, 2023 
 
 My own thoughts: 

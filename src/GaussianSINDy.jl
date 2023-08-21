@@ -4,7 +4,7 @@ include("structs.jl")
 include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
-include("ode_fns.jl")  
+include("ode_fns/ode_fns.jl")  
 include("utils.jl")
 include("init_params.jl")
 
