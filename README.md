@@ -4,7 +4,31 @@ Discovering Equations of Motion from Data
 
 # Research Notes 
 
+## Aug 21, 2023 
+
+ICRA DEADLINE: SEPT 15 
+
+- PRIORITY: hitting the hardware data now: 
+  - quadcopter data 
+  - try single pendulum or unicycle 
+  - keep trying Jake's car data 
+- future work? iterative GPSINDy 
+  - try on actual hardware    
+  - what will better mean help with? 
+  - generalization  
+- try real LASSO 
+- SECOND: compare against baseline models 
+  - Baseline A: SINDy directly 
+  - Baseline B: moving average / low pass filter --> SINDy  
+  - baseline: compare against polynomial fitting ? 
+  - baseline: neural network 
+  - does choice of GP make a difference?  
+- KEEP WRITING 
+
 ## Aug 18, 2023 
+
+- Finish methods section by this weekend 
+- Start writing results section, filling out  
 
 Somi: 
 - try planar car dynamics

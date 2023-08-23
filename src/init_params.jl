@@ -44,8 +44,13 @@ function init_params(fn)
 
         x0 = [ 0, 0, 0.5, 0.5 ] 
         p  = zeros(4) 
-        
-        str = "double_pendulum"
+        str = "double_pendulum" 
+
+    elseif fn == dyn_car 
+
+        x0 = [ 90.0000, 4.2500, 13.0000, 3.1416, 5.0000, 2.0000, 0, 0, 0, 0, 0, 0 ] 
+        p = zeros(4) 
+        str = "dyn_car" 
 
     end 
     # p      = [ 10.0, 28.0, 8/3, 2.0 ] 

@@ -356,3 +356,33 @@ function nonlinear_terms( x_data, u_data = false )
 
     return terms 
 end 
+
+
+## ============================================ ##
+
+export pretty_coeffs 
+function pretty_coeffs(Ξ_true, x_true, u = false)
+
+    # z = zeros(length(x_true), 2)
+    terms = nonlinear_terms( x_true, u ) 
+
+    # ----------------------- #
+
+    n_vars = size(x_true, 2) 
+    header = [ "term" ] 
+    for i = 1 : n_vars 
+        push!( header, string( "x", i, "dot" ) ) 
+    end 
+    header = permutedims( header[:,:] ) 
+
+    sz = size(Ξ_true) 
+
+    Ξ_terms = Array{Any}( undef, sz .+ (1,1) )
+
+    Ξ_terms[1,:]          = header 
+    Ξ_terms[2:end, 1]     = terms 
+    Ξ_terms[2:end, 2:end] = Ξ_true  
+
+    return Ξ_terms 
+
+end 

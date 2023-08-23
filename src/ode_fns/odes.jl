@@ -18,7 +18,8 @@ end
 ## ============================================ ##
 
 
-function dyn_car(t, xaug)
+# function dyn_car(t, xaug)
+function dyn_car( xdot, xaug, p, t ) 
     #
     #Calculates the state derivative for a constant-velocity car modeled as a
     #box and driven at the back axle (back of the box).
@@ -72,7 +73,7 @@ function dyn_car(t, xaug)
     ew = xaug[12]
     
     #calculate the state derivative
-    xdot = zeros(12, 1);
+    # xdot = zeros(12, 1);
     xdot[1] = s*cos(t) + ex 
     xdot[2] = s*sin(t) + ey 
     #assume speed is "constant," driven only by noise
@@ -83,7 +84,7 @@ function dyn_car(t, xaug)
     xdot[5] = el 
     xdot[6] = ew 
     #assume each of the process noise inputs are zero order hold
-    xdot[7:12] = 0 
+    xdot[7:12] .= 0 
     
     return xdot 
 end 
