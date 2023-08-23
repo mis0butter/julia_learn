@@ -22,6 +22,7 @@ ICRA DEADLINE: SEPT 15
   - Baseline B: moving average / low pass filter --> SINDy  
   - baseline: compare against polynomial fitting ? 
   - baseline: neural network 
+  - baseline: "prior" dynamics 
   - does choice of GP make a difference?  
 - KEEP WRITING 
 

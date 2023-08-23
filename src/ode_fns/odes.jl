@@ -194,4 +194,88 @@ function lorenz(du, (x,y,z), (σ,ρ,β), t)
 end 
 
 
+## ============================================ ##
+
+
+function quadcopter( dx, x, p, t; u = zeros(3) )
+# ----------------------- #
+# PURPOSE: 
+#       quadcopter dynamics 
+# INPUTS: 
+#       dx 
+#           dx[1:3]   = linear velocity 
+#           dx[4:6]   = linear acceleration  
+#           dx[7:9]   = angular velocity  
+#           dx[10:12] = angular acceleration 
+#       x 
+#           x[1:3]    = linear position  
+#           x[4:6]    = linear velocity   
+#           x[7:9]    = angular rotation   
+#           x[10:12]  = angular velocity  
+#       p   = [ Ixx, Iyy, Izz, m ]
+#       t   = time 
+#       u   = control torque 
+# OUTPUTS: 
+#       dx 
+#           dx[1:3]   = linear velocity 
+#           dx[4:6]   = linear acceleration  
+#           dx[7:9]   = angular velocity  
+#           dx[10:12] = angular acceleration 
+# ----------------------- #
+
+    Ixx = p[1] 
+    Iyy = p[2] 
+    Izz = p[3] 
+    m   = p[4]
+
+    r  = x[1:3] 
+    dr = x[4:6]
+    ω  = x[7:9] 
+    dω = x[10:12] 
+
+    ddr = zeros(3) 
+    R = rotation_euler( ω ) 
+    Fd = -kd * dr 
+    ddr = [0, 0, -g] + 1 / m * u + Fd
+    
+    ddω = zeros(3) 
+    ddω[1] = τ[1] * Ixx^-1 - ( Iyy - Izz ) / ( Ixx ) * ω[2] * ω[3] 
+    ddω[2] = τ[2] * Iyy^-1 - ( Izz - Ixx ) / ( Iyy ) * ω[1] * ω[3]
+    ddω[3] = τ[3] * Izz^-1 - ( Ixx - Iyy ) / ( Izz ) * ω[1] * ω[2] 
+
+    dx = [ dr, ddr, dω, ddω ] 
+
+    return dx 
+end 
+
+function rotation_euler( ϕ, θ, ψ )
+# roll = ϕ, pitch = θ, yaw = ψ 
+
+    cϕ = cos(ϕ)
+    cθ = cos(θ)
+    cψ = cos(ψ)
+    sϕ = sin(ϕ)
+    sθ = sin(θ)
+    sψ = sin(ψ)
+
+    R11 = cϕ * cψ - cθ * sϕ * sψ 
+    R12 = -cψ * sϕ - cϕ * cθ * sψ 
+    R13 = sθ * sψ 
+
+    R21 = cθ * cψ * sϕ 
+    R22 = cϕ * cθ * cψ - sϕ * sψ 
+    R23 = -cψ * sθ 
+
+    R31 = sϕ * sθ 
+    R32 = cϕ * sθ 
+    R33 = cθ 
+
+    R = [ R11 R12 R13 ; 
+          R21 R22 R23 ; 
+          R31 R32 R33 ]
+    
+    return R 
+end 
+
+
 
