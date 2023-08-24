@@ -26,6 +26,7 @@ end
 
 struct data_struct
     t 
+    u 
     x_true 
     dx_true 
     x_noise 

@@ -22,25 +22,15 @@ function ode_train_test( fn )
     # split into training and test data 
     test_fraction = 0.2 
     portion       = 5 
+    u_train,        u_test        = split_train_test(u,        test_fraction, portion) 
     t_train,        t_test        = split_train_test(t,        test_fraction, portion) 
     x_train_true,   x_test_true   = split_train_test(x_true,   test_fraction, portion) 
     dx_train_true,  dx_test_true  = split_train_test(dx_true,  test_fraction, portion) 
     x_train_noise,  x_test_noise  = split_train_test(x_noise,  test_fraction, portion) 
     dx_train_noise, dx_test_noise = split_train_test(dx_noise, test_fraction, portion) 
 
-    data_train = data_struct( [], [], [], [], [] ) 
-    push!( data_train.t, t_train ) 
-    push!( data_train.x_true, x_train_true ) 
-    push!( data_train.dx_true, dx_train_true )  
-    push!( data_train.x_noise, x_train_noise )  
-    push!( data_train.dx_noise, dx_train_noise )  
-
-    data_test = data_struct( [], [], [], [], [] ) 
-    push!( data_test.t, t_test ) 
-    push!( data_test.x_true, x_test_true ) 
-    push!( data_test.dx_true, dx_test_true )  
-    push!( data_test.x_noise, x_test_noise )  
-    push!( data_test.dx_noise, dx_test_noise )  
+    data_train = data_struct( t_train, u_train, x_train_true, dx_train_true, x_train_noise, dx_train_noise ) 
+    data_test  = data_struct( t_test, u_test, x_test_true, dx_test_true, x_test_noise, dx_test_noise) 
 
     return data_train, data_test 
 end 

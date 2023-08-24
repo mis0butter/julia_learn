@@ -23,13 +23,17 @@ dx_fd = fdiff(t, x, 2)
 # split into training and test data 
 test_fraction = 0.2 
 portion       = 5 
-t_train, t_test   = split_train_test(t, test_fraction, portion) 
+u_train,  u_test  = split_train_test(u, test_fraction, portion) 
+t_train,  t_test  = split_train_test(t, test_fraction, portion) 
 x_train,  x_test  = split_train_test(x, test_fraction, portion) 
 dx_train, dx_test = split_train_test(dx_fd, test_fraction, portion) 
-u_train, u_test   = split_train_test(dx_fd, test_fraction, portion) 
+u_train,  u_test  = split_train_test(dx_fd, test_fraction, portion) 
 
-x_GP,  Σ_xGP,  hp = post_dist_SE( t_train, x_train, t_train )              # step -1 
-dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_train, x_GP )    # step 0 
+# x_GP,  Σ_xGP,  hp = post_dist_SE( t_train, x_train, t_train )              # step -1 
+# dx_GP, Σ_dxGP, hp = post_dist_SE( x_GP, dx_train, x_GP )    # step 0 
+
+x_GP  = gp_post( t_train, 0*x_train, t_train, 0*x_train, x_train ) 
+dx_GP = gp_post( x_GP, 0*dx_train, x_GP, 0*dx_train, dx_train ) 
 
 
 ## ============================================ ##
@@ -42,8 +46,11 @@ poly_order = n_vars
 
 λ = 0.1 
 # Ξ = SINDy_c_test( x, u, dx_fd, λ ) 
-Ξ_sindy = SINDy_test( x_train, dx_train, λ, u ) 
-Ξ_gpsindy = SINDy_test( x_GP, dx_GP, λ, u ) 
+Ξ_sindy       = SINDy_test( x_train, dx_train, λ, u_train ) 
+Ξ_sindy_terms = pretty_coeffs( Ξ_sindy, x_train, u_train ) 
+
+Ξ_gpsindy       = SINDy_test( x_GP, dx_GP, λ, u_train ) 
+Ξ_gpsindy_terms = pretty_coeffs( Ξ_gpsindy, x_GP, u_train ) 
 
 
 ## ============================================ ##
@@ -51,20 +58,20 @@ poly_order = n_vars
 using Plots 
 
 # SINDy alone 
-Θx = pool_data_test( [x u], n_vars, poly_order) 
+Θx = pool_data_test( [x_train u_train], n_vars, poly_order) 
 # Ξ_sindy = sparsify_dynamics_test( Θx, dx_fd, λ, x_vars ) 
 dx_sindy = Θx * Ξ_sindy 
 
 # GPSINDy 
-Θx = pool_data_test( [x_GP u], n_vars, poly_order) 
+Θx = pool_data_test( [x_GP u_train], n_vars, poly_order) 
 # Ξ_gpsindy = sparsify_dynamics_test( Θx, dx_GP, λ, x_vars ) 
 dx_gpsindy = Θx * Ξ_gpsindy 
 
 plt = plot( title = "dx: meas vs. sindy", legend = :outerright )
-scatter!( plt, t, dx_fd[:,1], c = :black, ms = 3, label = "meas (finite diff)" )
-plot!( plt, t, dx_GP[:,1], c = :blue, label = "GP" )
-plot!( plt, t, dx_sindy[:,1], c = :red, ls = :dash, label = "SINDy" )   
-plot!( plt, t, dx_gpsindy[:,1], c = :green, ls = :dashdot, label = "GPSINDy" )   
+scatter!( plt, t_train, dx_train[:,1], c = :black, ms = 3, label = "meas (finite diff)" )
+plot!( plt, t_train, dx_GP[:,1], c = :blue, label = "GP" )
+plot!( plt, t_train, dx_sindy[:,1], c = :red, ls = :dash, label = "SINDy" )   
+plot!( plt, t_train, dx_gpsindy[:,1], c = :green, ls = :dashdot, label = "GPSINDy" )   
 
 ## ============================================ ##
 
