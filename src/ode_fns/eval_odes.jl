@@ -4,7 +4,7 @@ using DifferentialEquations
 ## ============================================ ##
 
 export ode_train_test 
-function ode_train_test( fn, portion ) 
+function ode_train_test( fn ) 
 
     x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
 
@@ -21,7 +21,7 @@ function ode_train_test( fn, portion )
 
     # split into training and test data 
     test_fraction = 0.2 
-    # portion       = 5 
+    portion       = 5 
     t_train,        t_test        = split_train_test(t,        test_fraction, portion) 
     x_train_true,   x_test_true   = split_train_test(x_true,   test_fraction, portion) 
     dx_train_true,  dx_test_true  = split_train_test(dx_true,  test_fraction, portion) 
@@ -29,18 +29,18 @@ function ode_train_test( fn, portion )
     dx_train_noise, dx_test_noise = split_train_test(dx_noise, test_fraction, portion) 
 
     data_train = data_struct( [], [], [], [], [] ) 
-    data_train.t        = t_train 
-    data_train.x_true   = x_train_true 
-    data_train.dx_true  = dx_train_true 
-    data_train.x_noise  = x_train_noise 
-    data_train.dx_noise = dx_train_noise 
+    push!( data_train.t, t_train ) 
+    push!( data_train.x_true, x_train_true ) 
+    push!( data_train.dx_true, dx_train_true )  
+    push!( data_train.x_noise, x_train_noise )  
+    push!( data_train.dx_noise, dx_train_noise )  
 
     data_test = data_struct( [], [], [], [], [] ) 
-    data_test.t         = t_test  
-    data_test.x_true    = x_test_true 
-    data_test.dx_true   = dx_test_true 
-    data_test.x_noise   = x_test_noise 
-    data_test.dx_noise  = dx_test_noise 
+    push!( data_test.t, t_test ) 
+    push!( data_test.x_true, x_test_true ) 
+    push!( data_test.dx_true, dx_test_true )  
+    push!( data_test.x_noise, x_test_noise )  
+    push!( data_test.dx_noise, dx_test_noise )  
 
     return data_train, data_test 
 end 
