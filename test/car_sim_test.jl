@@ -6,7 +6,7 @@ x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2)
 
 u = [] 
 for i = 1 : length(t) 
-    push!( u, [ 1/2*sin(t[i]), sin(t[i]/10) ] ) 
+    push!( u, [ 1/2*sin(t[i]), cos(t[i]) ] ) 
 end 
 u = vv2m(u) 
 

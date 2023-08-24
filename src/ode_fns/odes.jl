@@ -1,15 +1,15 @@
 ## ============================================ ##
 
 
-function unicycle( dx, x, p, t; u = [ 1/2*sin(t), t ] ) 
+function unicycle( dx, x, p, t; u = [ 1/2*sin(t), cos(t) ] ) 
  
     v = x[3]    # forward velocity 
     θ = x[4]    # heading angle 
 
-    dx[1] = v * cos(θ)
-    dx[2] = v * sin(θ)
-    dx[3] = u[1] 
-    dx[4] = u[2] 
+    dx[1] = v * cos(θ)      # x velocity 
+    dx[2] = v * sin(θ)      # y velocity 
+    dx[3] = u[1]            # acceleration  
+    dx[4] = u[2]            # turn rate 
     
     return dx 
 end 
