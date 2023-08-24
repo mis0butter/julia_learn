@@ -21,7 +21,7 @@ fn = pendulum
 # noise_vec = [ 0.1 ]   
 noise = 0.2 
 
-# ----------------------- #
+# ----------------------- # 
 # start MC loop 
 
 Ξ_vec = [] 
@@ -30,7 +30,6 @@ noise = 0.2
 # for noise = noise_vec 
 #     Ξ_hist, Ξ_err_hist = gpsindy_x2( fn, noise, λ, Ξ_hist, Ξ_err_hist ) 
 # end 
-
 
 # ----------------------- # 
 
@@ -49,11 +48,11 @@ dx_noise = dx_true + noise*randn( size(dx_true, 1), size(dx_true, 2) )
 # split into training and test data 
 test_fraction = 0.2 
 portion       = 5 
-t_train, t_test   = split_train_test(t, test_fraction, portion) 
-x_train_noise,  x_test_noise  = split_train_test(x_noise, test_fraction, portion) 
+t_train,        t_test        = split_train_test(t,        test_fraction, portion) 
+x_train_true,   x_test_true   = split_train_test(x_true,   test_fraction, portion) 
+dx_train_true,  dx_test_true  = split_train_test(dx_true,  test_fraction, portion) 
+x_train_noise,  x_test_noise  = split_train_test(x_noise,  test_fraction, portion) 
 dx_train_noise, dx_test_noise = split_train_test(dx_noise, test_fraction, portion) 
-x_train_true,  x_test_true    = split_train_test(x_true, test_fraction, portion) 
-dx_train_true, dx_test_true   = split_train_test(dx_true, test_fraction, portion) 
 
 # ----------------------- # 
 # standardize  
@@ -80,7 +79,8 @@ dx_train = dx_stand_noise
 # GPSINDy (first) 
 
 # step -1 : smooth x measurements with t (temporal)  
-x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )  
+# x_train_GP, Σ_xsmooth, hp   = post_dist_SE( t_train, x_train, t_train )  
+x_train_GP  = gp_post( t_train, 0*x_train, t_train, 0*x_train, x_train ) 
 
 # step 0 : smooth dx measurements with x_GP (non-temporal) 
 # dx_train_GP, Σ_dxsmooth, hp = post_dist_SE( x_train_GP, dx_train, x_train_GP )  
@@ -123,6 +123,7 @@ t_gpsindy_x2_val, x_gpsindy_x2_val = validate_data(t_test, x_test_noise, dx_gpsi
 # plot!! 
 plot_states( t_train, x_train_noise, t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
 plot_test_data( t_test, x_test_noise, t_sindy_val, x_sindy_val, t_gpsindy_val, x_gpsindy_val, t_gpsindy_x2_val, x_gpsindy_x2_val ) 
+
 
 ## ============================================ ##
 # plot quartiles 

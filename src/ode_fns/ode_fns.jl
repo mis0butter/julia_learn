@@ -5,19 +5,12 @@ using DifferentialEquations
 # ODEs 
 
 include("odes.jl")
-export lorenz, ode_sine 
-export predator_prey, predator_prey_forcing  
-export pendulum, double_pendulum 
-export unicycle, dyn_car 
-export quadcopter, rotation_euler 
 
 
 ## ============================================ ##
 # solve ODE problem 
 
 include("eval_odes.jl")
-export solve_ode, ode_states, validate_data
-export dx_true_fn, build_dx_fn 
 
 
 ## ============================================ ##

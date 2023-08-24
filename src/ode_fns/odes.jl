@@ -1,6 +1,6 @@
 ## ============================================ ##
 
-
+export unicycle 
 function unicycle( dx, x, p, t; u = [ 1/2*sin(t), cos(t) ] ) 
  
     v = x[3]    # forward velocity 
@@ -17,8 +17,7 @@ end
 
 ## ============================================ ##
 
-
-# function dyn_car(t, xaug)
+export dyn_car 
 function dyn_car( xdot, xaug, p, t ) 
     #
     #Calculates the state derivative for a constant-velocity car modeled as a
@@ -95,7 +94,7 @@ end
 # Constants, I do like that I do not have to parse them manually to ode78
 g = 9.81   # Acceleration due to gravity in m/s^2
 
-
+export double_pendulum 
 function double_pendulum( dx, x, p, t ) 
 
     l1 = p[1] 
@@ -129,7 +128,7 @@ end
 
 ## ============================================ ##
 
-
+export ode_sine 
 function ode_sine(dx, x, p, t)
     dx[1] = 1/2*sin(x[1])  
     # dx[2] = -1/2 * x[2] 
@@ -139,7 +138,7 @@ end
 
 ## ============================================ ##
 
-
+export pendulum 
 function pendulum(dx, x, p, t)
 
     θ  = x[1] 
@@ -159,7 +158,7 @@ end
 
 ## ============================================ ##
 
-
+export predator_prey 
 function predator_prey(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
 
     dx[1] = a*x1 - b*x1*x2 + u^2 * 0 
@@ -171,7 +170,7 @@ end
 
 ## ============================================ ##
 
-
+export predator_prey_forcing 
 function predator_prey_forcing(dx, (x1,x2), (a,b,c,d), t; u = 2sin(t) + 2sin(t/10))
 
     dx[1] = a*x1 - b*x1*x2 + u^2 
@@ -183,7 +182,7 @@ end
 
 ## ============================================ ##
 
-
+export lorenz 
 function lorenz(du, (x,y,z), (σ,ρ,β), t)
 
     du[1] = dx = σ * ( y - x ) 
@@ -196,7 +195,7 @@ end
 
 ## ============================================ ##
 
-
+export quadcopter 
 function quadcopter( dx, x, p, t; u = zeros(3) )
 # ----------------------- #
 # PURPOSE: 
@@ -252,6 +251,7 @@ function quadcopter( dx, x, p, t; u = zeros(3) )
     return dx 
 end 
 
+export rotation_euler 
 function rotation_euler( (ϕ, θ, ψ) )
 # roll = ϕ, pitch = θ, yaw = ψ 
 

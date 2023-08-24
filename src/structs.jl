@@ -22,7 +22,15 @@ struct Ξ_err_struct
     sindy 
     gpsindy 
     gpsindy_x2 
-end
+end 
 
-export Hist, Ξ_struct, Ξ_err_struct 
+struct data_struct
+    t 
+    x_true 
+    dx_true 
+    x_noise 
+    dx_noise 
+end 
+
+export Hist, Ξ_struct, Ξ_err_struct, data_struct 
 

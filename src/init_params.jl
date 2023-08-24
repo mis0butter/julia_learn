@@ -24,6 +24,7 @@ function init_params(fn)
         str = "predator_prey" 
 
     elseif fn == pendulum 
+        
         θ   = 0.0 ; dθ = 0.0  
         x0  = [ θ, dθ ]
         l = 1 ; m = 1  
@@ -53,7 +54,7 @@ function init_params(fn)
         str = "dyn_car" 
 
     elseif fn == quadcopter 
-        
+
         x0  = ones(12) 
         p   = ones(4) 
         str = "quadcopter" 
