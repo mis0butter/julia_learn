@@ -1,8 +1,9 @@
-using GaussianSINDy 
-
-fn = unicycle 
+fn = quadcopter 
 
 x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
+
+## ============================================ ##
+
 
 u = [] 
 for i = 1 : length(t) 
@@ -14,8 +15,7 @@ u = vv2m(u)
 Ξ_true  = SINDy_test( x_true, dx_true, λ, u ) 
 Ξ_true_terms = pretty_coeffs(Ξ_true, x_true, u) 
 
-
-
+ 
 ## ============================================ ##
 
 

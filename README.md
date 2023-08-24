@@ -11,7 +11,7 @@ ICRA DEADLINE: SEPT 15
 - PRIORITY: hitting the hardware data now: 
   - quadcopter data 
   - try single pendulum or unicycle 
-  - keep trying Jake's car data 
+  - keep trying Jake's car data !!! 
 - future work? iterative GPSINDy 
   - try on actual hardware    
   - what will better mean help with? 

@@ -1,10 +1,10 @@
 ## ============================================ ##
 
 
-function unicycle( dx, x, p, t; u = [ 1/2*sin(t), sin(t/10) ] ) 
-
-    v = x[3] 
-    θ = x[4] 
+function unicycle( dx, x, p, t; u = [ 1/2*sin(t), t ] ) 
+ 
+    v = x[3]    # forward velocity 
+    θ = x[4]    # heading angle 
 
     dx[1] = v * cos(θ)
     dx[2] = v * sin(θ)
@@ -235,20 +235,24 @@ function quadcopter( dx, x, p, t; u = zeros(3) )
 
     ddr = zeros(3) 
     R = rotation_euler( ω ) 
+
+    # dummy variable for now 
+    kd = -1 
+
     Fd = -kd * dr 
-    ddr = [0, 0, -g] + 1 / m * u + Fd
+    ddr = [0, 0, -g] + ( 1 / m * u ) + Fd
     
     ddω = zeros(3) 
-    ddω[1] = τ[1] * Ixx^-1 - ( Iyy - Izz ) / ( Ixx ) * ω[2] * ω[3] 
-    ddω[2] = τ[2] * Iyy^-1 - ( Izz - Ixx ) / ( Iyy ) * ω[1] * ω[3]
-    ddω[3] = τ[3] * Izz^-1 - ( Ixx - Iyy ) / ( Izz ) * ω[1] * ω[2] 
+    ddω[1] = u[1] * Ixx^-1 - ( Iyy - Izz ) / ( Ixx ) * ω[2] * ω[3] 
+    ddω[2] = u[2] * Iyy^-1 - ( Izz - Ixx ) / ( Iyy ) * ω[1] * ω[3]
+    ddω[3] = u[3] * Izz^-1 - ( Ixx - Iyy ) / ( Izz ) * ω[1] * ω[2] 
 
     dx = [ dr, ddr, dω, ddω ] 
 
     return dx 
 end 
 
-function rotation_euler( ϕ, θ, ψ )
+function rotation_euler( (ϕ, θ, ψ) )
 # roll = ϕ, pitch = θ, yaw = ψ 
 
     cϕ = cos(ϕ)
