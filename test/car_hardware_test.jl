@@ -34,6 +34,10 @@ for i = 1 : length(rollover_up_ind)
 
 end 
 
+# use central finite differencing now  
+dx_fd = fdiff(t, x, 2) 
+# dx_true = dx_true_fn
+
 ## ============================================ ##
 
 # split into training and test data 
@@ -44,7 +48,6 @@ t_train,  t_test  = split_train_test( t, test_fraction, portion )
 x_train,  x_test  = split_train_test( x, test_fraction, portion ) 
 dx_train, dx_test = split_train_test( dx_fd, test_fraction, portion ) 
 u_train,  u_test  = split_train_test( dx_fd, test_fraction, portion ) 
-
 
 
 ## ============================================ ##
@@ -58,6 +61,7 @@ dx_GP_train = gp_post( x_GP_train, 0*dx_train, x_GP_train, 0*dx_train, dx_train 
 
 x_GP_test   = gp_post( t_test, 0*x_test, t_test, 0*x_test, x_test ) 
 dx_GP_test  = gp_post( x_GP_test, 0*dx_test, x_GP_test, 0*dx_test, dx_test ) 
+
 
 ## ============================================ ##
 
