@@ -4,6 +4,40 @@ Discovering Equations of Motion from Data
 
 # Research Notes 
 
+## Aug 23, 2023 
+
+Somi: 
+- work on car data 
+
+Adam: 
+- writing process: 
+- need ~25 refs 
+- shared his writing guide on Slack 
+- most important ref: SINDy 
+  - name some other symbolic regression algorithms, problems with SINDy 
+- a problem is not enough references 
+  - make sure you cover all your bases 
+  - bulk of related work is 2-3 paragraphs in intro 
+- what template to use? ICRA or RA-L? 
+  - find the right template !!!   
+- read RA-L and ICRA site submission requirements CAREFULLY 
+  - take notes 
+- want ~4-5 figures for 6 pages 
+  - title figure (motivating example), more artistic, illustrating the problem, nice cartoon  
+  - tools: mathcha --> exports to latex 
+  - be conservative, use what works 
+  - exporting to png is fine 
+  - tikz works well with latex 
+  - 2-3 figures for results, at least 1 per experiment 
+  - at least 2 experiments 
+- if you use tables, highlight or color numbers that you want people to pay attention to 
+- reviewers: 
+  - if they have theoretical problem, pay attention 
+  - REBUTTAL IS IMPORTANT - cross that bridge when you get there  
+- get better at anticipating process, review other papers
+  - the way you get asked to review is by submitting papers 
+- aim for 1 conference paper and 1 journal paper per year   
+
 ## Aug 21, 2023 
 
 ICRA DEADLINE: SEPT 15 
