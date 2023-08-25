@@ -14,7 +14,9 @@ data = Matrix(df)
 # extract variables 
 t = data[:,1] 
 x = data[:,2:end-2]
-u = data[:,end-1:end]
+u = data[:,end-1:end] 
+
+n_vars = size(x, 2) 
 
 # use forward finite differencing 
 dx_fd = fdiff(t, x, 1) 
@@ -47,8 +49,6 @@ u_train,  u_test  = split_train_test( u, test_fraction, portion )
 t_train,  t_test  = split_train_test( t, test_fraction, portion ) 
 x_train,  x_test  = split_train_test( x, test_fraction, portion ) 
 dx_train, dx_test = split_train_test( dx_fd, test_fraction, portion ) 
-u_train,  u_test  = split_train_test( dx_fd, test_fraction, portion ) 
-
 
 ## ============================================ ##
 
@@ -62,9 +62,22 @@ dx_GP_train = gp_post( x_GP_train, 0*dx_train, x_GP_train, 0*dx_train, dx_train 
 x_GP_test   = gp_post( t_test, 0*x_test, t_test, 0*x_test, x_test ) 
 dx_GP_test  = gp_post( x_GP_test, 0*dx_test, x_GP_test, 0*dx_test, dx_test ) 
 
-
 ## ============================================ ##
+# plot smoothed data 
 
+p_nvars = [] 
+for i = 1 : n_vars 
+    plt = plot( legend = :outerright, title = string("dx", i) )
+        scatter!( plt, t_train, dx_train[:,i], label = "FD" ) 
+        plot!( plt, t_train, dx_GP_train[:,i], label = "GP" ) 
+    push!( p_nvars, plt ) 
+end 
+p_nvars = plot( p_nvars ... ,  
+    layout = (n_vars,1), 
+    size   = [600 1000], 
+    plot_title = "FD vs GP training data"
+) 
+display(p_nvars) 
 
 
 ## ============================================ ##
