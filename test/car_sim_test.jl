@@ -24,7 +24,7 @@ dx_GP = gp_post( x_GP, 0*data_train.dx_noise, x_GP, 0*data_train.dx_noise, data_
 
 using LinearAlgebra
 
-z_fd = Ξ_sindy 
+z_fd = Ξ_true 
 
 # get # states AND control inputs 
 x_vars = size( data_train.dx_true, 2 ) 
