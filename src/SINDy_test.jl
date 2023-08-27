@@ -193,16 +193,16 @@ end
 
 export pool_data_vecfn_test
 function pool_data_vecfn_test(n_vars, poly_order) 
-    # ----------------------- #
-    # Purpose: Build data vector of functions  
-    # 
-    # Inputs: 
-    #   n_vars      = # elements in state 
-    #   poly_order  = polynomial order (goes up to order 3) 
-    # 
-    # Outputs: 
-    #   Θ       = data matrix passed through function library 
-    # ----------------------- #
+# ----------------------- #
+# Purpose: Build data vector of functions  
+# 
+# Inputs: 
+#   n_vars      = # elements in state 
+#   poly_order  = polynomial order (goes up to order 3) 
+# 
+# Outputs: 
+#   Θ       = data matrix passed through function library 
+# ----------------------- #
     
     # initialize empty vector of functions 
     Θx = Vector{Function}(undef,0) 

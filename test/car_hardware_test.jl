@@ -74,7 +74,7 @@ for i = 1 : n_vars
 end 
 p_nvars = plot( p_nvars ... ,  
     layout = (n_vars,1), 
-    size   = [600 1000], 
+    size   = [600 1200], 
     plot_title = "FD vs GP training data"
 ) 
 display(p_nvars) 
@@ -117,12 +117,43 @@ plot!( plt, t_train, dx_GP_train[:,1], c = :blue, label = "GP" )
 plot!( plt, t_train, dx_sindy[:,1], c = :red, ls = :dash, label = "SINDy" )   
 plot!( plt, t_train, dx_gpsindy[:,1], c = :green, ls = :dashdot, label = "GPSINDy" )   
 
+
 ## ============================================ ##
+
+dt = 0.02 
 
 dx_sindy_fn      = build_dx_fn(poly_order, Ξ_sindy) 
 dx_gpsindy_fn    = build_dx_fn(poly_order, Ξ_gpsindy) 
 
 t_sindy_val,      x_sindy_val      = validate_data(t_test, x_test, dx_sindy_fn, dt) 
+
+## ============================================ ##
+
+using DifferentialEquations 
+
+n_vars = size(x_test, 2) 
+x0     = [ x_test[1] ] 
+if n_vars > 1 
+    x0 = x_test[1,:] 
+end 
+
+# dt    = t_test[2] - t_test[1] 
+tspan = (t_test[1], t_test[end])
+prob  = ODEProblem(dx_sindy_fn, x0, tspan) 
+
+
+# solve the ODE
+sol   = solve(prob, saveat = dt)
+# sol = solve(prob,  reltol = 1e-8, abstol = 1e-8)
+x_validate = sol.u ; 
+x_validate = mapreduce(permutedims, vcat, x_validate) 
+t_validate = sol.t 
+
+
+## ============================================ ##
+
+
+
 # t_sindy_val,      x_sindy_val      = validate_data(t_test, x_test, fn, dt) 
 t_gpsindy_val,    x_gpsindy_val    = validate_data(t, x_GP_train, dx_gpsindy_fn, dt) 
 
