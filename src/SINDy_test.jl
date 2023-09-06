@@ -132,7 +132,9 @@ function pool_data_test(xmat, n_vars, poly_order)
         for i = 1 : n_vars 
             for j = i : n_vars 
                 ind += 1 ; 
+                println( "i = ", i, ". j = ", j ) 
                 vec  = xmat[:,i] .* xmat[:,j] 
+                println("done") 
                 Θx   = [Θx vec] 
             end 
         end 
@@ -251,7 +253,7 @@ function pool_data_vecfn_test(n_vars, poly_order)
     # sine functions 
     for i = 1 : n_vars 
         ind  += 1
-        push!(Θx, x -> cos.( x[i] ) )
+        push!(Θx, x -> cos.( x[i] ) ) 
     end 
 
     # nonlinear combinations with sine functions 
@@ -397,3 +399,5 @@ function pretty_coeffs(Ξ_true, x_true, u = false)
     return Ξ_terms 
 
 end 
+
+

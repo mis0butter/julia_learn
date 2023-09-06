@@ -37,7 +37,7 @@ function split_train_test(x, test_fraction, portion)
     # if test data = LAST portion 
     if portion == 1/test_fraction 
 
-        ind = Int(round( size(x,1) * (1 - test_fraction) ))  
+        ind = Int(round( size(x,1) * (1 - test_fraction) ))   
 
         x_train = x[1:ind,:]
         x_test  = x[ind:end,:] 

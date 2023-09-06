@@ -3,11 +3,49 @@ using GaussianSINDy
 ## ============================================ ##
 # truth 
 
-fn = unicycle 
-data_train, data_test = ode_train_test( fn ) 
+fn = predator_prey_forcing 
+# data_train, data_test = ode_train_test( fn ) 
+
+x0, dt, t, x_true, dx_true, dx_fd, p = ode_states(fn, 0, 2) 
+
+u = [] 
+for i = 1 : length(t) 
+    # push!( u, [ 1/2*sin(t[i]), cos(t[i]) ] ) 
+    push!( u, 2sin(t[i]) + 2sin(t[i]/10) ) 
+end 
+# u = vv2m()
+
+## ============================================ ##
 
 λ = 0.1 
-Ξ_true = SINDy_test( data_train.x_true, data_train.dx_true, λ, data_train.u ) 
+# Ξ_true = SINDy_test( data_train.x_true, data_train.dx_true, λ, data_train.u ) 
+
+x  = x_true 
+dx = dx_true 
+# u  = false 
+
+x_vars = size(x, 2)
+u_vars = size(u, 2) 
+poly_order = x_vars 
+
+if isequal(u, false)      # if u_data = false 
+    n_vars = x_vars 
+    data   = x 
+else            # there are u_data inputs 
+    n_vars = x_vars + u_vars 
+    data   = [ x u ]
+end 
+
+# construct data library 
+Θx = pool_data_test(data, n_vars, poly_order) 
+
+# first cut - SINDy 
+Ξ = sparsify_dynamics_test(Θx, dx, λ, x_vars) 
+
+
+
+## ============================================ ##
+
 Ξ_true_terms = pretty_coeffs(Ξ_true, data_train.x_true, data_train.u) 
 
 Ξ_sindy = SINDy_test( data_train.x_noise, data_train.dx_noise, λ, data_train.u ) 
@@ -51,8 +89,9 @@ dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ]
 
 
 poly_order = 3 
-dx_sindy_fn      = build_dx_fn(poly_order, n_vars, Ξ_sindy) 
-dx_gpsindy_fn    = build_dx_fn(poly_order, n_vars, Ξ_gpsindy) 
+dx_true_f        = build_dx_fn(poly_order, x_vars, u_vars, Ξ_true) 
+dx_sindy_fn      = build_dx_fn(poly_order, x_vars, u_vars, Ξ_sindy) 
+dx_gpsindy_fn    = build_dx_fn(poly_order, x_vars, u_vars, Ξ_gpsindy) 
 
 dt = data_train.t[2] - data_train.t[1] 
 t_sindy_val,   x_sindy_val   = validate_data( data_test.t, [ data_test.x_noise data_test.u ], dx_sindy_fn, dt ) 

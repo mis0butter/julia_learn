@@ -1,7 +1,7 @@
 ## ============================================ ##
 
 export unicycle 
-function unicycle( dx, x, p, t; u = [ 1/2*sin(t), cos(t) ] ) 
+function unicycle( dx, x, p, t, u = [ 1/2*sin(t), cos(t) ] ) 
  
     v = x[3]    # forward velocity 
     θ = x[4]    # heading angle 

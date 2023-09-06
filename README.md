@@ -4,6 +4,11 @@ Discovering Equations of Motion from Data
 
 # Research Notes 
 
+## Sept 5, 2023 
+
+Junette: 
+- integrating ODEs with discrete control inputs ... 
+
 ## Aug 23, 2023 
 
 Somi: 

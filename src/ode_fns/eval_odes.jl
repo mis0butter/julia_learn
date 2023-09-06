@@ -1,6 +1,5 @@
 using DifferentialEquations
 
-
 ## ============================================ ##
 
 export ode_train_test 
@@ -15,9 +14,10 @@ function ode_train_test( fn )
 
     u = [] 
     for i = 1 : length(t) 
-        push!( u, [ 1/2*sin(t[i]), cos(t[i]) ] ) 
+        # push!( u, [ 1/2*sin(t[i]), cos(t[i]) ] ) 
+        push!( u, 2sin(t[i]) + 2sin(t[i]/10) ) 
     end 
-    u = vv2m(u) 
+    # u = vv2m(u) 
 
     # split into training and test data 
     test_fraction = 0.2 
@@ -95,13 +95,13 @@ end
 ## ============================================ ##
 
 export validate_data 
-function validate_data(t_test, x_test, dx_fn, dt)
+function validate_data(t_test, xu_test, dx_fn, dt)
 
 
-    n_vars = size(x_test, 2) 
-    x0     = [ x_test[1] ] 
+    n_vars = size(xu_test, 2) 
+    x0     = [ xu_test[1] ] 
     if n_vars > 1 
-        x0 = x_test[1,:] 
+        x0 = xu_test[1,:] 
     end 
 
     # dt    = t_test[2] - t_test[1] 
@@ -119,6 +119,39 @@ function validate_data(t_test, x_test, dx_fn, dt)
 
 end 
 
+## ============================================ ##
+# (5) Function to integrate an ODE using forward Euler integration.
+
+export integrate_euler 
+function integrate_euler(dx_fn, x₀, p, T; u = false)
+    # TODO: Euler integration consists of setting x(t + δt) ≈ x(t) + δt * ẋ(t, x(t), u(t)).
+    #       Returns x(T) given x(0) = x₀.
+
+    xt  = x₀ 
+
+    if u == false 
+
+        t  = 0 : 0.01 : T 
+        n  = length(t) 
+
+        for i = 1 : n 
+            xt += δt * dx_fn( xt, t[i] ) 
+        end     
+
+    else 
+
+        n  = length(u) 
+        dt = T / n 
+        t  = 0 : dt : T     
+
+        for i = 1 : n 
+            xt += δt * dx_fn( xt, t[i], u[i] ) 
+        end 
+    
+    end 
+
+    return xt 
+end
 
 ## ============================================ ##
 
@@ -138,11 +171,12 @@ function dx_true_fn(t, x, p, fn)
 
 end 
 
-
 ## ============================================ ##
 
 export build_dx_fn 
-function build_dx_fn(poly_order, n_vars, z_fd) 
+function build_dx_fn(poly_order, x_vars, u_vars, z_fd) 
+
+    n_vars = x_vars + u_vars 
 
     # define pool_data functions 
     fn_vector = pool_data_vecfn_test(n_vars, poly_order) 
@@ -152,13 +186,15 @@ function build_dx_fn(poly_order, n_vars, z_fd)
 
     # create vector of functions, each element --> each state 
     dx_fn_vec = Vector{Function}(undef,0) 
-    for i = 1:n_vars 
+    for i = 1 : x_vars 
         # define the differential equation 
         push!( dx_fn_vec, (xu,p,t) -> dot( 𝚽( xu, fn_vector ), z_fd[:,i] ) ) 
     end 
 
-    dx_fn(x,p,t) = [ f(x,p,t) for f in dx_fn_vec ] 
+    dx_fn(xu,p,t) = [ f(xu,p,t) for f in dx_fn_vec ] 
 
     return dx_fn 
 
 end 
+
+

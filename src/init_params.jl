@@ -14,7 +14,7 @@ function init_params(fn)
         p   = [ 1.1, 0.4, 1, 0.4 ] 
         str = "ode_sine" 
 
-    elseif fn == predator_prey 
+    elseif fn == predator_prey || fn == predator_prey_forcing 
         # x0  = [ 1.0; 0.5 ]
         x0  = [ 10.0; 5.0 ] 
         p   = [ 1.1, 0.4, 1, 0.4 ] 

@@ -5,7 +5,7 @@ using GaussianSINDy
 ## ============================================ ##
 
 # choose ODE, plot states --> measurements 
-fn = pendulum 
+fn = predator_prey 
 # constants 
 λ  = 0.1 
 
