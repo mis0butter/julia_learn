@@ -1,10 +1,10 @@
-module GaussianSINDy 
+module GaussianSINDy
 
 include("structs.jl")
 include("SINDy.jl")
 include("GP_tools.jl")
 include("lasso_admm.jl")
-include("ode_fns/ode_fns.jl")  
+include("ode_fns/ode_fns.jl")
 include("utils.jl")
 include("init_params.jl")
 
@@ -12,75 +12,76 @@ include("init_params.jl")
 # redo fns 
 
 include("SINDy_test.jl")
-include("opt_fns.jl") 
-include("gpsindy_fns.jl") 
+include("opt_fns.jl")
+include("gpsindy_fns.jl")
 include("plot_fns.jl")
+include("nn_functions.jl")
 
 
 ## ============================================ ##
 
-export sindy_gp_admm 
-function sindy_gp_admm( t, x, dx_fd, λ, hist_hp_opt )
+export sindy_gp_admm
+function sindy_gp_admm(t, x, dx_fd, λ, hist_hp_opt)
 
     # ----------------------- #
     # SINDy 
 
-    n_vars = size(x, 2) 
-    poly_order = n_vars 
+    n_vars = size(x, 2)
+    poly_order = n_vars
 
     # construct data library 
-    Θx = pool_data_test(x, n_vars, poly_order) 
+    Θx = pool_data_test(x, n_vars, poly_order)
 
     # first cut - SINDy 
-    Ξ = sparsify_dynamics_test(Θx, dx_fd, λ, n_vars) 
+    Ξ = sparsify_dynamics_test(Θx, dx_fd, λ, n_vars)
 
     # ----------------------- #
     # objective function 
 
-    z_soln = 0 * Ξ 
+    z_soln = 0 * Ξ
 
     # ADMM stuff 
-    ρ = 1.0 
-    α = 1.0 
+    ρ = 1.0
+    α = 1.0
 
     # ----------------------- #
     # loop with state j
 
-    for j = 1 : n_vars 
+    for j = 1:n_vars
 
         # initial loss function vars 
-        ξ  = 0 * Ξ[:,j] 
-        dx = dx_fd[:,j] 
+        ξ = 0 * Ξ[:, j]
+        dx = dx_fd[:, j]
 
         # assign for f_hp_opt 
-        f_hp(ξ, σ_f, l, σ_n) = f_obj( t, σ_f, l, σ_n, dx, ξ, Θx )
+        f_hp(ξ, σ_f, l, σ_n) = f_obj(t, σ_f, l, σ_n, dx, ξ, Θx)
 
         # l1 norm 
-        g(z) = λ * sum(abs.(z)) 
+        g(z) = λ * sum(abs.(z))
 
         # ----------------------- #
         # admm!!! 
 
         n = length(ξ)
         println("t size = ", size(t))
-        println( "Θx size = ", size(Θx) )
+        println("Θx size = ", size(Θx))
         # x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_hp_opt( t, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
-        x_hp_opt, z_hp_opt, hist_hp_opt, k  = lasso_admm_gp_opt( t, dx, Θx, f_hp, g, n, λ, ρ, α, hist_hp_opt ) 
+        x_hp_opt, z_hp_opt, hist_hp_opt, k = lasso_admm_gp_opt(t, dx, Θx, f_hp, g, n, λ, ρ, α, hist_hp_opt)
 
         # ----------------------- #
         # output solution 
 
-        z_soln[:,j] = z_hp_opt 
+        z_soln[:, j] = z_hp_opt
 
-    end 
+    end
 
-    return z_soln, hist_hp_opt 
+    return z_soln, hist_hp_opt
 
-end 
+end
 
 ## ============================================ ##
 
-end 
+end
 
 ## ============================================ ##
 
